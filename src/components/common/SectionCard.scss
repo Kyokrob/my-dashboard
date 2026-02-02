@@ -1,0 +1,25 @@
+.card {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  border-radius: 14px;
+  overflow: hidden;
+
+  &__head {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 14px;
+    letter-spacing: 0.2px;
+    opacity: 0.9;
+  }
+
+  &__body {
+    padding: 12px 14px;
+  }
+}

@@ -1,0 +1,79 @@
+.todo {
+  display: grid;
+  gap: 14px;
+}
+
+.todo__add {
+  display: flex;
+  gap: 10px;
+
+  input {
+    flex: 1;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: rgba(255,255,255,0.06);
+    border: 1px solid rgba(255,255,255,0.14);
+    color: rgba(255,255,255,0.92);
+  }
+}
+
+.todo__list {
+  display: grid;
+  gap: 8px;
+}
+
+.todo__empty {
+  opacity: 0.6;
+  font-size: 13px;
+}
+
+.todo__row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+
+  &.is-done {
+    opacity: 0.55;
+
+    .todo__text {
+      text-decoration: line-through;
+    }
+  }
+}
+
+.todo__check {
+  width: 18px;
+  height: 18px;
+  border-radius: 6px;
+  border: 1px solid rgba(255,255,255,0.4);
+  background: transparent;
+  cursor: pointer;
+
+  &.checked {
+    background: #1dd1a1;
+    border-color: #1dd1a1;
+  }
+}
+
+.todo__text {
+  font-size: 14px;
+}
+
+.todo__editInput {
+  width: 100%;
+  padding: 6px 8px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.92);
+}
+
+.todo__actions {
+  display: flex;
+  gap: 6px;
+}

@@ -1,0 +1,21 @@
+# deps
+node_modules
+server/node_modules
+
+# env
+.env
+.env.*
+!.env.example
+
+# builds
+dist
+server/dist
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+*.log
+
+# OS
+.DS_Store

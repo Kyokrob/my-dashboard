@@ -1,0 +1,15 @@
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 1.1fr 0.9fr;
+  gap: 16px;
+  align-items: start;
+}
+
+.dashboard-col {
+  display: grid;
+  gap: 16px;
+}
+
+.dashboard-full {
+  margin-top: 16px;
+}

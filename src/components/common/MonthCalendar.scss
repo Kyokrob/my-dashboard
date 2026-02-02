@@ -1,0 +1,125 @@
+.mcal {
+  display: grid;
+  gap: 10px;
+}
+
+.mcal__top {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.mcal__title {
+  font-weight: 700;
+  letter-spacing: 0.2px;
+}
+
+.mcal__hint {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.mcal__dow {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+  opacity: 0.7;
+  font-size: 12px;
+}
+
+.mcal__dowItem {
+  text-align: center;
+}
+
+.mcal__grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 8px;
+}
+
+.mcal__cell {
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.10);
+  background: rgba(255, 255, 255, 0.04);
+  padding: 8px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  cursor: default;
+
+  &.is-empty {
+    background: transparent;
+    border-color: transparent;
+  }
+
+  &.has-data {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.16);
+  }
+}
+
+.mcal__day {
+  font-size: 13px;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.mcal__chips {
+  display: flex;
+  gap: 6px;
+}
+
+.chip {
+  font-size: 10px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  opacity: 0.9;
+
+  &--exp {
+    border-color: rgba(29, 209, 161, 0.35);
+    color: #1dd1a1;
+  }
+
+  &--wo {
+    border-color: rgba(100, 181, 246, 0.35);
+    color: rgba(140, 200, 255, 0.95);
+  }
+}
+
+.mcal__tip {
+  font-size: 12px;
+  line-height: 1.5;
+  min-width: 220px;
+}
+
+.mcal__tipDate {
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+
+.mcal__tipRow {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  opacity: 0.95;
+}
+
+.mcal__tipLabel {
+  opacity: 0.7;
+}
+
+.mcal__tipList {
+  margin-top: 8px;
+  opacity: 0.9;
+}
+
+.mcal__tipItem {
+  white-space: nowrap;
+}
+
+.mcal__tipMore {
+  margin-top: 4px;
+  opacity: 0.7;
+}
