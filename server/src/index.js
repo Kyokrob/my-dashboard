@@ -8,6 +8,9 @@ import workoutsRoutes from "./routes/workouts.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import { errorHandler } from "./middleware/error.js";
 import { requireAuth, attachUser } from "./middleware/auth.js";
+import path from "path";
+import { fileURLToPath } from "url";
+
 
 dotenv.config();
 
@@ -61,6 +64,24 @@ app.use("/api/auth", authRoutes);
 app.use("/api/expenses", requireAuth, expensesRoutes);
 app.use("/api/workouts", requireAuth, workoutsRoutes);
 
+// Serve Vite build in production
+if (process.env.NODE_ENV === "production") {
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
+
+  // server/src -> repoRoot/dist
+  const clientDistPath = path.resolve(__dirname, "../../dist");
+
+  app.use(express.static(clientDistPath));
+
+  // SPA fallback (avoid /api)
+  app.get("*", (req, res) => {
+    if (req.path.startsWith("/api")) return res.status(404).end();
+    res.sendFile(path.join(clientDistPath, "index.html"));
+  });
+}
+
+// Error handler
 app.use(errorHandler);
 
 const port = process.env.PORT || 5050;
@@ -77,5 +98,6 @@ const startServer = async () => {
     process.exit(1);
   }
 };
+
 
 startServer();

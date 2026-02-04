@@ -8,7 +8,9 @@
     "dev:client": "vite",
     "dev:server": "npm --prefix server run dev",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "render-build": "npm ci && npm --prefix server ci && npm run build",
+    "start": "npm --prefix server start"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",
