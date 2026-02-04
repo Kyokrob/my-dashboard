@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { apiFetch } from "../api/apiFetch.js";
 import "./Dashboard.scss";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
@@ -51,7 +52,7 @@ export default function Dashboard() {
   const normalizeWorkout = (w) => ({ ...w, id: w.id ?? w._id });
 
   async function fetchExpenses() {
-    const res = await fetch("/api/expenses");
+    const res = await apiFetch("/api/expenses");
     if (!res.ok) throw new Error(`GET /api/expenses failed: ${res.status}`);
     const data = await res.json();
     if (!Array.isArray(data)) return [];
@@ -59,7 +60,7 @@ export default function Dashboard() {
   }
 
   async function fetchWorkouts() {
-    const res = await fetch("/api/workouts");
+    const res = await apiFetch("/api/workouts");
     if (!res.ok) throw new Error(`GET /api/workouts failed: ${res.status}`);
     const data = await res.json();
     if (!Array.isArray(data)) return [];
@@ -136,144 +137,129 @@ useEffect(() => {
      CRUD - Expenses (API)
   ====================== */
   async function addExpense(row) {
-    try {
-      const payload = { ...row };
-      delete payload.id;
+  try {
+    const payload = { ...row };
+    delete payload.id;
 
-      const res = await fetch("/api/expenses", {
+    const created = normalizeExpense(
+      await apiFetch("/api/expenses", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(payload),
-      });
+      })
+    );
 
-      if (!res.ok) throw new Error(`POST /api/expenses failed: ${res.status}`);
-
-      const created = normalizeExpense(await res.json());
-      setExpenseRows((prev) => [...prev, created]);
-      showSnack("Expense added", "success");
-    } catch (err) {
-      console.error(err);
-      showSnack("Failed to add expense", "error");
-    }
+    setExpenseRows((prev) => [...prev, created]);
+    showSnack("Expense added", "success");
+  } catch (err) {
+    console.error(err);
+    showSnack("Failed to add expense", "error");
   }
+}
+
 
   async function updateExpense(updated) {
-    try {
-      const id = updated.id ?? updated._id;
-      if (!id) throw new Error("Missing expense id");
+  try {
+    const id = updated.id ?? updated._id;
+    if (!id) throw new Error("Missing expense id");
 
-      const payload = { ...updated };
-      delete payload.id;
-      delete payload._id;
+    const payload = { ...updated };
+    delete payload.id;
+    delete payload._id;
 
-      const res = await fetch(`/api/expenses/${id}`, {
+    const saved = normalizeExpense(
+      await apiFetch(`/api/expenses/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
         body: JSON.stringify(payload),
-      });
+      })
+    );
 
-      if (!res.ok) throw new Error(`PUT /api/expenses/${id} failed: ${res.status}`);
-
-      const saved = normalizeExpense(await res.json());
-      setExpenseRows((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
-      showSnack("Expense updated", "info");
-    } catch (err) {
-      console.error(err);
-      showSnack("Failed to update expense", "error");
-    }
+    setExpenseRows((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
+    showSnack("Expense updated", "info");
+  } catch (err) {
+    console.error(err);
+    showSnack("Failed to update expense", "error");
   }
+}
+
 
   async function deleteExpense(id) {
-    try {
-      if (!id) return;
+  try {
+    if (!id) return;
 
-      const res = await fetch(`/api/expenses/${id}`, { 
-        method: "DELETE",
-        credentials: "include",
- });
+    await apiFetch(`/api/expenses/${id}`, { method: "DELETE" });
 
-      if (!res.ok && res.status !== 204) {
-        throw new Error(`DELETE /api/expenses/${id} failed: ${res.status}`);
-      }
-
-      setExpenseRows((prev) => prev.filter((r) => r.id !== id));
-      showSnack("Expense deleted", "warning");
-    } catch (err) {
-      console.error(err);
-      showSnack("Failed to delete expense", "error");
-    }
+    setExpenseRows((prev) => prev.filter((r) => r.id !== id));
+    showSnack("Expense deleted", "warning");
+  } catch (err) {
+    console.error(err);
+    showSnack("Failed to delete expense", "error");
   }
+}
+
 
   /* ======================
      CRUD - Workouts (API)
   ====================== */
   async function addWorkout(row) {
-    try {
-      const payload = { ...row };
-      delete payload.id;
+  try {
+    const payload = { ...row };
+    delete payload.id;
 
-      const res = await fetch("/api/workouts", {
+    const created = normalizeWorkout(
+      await apiFetch("/api/workouts", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      });
+      })
+    );
 
-      if (!res.ok) throw new Error(`POST /api/workouts failed: ${res.status}`);
-
-      const created = normalizeWorkout(await res.json());
-      setWorkoutRows((prev) => [...prev, created]);
-      showSnack("Workout added", "success");
-    } catch (err) {
-      console.error(err);
-      showSnack("Failed to add workout", "error");
-    }
+    setWorkoutRows((prev) => [...prev, created]);
+    showSnack("Workout added", "success");
+  } catch (err) {
+    console.error(err);
+    showSnack("Failed to add workout", "error");
   }
+}
+
 
   async function updateWorkout(updated) {
-    try {
-      const id = updated.id ?? updated._id;
-      if (!id) throw new Error("Missing workout id");
+  try {
+    const id = updated.id ?? updated._id;
+    if (!id) throw new Error("Missing workout id");
 
-      const payload = { ...updated };
-      delete payload.id;
-      delete payload._id;
+    const payload = { ...updated };
+    delete payload.id;
+    delete payload._id;
 
-      const res = await fetch(`/api/workouts/${id}`, {
+    const saved = normalizeWorkout(
+      await apiFetch(`/api/workouts/${id}`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
-      });
+      })
+    );
 
-      if (!res.ok) throw new Error(`PUT /api/workouts/${id} failed: ${res.status}`);
-
-      const saved = normalizeWorkout(await res.json());
-      setWorkoutRows((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
-      showSnack("Workout updated", "info");
-    } catch (err) {
-      console.error(err);
-      showSnack("Failed to update workout", "error");
-    }
+    setWorkoutRows((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
+    showSnack("Workout updated", "info");
+  } catch (err) {
+    console.error(err);
+    showSnack("Failed to update workout", "error");
   }
+}
+
 
   async function deleteWorkout(id) {
-    try {
-      if (!id) return;
+  try {
+    if (!id) return;
 
-      const res = await fetch(`/api/workouts/${id}`, { method: "DELETE" });
+    await apiFetch(`/api/workouts/${id}`, { method: "DELETE" });
 
-      if (!res.ok && res.status !== 204) {
-        throw new Error(`DELETE /api/workouts/${id} failed: ${res.status}`);
-      }
-
-      setWorkoutRows((prev) => prev.filter((r) => r.id !== id));
-      showSnack("Workout deleted", "warning");
-    } catch (err) {
-      console.error(err);
-      showSnack("Failed to delete workout", "error");
-    }
+    setWorkoutRows((prev) => prev.filter((r) => r.id !== id));
+    showSnack("Workout deleted", "warning");
+  } catch (err) {
+    console.error(err);
+    showSnack("Failed to delete workout", "error");
   }
+}
+
 
   /* ======================
      Shared Confirm Dialog
