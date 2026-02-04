@@ -76,26 +76,21 @@ app.use("/api/expenses", requireAuth, expensesRoutes);
 app.use("/api/workouts", requireAuth, workoutsRoutes);
 
 /* ======================
-   STATIC (PRODUCTION)
-   Serve Vite dist from repo root
+   SERVE FRONTEND IN PROD
 ====================== */
 if (isProd) {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
+  const DIST_DIR = path.join(process.cwd(), "dist");
 
-  // server/src -> server -> repo root
-  const ROOT_DIR = path.resolve(__dirname, "..", "..");
-  const DIST_DIR = path.join(ROOT_DIR, "dist");
+  console.log("✅ Serving dist from:", DIST_DIR);
 
-  // Serve static assets (css/js under dist/assets)
   app.use(express.static(DIST_DIR));
 
-  // SPA fallback (but never intercept /api)
   app.get("*", (req, res, next) => {
     if (req.path.startsWith("/api")) return next();
-    return res.sendFile(path.join(DIST_DIR, "index.html"));
+    res.sendFile(path.join(DIST_DIR, "index.html"));
   });
 }
+
 
 // ✅ Error handler must be last
 app.use(errorHandler);
