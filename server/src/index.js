@@ -2,42 +2,51 @@ import express from "express";
 import cors from "cors";
 import dotenv from "dotenv";
 import session from "express-session";
-import { connectDB } from "./config/db.js";
-import expensesRoutes from "./routes/expenses.routes.js";
-import workoutsRoutes from "./routes/workouts.routes.js";
-import authRoutes from "./routes/auth.routes.js";
-import { errorHandler } from "./middleware/error.js";
-import { requireAuth, attachUser } from "./middleware/auth.js";
 import path from "path";
 import { fileURLToPath } from "url";
 
+import { connectDB } from "./config/db.js";
+import authRoutes from "./routes/auth.routes.js";
+import expensesRoutes from "./routes/expenses.routes.js";
+import workoutsRoutes from "./routes/workouts.routes.js";
+import { errorHandler } from "./middleware/error.js";
+import { requireAuth, attachUser } from "./middleware/auth.js";
 
 dotenv.config();
 
 const app = express();
 const isProd = process.env.NODE_ENV === "production";
 
-// REQUIRED for Render / proxies
+// ✅ REQUIRED for Render / reverse proxies (secure cookies + correct IP)
 app.set("trust proxy", 1);
 
-// CORS (keep credentials ON)
-const rawOrigins = (process.env.CORS_ORIGIN || "").split(",").map(s => s.trim()).filter(Boolean);
+// ✅ Parse JSON
+app.use(express.json());
+
+// ✅ CORS (cookie sessions)
+const rawOrigins = (process.env.CORS_ORIGIN || "")
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, cb) => {
-      if (!origin) return cb(null, true); // allow server-to-server / curl
-      if (rawOrigins.length === 0) return cb(null, true); // unblock early
-      return rawOrigins.includes(origin) ? cb(null, true) : cb(new Error("CORS blocked"));
+      // allow server-to-server / curl
+      if (!origin) return cb(null, true);
+
+      // if no origins configured, allow all (useful during setup)
+      if (rawOrigins.length === 0) return cb(null, true);
+
+      return rawOrigins.includes(origin)
+        ? cb(null, true)
+        : cb(new Error(`CORS blocked: ${origin}`));
     },
     credentials: true,
   })
 );
 
-
-app.use(express.json());
-
-// Session (cookie-based auth, production-safe)
+// ✅ Session (cookie-based auth)
 app.use(
   session({
     name: "sid",
@@ -46,58 +55,63 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      secure: isProd,                  // must be true on HTTPS (Render)
-      sameSite: isProd ? "none" : "lax", // cross-site cookies in prod
-      maxAge: 1000 * 60 * 60 * 24 * 7,   // 7 days
+      secure: isProd, // true on HTTPS (Render/Vercel)
+      sameSite: isProd ? "none" : "lax", // allow cross-site cookie in prod
+      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
     },
   })
 );
 
-
+// ✅ Attach user from session (if present)
 app.use(attachUser);
 
-app.get("/health", (req, res) => {
-  res.json({ ok: true });
-});
+// ✅ Health (public)
+app.get("/health", (req, res) => res.json({ ok: true }));
 
+/* ======================
+   API ROUTES
+====================== */
 app.use("/api/auth", authRoutes);
 app.use("/api/expenses", requireAuth, expensesRoutes);
 app.use("/api/workouts", requireAuth, workoutsRoutes);
 
-// Serve Vite build in production
-if (process.env.NODE_ENV === "production") {
+/* ======================
+   STATIC (PRODUCTION)
+   Serve Vite dist from repo root
+====================== */
+if (isProd) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
 
-  // server/src -> repoRoot/dist
-  const clientDistPath = path.resolve(__dirname, "../../dist");
+  // server/src -> server -> repo root
+  const ROOT_DIR = path.resolve(__dirname, "..", "..");
+  const DIST_DIR = path.join(ROOT_DIR, "dist");
 
-  app.use(express.static(clientDistPath));
+  // Serve static assets (css/js under dist/assets)
+  app.use(express.static(DIST_DIR));
 
-  // SPA fallback (avoid /api)
-  app.get("*", (req, res) => {
-    if (req.path.startsWith("/api")) return res.status(404).end();
-    res.sendFile(path.join(clientDistPath, "index.html"));
+  // SPA fallback (but never intercept /api)
+  app.get("*", (req, res, next) => {
+    if (req.path.startsWith("/api")) return next();
+    return res.sendFile(path.join(DIST_DIR, "index.html"));
   });
 }
 
-// Error handler
+// ✅ Error handler must be last
 app.use(errorHandler);
 
-const port = process.env.PORT || 5050;
+const port = Number(process.env.PORT || 5050);
 
-const startServer = async () => {
+async function startServer() {
   try {
     await connectDB(process.env.MONGODB_URI);
-
     app.listen(port, () => {
-      console.log(`🚀 API running on http://127.0.0.1:${port}`);
+      console.log(`🚀 API running on port ${port}`);
     });
   } catch (err) {
     console.error("❌ Failed to start server:", err);
     process.exit(1);
   }
-};
-
+}
 
 startServer();
