@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import "./dashboard.scss";
+import "./Dashboard.scss";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
