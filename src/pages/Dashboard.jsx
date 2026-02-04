@@ -52,17 +52,13 @@ export default function Dashboard() {
   const normalizeWorkout = (w) => ({ ...w, id: w.id ?? w._id });
 
   async function fetchExpenses() {
-    const res = await apiFetch("/api/expenses");
-    if (!res.ok) throw new Error(`GET /api/expenses failed: ${res.status}`);
-    const data = await res.json();
+    const data = await apiFetch("/api/expenses");
     if (!Array.isArray(data)) return [];
     return data.map(normalizeExpense);
   }
 
   async function fetchWorkouts() {
-    const res = await apiFetch("/api/workouts");
-    if (!res.ok) throw new Error(`GET /api/workouts failed: ${res.status}`);
-    const data = await res.json();
+    const data = await apiFetch("/api/workouts");
     if (!Array.isArray(data)) return [];
     return data.map(normalizeWorkout);
   }
