@@ -4,7 +4,6 @@ import fs from "fs";
 import dotenv from "dotenv";
 import session from "express-session";
 import path from "path";
-import { fileURLToPath } from "url";
 
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -54,6 +53,7 @@ app.use(
     secret: process.env.SESSION_SECRET || "dev_secret_change_me",
     resave: false,
     saveUninitialized: false,
+    proxy: true, // ✅ important when trust proxy is enabled
     cookie: {
       httpOnly: true,
       secure: isProd, // true on HTTPS (Render/Vercel)
@@ -64,6 +64,7 @@ app.use(
 );
 
 // ✅ Attach user from session (if present)
+// (If your attachUser sometimes throws, you can early-return for assets/api here)
 app.use(attachUser);
 
 // ✅ Health (public)
@@ -80,14 +81,10 @@ app.use("/api/workouts", requireAuth, workoutsRoutes);
    SERVE FRONTEND IN PROD
 ====================== */
 if (isProd) {
-  const __filename = fileURLToPath(import.meta.url);
-  const __dirname = path.dirname(__filename);
-
+  // On Render, repo root is usually process.cwd() = /opt/render/project/src
   const candidates = [
-    path.join(process.cwd(), "dist"),                 // if cwd is repo root
-    path.join(process.cwd(), "..", "dist"),           // if cwd is /server
-    path.resolve(__dirname, "..", "..", "dist"),      // server/src -> repo/dist
-    path.resolve(__dirname, "..", "..", "..", "dist") // safety
+    path.join(process.cwd(), "dist"),
+    path.join(process.cwd(), "..", "dist"),
   ];
 
   const DIST_DIR = candidates.find((p) => fs.existsSync(path.join(p, "index.html")));
@@ -99,15 +96,22 @@ if (isProd) {
   if (!DIST_DIR) {
     console.error("❌ Could not find dist/index.html at runtime.");
   } else {
+    const ASSETS_DIR = path.join(DIST_DIR, "assets");
+
+    // ✅ Serve assets explicitly first (prevents SPA fallback from touching /assets/*)
+    app.use("/assets", express.static(ASSETS_DIR));
+
+    // ✅ Serve the rest of dist (favicon, manifest, etc.)
     app.use(express.static(DIST_DIR));
 
+    // ✅ SPA fallback LAST (never intercept /api or /assets)
     app.get("*", (req, res, next) => {
       if (req.path.startsWith("/api")) return next();
+      if (req.path.startsWith("/assets")) return next();
       return res.sendFile(path.join(DIST_DIR, "index.html"));
     });
   }
 }
-
 
 // ✅ Error handler must be last
 app.use(errorHandler);
