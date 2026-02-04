@@ -1,0 +1,8 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "https://my-dashboard-sqf6.onrender.com/api/$1"
+    }
+  ]
+}
