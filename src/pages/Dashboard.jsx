@@ -143,6 +143,7 @@ useEffect(() => {
 
     const created = normalizeExpense(
       await apiFetch("/api/expenses", {
+        credentials: "include",
         method: "POST",
         body: JSON.stringify(payload),
       })
@@ -168,6 +169,7 @@ useEffect(() => {
 
     const saved = normalizeExpense(
       await apiFetch(`/api/expenses/${id}`, {
+        credentials: "include",
         method: "PUT",
         body: JSON.stringify(payload),
       })
@@ -186,7 +188,9 @@ useEffect(() => {
   try {
     if (!id) return;
 
-    await apiFetch(`/api/expenses/${id}`, { method: "DELETE" });
+    await apiFetch(`/api/expenses/${id}`, { 
+      credentials: "include",
+      method: "DELETE" });
 
     setExpenseRows((prev) => prev.filter((r) => r.id !== id));
     showSnack("Expense deleted", "warning");
@@ -207,6 +211,7 @@ useEffect(() => {
 
     const created = normalizeWorkout(
       await apiFetch("/api/workouts", {
+        credentials: "include",
         method: "POST",
         body: JSON.stringify(payload),
       })
@@ -232,6 +237,7 @@ useEffect(() => {
 
     const saved = normalizeWorkout(
       await apiFetch(`/api/workouts/${id}`, {
+        credentials: "include",
         method: "PUT",
         body: JSON.stringify(payload),
       })
@@ -250,7 +256,9 @@ useEffect(() => {
   try {
     if (!id) return;
 
-    await apiFetch(`/api/workouts/${id}`, { method: "DELETE" });
+    await apiFetch(`/api/workouts/${id}`, { 
+      credentials: "include",
+      method: "DELETE" });
 
     setWorkoutRows((prev) => prev.filter((r) => r.id !== id));
     showSnack("Workout deleted", "warning");
