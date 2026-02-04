@@ -1,6 +1,7 @@
 {
   "rewrites": [
     { "source": "/api/(.*)", "destination": "https://my-dashboard-sqf6.onrender.com/api/$1" },
+    { "source": "/health", "destination": "https://my-dashboard-sqf6.onrender.com/health" },
     { "source": "/(.*)", "destination": "/" }
   ]
 }
