@@ -66,15 +66,16 @@ export default function ExpenseCategoryPie({ rows = [] }) {
         height={310}
         slotProps={{ legend: { hidden: true } }}
         sx={{
-    "& .MuiPieArcLabel-root": {
-      fill: "#fff",
-      fontWeight: 600,
-      fontSize: 12,
-    },
-    "& .css-1308xjd-MuiChartsLegend-root": {
-      color: "white"
-    }
-  }}
+          "& .MuiPieArcLabel-root": {
+            fill: "#fff",
+            fontWeight: 600,
+            fontSize: 12,
+          },
+          "& .MuiChartsLegend-root, & .MuiChartsLegend-root text": {
+            color: "#fff",
+            fill: "#fff",
+          },
+        }}
       />
     </div>
   );

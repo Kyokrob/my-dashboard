@@ -100,6 +100,15 @@
   min-width: 220px;
 }
 
+.mcal__tooltip {
+  max-width: min(320px, 85vw);
+  padding: 8px 10px;
+}
+
+.mcal__tooltipArrow {
+  color: rgba(17, 17, 17, 0.92);
+}
+
 .mcal__tipDate {
   font-weight: 700;
   margin-bottom: 6px;
@@ -170,5 +179,19 @@
   .chip {
     font-size: 8px;
     padding: 1px 4px;
+  }
+
+  .mcal__tooltip {
+    max-width: 85vw;
+  }
+
+  .mcal__tip {
+    min-width: 0;
+    max-width: 85vw;
+  }
+
+  .mcal__tipItem {
+    white-space: normal;
+    word-break: break-word;
   }
 }

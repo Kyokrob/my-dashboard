@@ -39,9 +39,10 @@ export default function WorkoutTypePie({ rows = [] }) {
       fontWeight: 600,
       fontSize: 12,
     },
-    "& .css-1308xjd-MuiChartsLegend-root": {
-      color: "white"
-    }
+    "& .MuiChartsLegend-root, & .MuiChartsLegend-root text": {
+      color: "#fff",
+      fill: "#fff",
+    },
   }}
 />
 

@@ -98,7 +98,25 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }
           const hasAnything = dayExpenses.length || dayWorkouts.length;
 
           return (
-            <Tooltip key={idx} title={tooltip} arrow placement="left" enterDelay={150}>
+            <Tooltip
+              key={idx}
+              title={tooltip}
+              arrow
+              placement="top"
+              enterDelay={150}
+              enterTouchDelay={0}
+              leaveTouchDelay={2000}
+              slotProps={{
+                popper: {
+                  modifiers: [
+                    { name: "flip", options: { fallbackPlacements: ["top", "bottom", "right", "left"] } },
+                    { name: "preventOverflow", options: { boundary: "viewport", padding: 8 } },
+                  ],
+                },
+                tooltip: { className: "mcal__tooltip" },
+                arrow: { className: "mcal__tooltipArrow" },
+              }}
+            >
               <div className={`mcal__cell ${hasAnything ? "has-data" : ""}`}>
                 <div className="mcal__day">{day}</div>
 
