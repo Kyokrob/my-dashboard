@@ -12,16 +12,29 @@ import { requireAuth, attachUser } from "./middleware/auth.js";
 dotenv.config();
 
 const app = express();
+const isProd = process.env.NODE_ENV === "production";
+
+// REQUIRED for Render / proxies
+app.set("trust proxy", 1);
+
+// CORS (keep credentials ON)
+const rawOrigins = (process.env.CORS_ORIGIN || "").split(",").map(s => s.trim()).filter(Boolean);
 
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN || true,
+    origin: (origin, cb) => {
+      if (!origin) return cb(null, true); // allow server-to-server / curl
+      if (rawOrigins.length === 0) return cb(null, true); // unblock early
+      return rawOrigins.includes(origin) ? cb(null, true) : cb(new Error("CORS blocked"));
+    },
     credentials: true,
   })
 );
+
+
 app.use(express.json());
 
-app.set("trust proxy", 1);
+// Session (cookie-based auth, production-safe)
 app.use(
   session({
     name: "sid",
@@ -30,12 +43,14 @@ app.use(
     saveUninitialized: false,
     cookie: {
       httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      maxAge: 1000 * 60 * 60 * 24 * 7,
+      secure: isProd,                  // must be true on HTTPS (Render)
+      sameSite: isProd ? "none" : "lax", // cross-site cookies in prod
+      maxAge: 1000 * 60 * 60 * 24 * 7,   // 7 days
     },
   })
 );
+
+
 app.use(attachUser);
 
 app.get("/health", (req, res) => {

@@ -28,7 +28,7 @@ import { useDashboard } from "../context/DashboardContext.jsx";
 import { sumExpensesByCategory } from "../utils/rollups.js";
 import { inMonth } from "../utils/date.js";
 
-import { budgetByCategory, categoryOrder } from "../../server/src/config/budget.js";
+import { budgetByCategory, categoryOrder } from "../config/budget.js";
 
 
 
@@ -143,6 +143,7 @@ useEffect(() => {
       const res = await fetch("/api/expenses", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -169,6 +170,7 @@ useEffect(() => {
       const res = await fetch(`/api/expenses/${id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
+        credentials: "include",
         body: JSON.stringify(payload),
       });
 
@@ -187,7 +189,10 @@ useEffect(() => {
     try {
       if (!id) return;
 
-      const res = await fetch(`/api/expenses/${id}`, { method: "DELETE" });
+      const res = await fetch(`/api/expenses/${id}`, { 
+        method: "DELETE",
+        credentials: "include",
+ });
 
       if (!res.ok && res.status !== 204) {
         throw new Error(`DELETE /api/expenses/${id} failed: ${res.status}`);
