@@ -1,5 +1,6 @@
 import express from "express";
 import cors from "cors";
+import fs from "fs";
 import dotenv from "dotenv";
 import session from "express-session";
 import path from "path";
@@ -79,16 +80,32 @@ app.use("/api/workouts", requireAuth, workoutsRoutes);
    SERVE FRONTEND IN PROD
 ====================== */
 if (isProd) {
-  const DIST_DIR = path.join(process.cwd(), "dist");
+  const __filename = fileURLToPath(import.meta.url);
+  const __dirname = path.dirname(__filename);
 
-  console.log("✅ Serving dist from:", DIST_DIR);
+  const candidates = [
+    path.join(process.cwd(), "dist"),                 // if cwd is repo root
+    path.join(process.cwd(), "..", "dist"),           // if cwd is /server
+    path.resolve(__dirname, "..", "..", "dist"),      // server/src -> repo/dist
+    path.resolve(__dirname, "..", "..", "..", "dist") // safety
+  ];
 
-  app.use(express.static(DIST_DIR));
+  const DIST_DIR = candidates.find((p) => fs.existsSync(path.join(p, "index.html")));
 
-  app.get("*", (req, res, next) => {
-    if (req.path.startsWith("/api")) return next();
-    res.sendFile(path.join(DIST_DIR, "index.html"));
-  });
+  console.log("process.cwd() =", process.cwd());
+  console.log("dist candidates =", candidates);
+  console.log("✅ Using DIST_DIR =", DIST_DIR);
+
+  if (!DIST_DIR) {
+    console.error("❌ Could not find dist/index.html at runtime.");
+  } else {
+    app.use(express.static(DIST_DIR));
+
+    app.get("*", (req, res, next) => {
+      if (req.path.startsWith("/api")) return next();
+      return res.sendFile(path.join(DIST_DIR, "index.html"));
+    });
+  }
 }
 
 
