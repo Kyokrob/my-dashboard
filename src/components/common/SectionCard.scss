@@ -23,3 +23,15 @@
     padding: 12px 14px;
   }
 }
+
+@media (max-width: 720px) {
+  .card__head {
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: flex-start;
+  }
+
+  .card__title {
+    font-size: 13px;
+  }
+}

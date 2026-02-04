@@ -2,11 +2,12 @@ import { useState, useEffect } from "react";
 import "./dashboard.scss";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import MonthCalendar from "../components/common/MonthCalendar.jsx";
 
 import KpiCard from "../components/common/KpiCard.jsx";
 import WorkoutTypePie from "../components/workouts/WorkoutTypePie.jsx";
-import ExpenseCategoryPie from "../components/expenses/ExpenseCategoryPie.jsx";
+import ExpenseCategoryBar from "../components/expenses/ExpenseCategoryBar.jsx";
 import TodoList from "../components/todo/TodoList.jsx";
 import DashboardLayout from "../components/layout/DashboardLayout.jsx";
 import MonthPicker from "../components/layout/MonthPicker.jsx";
@@ -24,10 +25,11 @@ import WorkoutTable from "../components/workouts/WorkoutTable.jsx";
 import WorkoutDialog from "../components/workouts/WorkoutDialog.jsx";
 
 import { useDashboard } from "../context/DashboardContext.jsx";
-// import { expenses as mockExpenses } from "../mock/expenses.js";
-// import { workouts as mockWorkouts } from "../mock/workouts.js";
 import { sumExpensesByCategory } from "../utils/rollups.js";
 import { inMonth } from "../utils/date.js";
+
+import { budgetByCategory, categoryOrder } from "../../server/src/config/budget.js";
+
 
 
 
@@ -313,25 +315,72 @@ useEffect(() => {
 
   const workoutCount = monthWorkouts.length;
 
-  const avgIntensity = (() => {
-    const vals = monthWorkouts.map((w) => Number(w.intensity)).filter((n) => Number.isFinite(n));
-    if (!vals.length) return "-";
-    return (vals.reduce((a, b) => a + b, 0) / vals.length).toFixed(1);
-  })();
+  // Planned total based on selected tier
+const plannedTotal = categoryOrder.reduce((sum, cat) => {
+  const tierBudget = budgetByCategory?.[cat]?.[tier] ?? 0;
+  return sum + Number(tierBudget);
+}, 0);
 
-  const avgDailySpend = (() => {
-    const daysInMonth = new Date(Number(monthKey.split("-")[0]), Number(monthKey.split("-")[1]), 0).getDate();
-    if (!daysInMonth) return "-";
-    return Math.round(totalSpend / daysInMonth);
-  })();
+// Variance: + = over budget, - = under budget
+const spendVariance = plannedTotal - totalSpend;
+
+const spendVarianceLabel =
+  spendVariance >= 0
+    ? `+฿${spendVariance.toLocaleString()}`
+    : `-฿${Math.abs(spendVariance).toLocaleString()}`;
+
+const spendVarianceSub = spendVariance >= 0 ? "Remaining" : "Over budget";
+const spendVarianceIsBad = spendVariance < 0;
+
+  /* ======================
+   KPI – Active Days
+====================== */
+
+const activeDays = new Set(
+  monthWorkouts.map((w) => w.date)
+).size;
+
+const daysInMonth = new Date(
+  Number(monthKey.split("-")[0]),
+  Number(monthKey.split("-")[1]),
+  0
+).getDate();
+
+
+/* ======================
+   Weekly Spend Breakdown
+====================== */
+
+const weekdayLabels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+
+const weeklySpend = (() => {
+  const map = {};
+
+  monthExpenses.forEach((e) => {
+    const d = new Date(e.date);
+    const day = d.getDay(); // 0–6
+    map[day] = (map[day] || 0) + Number(e.amount || 0);
+  });
+
+  return weekdayLabels.map((label, idx) => ({
+    label,
+    amount: map[idx] || 0,
+  }));
+})();
+
+const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
+
+
+
+
 
   return (
     <DashboardLayout
       title={
         <div style={{ display: "flex", flexDirection: "column" }}>
-          <span>Kyokrob Dashboard</span>
-          <span style={{ fontSize: 18, opacity: 0.65, marginTop: 14 }}>
-            {new Date().toLocaleDateString("en-US", {
+          <span>Welcome Back Kyokrob</span>
+          <span style={{ fontSize: 18, opacity: 0.65, marginTop: 14, display: "flex", alignItems: "center", gap: 6 }}>
+           <CalendarMonthIcon/> {new Date().toLocaleDateString("en-US", {
               weekday: "long",
               day: "numeric",
               month: "long",
@@ -347,15 +396,26 @@ useEffect(() => {
         <KpiCard
           title="Total Spend"
           value={`฿${totalSpend.toLocaleString()}`}
-          sub="Includes all logged expenses"
+          sub="Includes all logged this month expenses"
         />
-        <KpiCard title="Top Spending Category" value={topCat} sub="Highest total spend category" />
-        <KpiCard title="Total Workouts" value={`${workoutCount}`} sub={`Avg intensity: ${avgIntensity}`} />
         <KpiCard
-          title="Avg Daily Spend"
-          value={avgDailySpend === "-" ? "-" : `฿${avgDailySpend.toLocaleString()}`}
-          sub="Total / days in month"
-        />
+  title="Spend vs Plan"
+  value={
+    <span style={{ color: spendVarianceIsBad ? "#E3A6A1" : "#9FC8B3" }}>
+      {spendVarianceLabel}
+    </span>
+  }
+  sub={spendVarianceSub}
+/>
+
+<KpiCard title="Top Spending Category" value={topCat} sub="Highest total spend category this month" />
+<KpiCard
+  title="Active Days"
+  value={`${activeDays} / ${daysInMonth}`}
+  sub="Days with at least one workout in this month"
+/>
+
+
       </div>
 
       {/* MAIN GRID */}
@@ -374,6 +434,10 @@ useEffect(() => {
               pageSize={10}
             />
           </SectionCard>
+          <SectionCard title="To-Do / Next Actions">
+            <TodoList rows={todos} onAdd={addTodo} onUpdate={updateTodo} onDelete={deleteTodo} />
+          </SectionCard>
+         
         </div>
 
         {/* RIGHT */}
@@ -401,7 +465,7 @@ useEffect(() => {
             </div>
           </SectionCard>
 
-          <SectionCard title="Expenses Summary">
+          <SectionCard title="Expense Breakdown (This Month)">
   <div style={{
     display: "flex",
     flexDirection: "column",
@@ -409,12 +473,34 @@ useEffect(() => {
     padding: "8px 0 4px",
     gap: 6,
     color: "white",
-  }}><ExpenseCategoryPie rows={monthExpenses}  /></div>
+  }}> <ExpenseCategoryBar rows={monthExpenses}  /></div>
 </SectionCard>
 
-          <SectionCard title="To-Do / Next Actions">
-            <TodoList rows={todos} onAdd={addTodo} onUpdate={updateTodo} onDelete={deleteTodo} />
-          </SectionCard>
+ <SectionCard title="Spending by Day (This Month)">
+  <div className="weekly-spend">
+    {weeklySpend.map((d) => (
+      <div key={d.label} className="weekly-spend__row">
+        <div className="weekly-spend__label">{d.label}</div>
+
+        <div className="weekly-spend__bar-wrap">
+          <div
+            className="weekly-spend__bar"
+            style={{
+              width: `${(d.amount / maxWeeklySpend) * 100}%`,
+            }}
+          />
+        </div>
+
+        <div className="weekly-spend__value">
+          ฿{d.amount.toLocaleString()}
+        </div>
+      </div>
+    ))}
+  </div>
+</SectionCard>
+ 
+
+
         </div>
       </div>
 

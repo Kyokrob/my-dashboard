@@ -13,3 +13,62 @@
 .dashboard-full {
   margin-top: 16px;
 }
+
+
+.weekly-spend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.weekly-spend__row {
+  display: grid;
+  grid-template-columns: 40px 1fr 80px;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.weekly-spend__label {
+  opacity: 0.7;
+}
+
+.weekly-spend__bar-wrap {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 6px;
+  height: 8px;
+  overflow: hidden;
+}
+
+.weekly-spend__bar {
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #b6d6f2,
+    #9fc8b3
+  ); // soft blue → sage
+  border-radius: 6px;
+}
+
+.weekly-spend__value {
+  text-align: right;
+  opacity: 0.75;
+}
+
+@media (max-width: 1100px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .dashboard-grid {
+    gap: 12px;
+  }
+
+  .weekly-spend__row {
+    grid-template-columns: 32px 1fr 64px;
+    gap: 8px;
+    font-size: 12px;
+  }
+}

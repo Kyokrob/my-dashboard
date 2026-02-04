@@ -28,6 +28,7 @@
 .wgrid {
   display: grid;
   gap: 8px;
+  overflow-x: auto;
 }
 
 /* Row grid (fits inside card) */
@@ -48,6 +49,7 @@
     1.2fr      /* Note */
     50px        /* Drink */
     88px;       /* Actions */
+  min-width: 900px;
 
   &--head {
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -61,6 +63,45 @@
     border-radius: 10px;
     padding-left: 8px;
     padding-right: 8px;
+  }
+}
+
+@media (max-width: 720px) {
+  .wtable {
+    gap: 14px;
+
+    &__controls {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    &__meta {
+      justify-self: start;
+    }
+  }
+
+  .wtable__field {
+    width: 100%;
+  }
+
+  .wgrid__row {
+    padding: 6px 0;
+  }
+
+  .wgrid__row {
+    grid-template-columns:
+      92px       /* Date */
+      1fr        /* Workout */
+      72px       /* Intensity */
+      72px       /* Weight */
+      72px       /* BF */
+      0.9fr      /* Feel */
+      1fr        /* Note */
+      42px       /* Drink */
+      72px;      /* Actions */
+    gap: 8px;
+    min-width: 820px;
+    font-size: 12px;
   }
 }
 

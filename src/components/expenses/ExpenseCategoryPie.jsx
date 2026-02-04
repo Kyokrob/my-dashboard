@@ -63,7 +63,7 @@ export default function ExpenseCategoryPie({ rows = [] }) {
           },
         ]}
         width={300}
-        height={300}
+        height={310}
         slotProps={{ legend: { hidden: true } }}
         sx={{
     "& .MuiPieArcLabel-root": {

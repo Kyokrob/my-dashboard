@@ -51,14 +51,14 @@ export default function WorkoutTable({
     "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.65)" },
     "& .MuiInputLabel-root.Mui-focused": { color: "#1dd1a1" },
     "& .MuiOutlinedInput-root": {
-      height: 42,
+      height: { xs: 36, sm: 42 },
       color: "rgba(255,255,255,0.92)",
       background: "rgba(255,255,255,0.06)",
       borderRadius: "12px",
       "& fieldset": { borderColor: "rgba(255,255,255,0.18)" },
       "&:hover fieldset": { borderColor: "rgba(255,255,255,0.35)" },
       "&.Mui-focused fieldset": { borderColor: "#1dd1a1" },
-      "& input, & .MuiSelect-select": { padding: "10px 12px" },
+      "& input, & .MuiSelect-select": { padding: { xs: "8px 10px", sm: "10px 12px" } },
     },
     "& .MuiSvgIcon-root": { color: "rgba(255,255,255,0.7)" },
   };
@@ -92,6 +92,7 @@ export default function WorkoutTable({
       {/* Controls (no Search) */}
       <div className="wtable__controls">
         <TextField
+          className="wtable__field"
           select
           size="small"
           label="Type"
@@ -100,7 +101,7 @@ export default function WorkoutTable({
             setType(e.target.value);
             setPage(1);
           }}
-          sx={{ minWidth: 200, ...fieldSx }}
+          sx={{ minWidth: { xs: 160, sm: 200 }, ...fieldSx }}
         >
           {WORKOUT_TYPES.map((t) => (
             <MenuItem key={t} value={t}>
@@ -110,6 +111,7 @@ export default function WorkoutTable({
         </TextField>
 
         <TextField
+          className="wtable__field"
           select
           size="small"
           label="Intensity"
@@ -118,7 +120,7 @@ export default function WorkoutTable({
             setIntensity(e.target.value);
             setPage(1);
           }}
-          sx={{ minWidth: 140, ...fieldSx }}
+          sx={{ minWidth: { xs: 120, sm: 140 }, ...fieldSx }}
         >
           {INTENSITIES.map((i) => (
             <MenuItem key={i} value={i}>

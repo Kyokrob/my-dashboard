@@ -1,8 +1,14 @@
 import { useState } from "react";
+import "../../styles/forms.scss";
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 export default function ExpenseForm({ onAdd }) {
   const [form, setForm] = useState({
-    date: "",
+    date: todayISO(),
     amount: "",
     category: "Eat",
     subCategory: "",
@@ -23,26 +29,85 @@ export default function ExpenseForm({ onAdd }) {
       amount: Number(form.amount),
     });
 
-    setForm({ date: "", amount: "", category: "Eat", subCategory: "", type: "" });
+    setForm({ date: todayISO(), amount: "", category: "Eat", subCategory: "", type: "" });
   }
 
   return (
-    <form onSubmit={handleSubmit} style={{ display: "grid", gap: 8 }}>
-      <input type="date" name="date" value={form.date} onChange={handleChange} />
-      <input type="number" name="amount" placeholder="Amount" value={form.amount} onChange={handleChange} />
-      <select name="category" value={form.category} onChange={handleChange}>
-        <option>Eat</option>
-        <option>Drink</option>
-        <option>Golf</option>
-        <option>Transport</option>
-        <option>Shopping</option>
-        <option>Billing</option>
-        <option>Others</option>
-        <option>Etc</option>
-      </select>
-      <input name="subCategory" placeholder="Sub category" value={form.subCategory} onChange={handleChange} />
-      <input name="type" placeholder="Type" value={form.type} onChange={handleChange} />
-      <button type="submit">Add Expense</button>
+    <form onSubmit={handleSubmit} className="form">
+      <div className="form__grid">
+        <div className="form__row">
+          <label className="form__label" htmlFor="expense-date">Date</label>
+          <input
+            id="expense-date"
+            className="form__input"
+            type="date"
+            name="date"
+            value={form.date}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="form__row">
+          <label className="form__label" htmlFor="expense-amount">Amount</label>
+          <input
+            id="expense-amount"
+            className="form__input"
+            type="number"
+            name="amount"
+            placeholder="0"
+            value={form.amount}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="form__row">
+          <label className="form__label" htmlFor="expense-category">Category</label>
+          <select
+            id="expense-category"
+            className="form__select"
+            name="category"
+            value={form.category}
+            onChange={handleChange}
+          >
+            <option>Eat</option>
+            <option>Drink</option>
+            <option>Golf</option>
+            <option>Transport</option>
+            <option>Shopping</option>
+            <option>Billing</option>
+            <option>Others</option>
+            <option>Etc</option>
+          </select>
+        </div>
+
+        <div className="form__row">
+          <label className="form__label" htmlFor="expense-sub">Sub category</label>
+          <input
+            id="expense-sub"
+            className="form__input"
+            name="subCategory"
+            placeholder="e.g., Lunch"
+            value={form.subCategory}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="form__row form__row--full">
+          <label className="form__label" htmlFor="expense-type">Type</label>
+          <input
+            id="expense-type"
+            className="form__input"
+            name="type"
+            placeholder="Card / Cash / Transfer"
+            value={form.type}
+            onChange={handleChange}
+          />
+        </div>
+      </div>
+
+      <div className="form__actions">
+        <button className="form__btn" type="submit">Add Expense</button>
+      </div>
     </form>
   );
 }

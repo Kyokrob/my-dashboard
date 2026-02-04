@@ -28,6 +28,7 @@ export default function MonthPicker({ value, onChange }) {
 
   return (
     <div
+      className="month-picker"
       style={{
         display: "flex",
         alignItems: "center",
@@ -51,6 +52,7 @@ export default function MonthPicker({ value, onChange }) {
       </Tooltip>
 
       <div
+        className="month-picker__label"
         style={{
           minWidth: 120,
           textAlign: "center",

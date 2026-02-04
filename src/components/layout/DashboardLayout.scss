@@ -25,3 +25,55 @@
   }
 }
 
+.month-picker {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.month-picker__label {
+  font-size: 13px;
+  letter-spacing: 0.2px;
+}
+
+@media (max-width: 900px) {
+  .layout {
+    padding: 16px;
+  }
+
+  .layout__header {
+    align-items: center;
+  }
+}
+
+@media (max-width: 720px) {
+  .layout {
+    padding: 12px;
+  }
+
+  .layout__header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .layout__title {
+    font-size: 20px;
+    line-height: 1.2;
+  }
+
+  .layout__right {
+    width: 100%;
+    display: flex;
+    justify-content: flex-start;
+  }
+
+  .month-picker {
+    width: 100%;
+    justify-content: space-between;
+  }
+}

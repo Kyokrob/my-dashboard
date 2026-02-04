@@ -1,23 +1,31 @@
-.proj {
-  display: grid;
+.tier {
+  display: flex;
   gap: 8px;
-
-  &__grid {
-    display: grid;
-    grid-template-columns: 1.2fr 1fr 1fr 1fr 0.9fr;
-    gap: 10px;
-    align-items: center;
-    padding: 8px 0;
-    border-bottom: 1px dashed rgba(255,255,255,0.08);
-
-    &--head {
-      border-bottom: 1px solid rgba(255,255,255,0.12);
-      opacity: 0.8;
-      font-size: 12px;
-      padding-top: 0;
-    }
-  }
 }
 
-.right { text-align: right; }
-.neg { font-weight: 700; }
+.tier__btn {
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  cursor: pointer;
+  color: inherit;
+  font-size: 12px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+}
+
+.tier__btn.is-active {
+  background: rgba(255,255,255,0.14);
+}
+
+@media (max-width: 720px) {
+  .tier {
+    gap: 6px;
+  }
+
+  .tier__btn {
+    padding: 4px 8px;
+    font-size: 11px;
+  }
+}

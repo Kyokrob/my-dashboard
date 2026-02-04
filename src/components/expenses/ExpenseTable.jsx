@@ -67,6 +67,7 @@ export default function ExpenseTable({
       {/* Controls */}
       <div className="etable__controls">
        <TextField
+  className="etable__field"
   select
   size="small"
   label="Category"
@@ -76,7 +77,7 @@ export default function ExpenseTable({
     setPage(1);
   }}
   sx={{
-    minWidth: 180, // ⬅️ wider
+    minWidth: { xs: 140, sm: 180 },
     "& .MuiInputLabel-root": {
       color: "rgba(255,255,255,0.65)",
     },
@@ -84,12 +85,12 @@ export default function ExpenseTable({
       color: "#1dd1a1",
     },
     "& .MuiOutlinedInput-root": {
-      height: 42, // ⬅️ taller input
+      height: { xs: 36, sm: 42 },
       color: "rgba(255,255,255,0.92)",
       background: "rgba(255,255,255,0.06)",
       borderRadius: "12px",
       "& input, & .MuiSelect-select": {
-        padding: "10px 12px", // ⬅️ more inner spacing
+        padding: { xs: "8px 10px", sm: "10px 12px" },
       },
       "& fieldset": {
         borderColor: "rgba(255,255,255,0.18)",
@@ -116,6 +117,7 @@ export default function ExpenseTable({
 
 
         <TextField
+  className="etable__field"
   size="small"
   label="Search"
   value={search}
@@ -125,7 +127,7 @@ export default function ExpenseTable({
   }}
   placeholder="sub / type / note"
   sx={{
-    minWidth: 300, // ⬅️ noticeably wider
+    minWidth: { xs: 200, sm: 260, md: 300 },
     "& .MuiInputLabel-root": {
       color: "rgba(255,255,255,0.65)",
     },
@@ -133,12 +135,12 @@ export default function ExpenseTable({
       color: "#1dd1a1",
     },
     "& .MuiOutlinedInput-root": {
-      height: 42,
+      height: { xs: 36, sm: 42 },
       color: "rgba(255,255,255,0.92)",
       background: "rgba(255,255,255,0.06)",
       borderRadius: "12px",
       "& input": {
-        padding: "10px 12px",
+        padding: { xs: "8px 10px", sm: "10px 12px" },
       },
       "& fieldset": {
         borderColor: "rgba(255,255,255,0.18)",
@@ -165,9 +167,9 @@ export default function ExpenseTable({
         <div className="table__row table__row--head">
           <div>Date</div>
           <div className="right">Amount</div>
-          <div>Category</div>
-          <div>Sub</div>
-          <div>Type</div>
+          <div className="center">Category</div>
+          <div className="center">Sub</div>
+          <div className="center">Type</div>
           <div className="right">Actions</div>
         </div>
 
@@ -200,7 +202,7 @@ export default function ExpenseTable({
                 )}
               </div>
 
-              <div>
+              <div className="center">
                 {isEdit ? (
                   <select
                     value={draft.category || "Eat"}
@@ -215,7 +217,7 @@ export default function ExpenseTable({
                 )}
               </div>
 
-              <div>
+              <div className="center">
                 {isEdit ? (
                   <input
                     value={draft.subCategory || ""}
@@ -226,7 +228,7 @@ export default function ExpenseTable({
                 )}
               </div>
 
-              <div>
+              <div className="center">
                 {isEdit ? (
                   <input
                     value={draft.type || ""}

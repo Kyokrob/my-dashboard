@@ -1,16 +1,69 @@
-# React + Vite
+# My Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Personal dashboard for tracking expenses, workouts, and monthly projections.
+Built with a React + Vite frontend and an Express + MongoDB backend.
 
-Currently, two official plugins are available:
+## Features
+- Expense tracking with category breakdowns and monthly totals
+- Budget projection by tier (low/mid/high)
+- Workout tracking with mix visualization
+- Weekly spend view and calendar view
+- Local to-do list stored in `localStorage`
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## Tech Stack
+- Frontend: React, Vite, MUI, Emotion, Sass
+- Backend: Express, Mongoose, MongoDB
 
-## React Compiler
+## Project Structure
+- `src/` frontend app (Vite)
+- `server/` backend API (Express)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Getting Started
 
-## Expanding the ESLint configuration
+### 1) Install dependencies
+```bash
+npm install
+npm --prefix server install
+```
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 2) Configure environment
+Create a `.env` file in `server/`:
+```bash
+MONGODB_URI=your_mongodb_connection_string
+CORS_ORIGIN=http://localhost:5173
+PORT=5050
+SESSION_SECRET=change_me
+```
+
+### 3) Run in development
+```bash
+npm run dev
+```
+
+This starts:
+- Vite client at `http://localhost:5173`
+- Express API at `http://127.0.0.1:5050`
+
+## API Endpoints
+- `POST /api/auth/bootstrap` (create first admin)
+- `POST /api/auth/login`
+- `POST /api/auth/logout`
+- `GET /api/auth/me`
+- `GET /api/expenses`
+- `POST /api/expenses`
+- `PUT /api/expenses/:id`
+- `DELETE /api/expenses/:id`
+- `GET /api/workouts`
+- `POST /api/workouts`
+- `PUT /api/workouts/:id`
+- `DELETE /api/workouts/:id`
+
+## Build and Preview
+```bash
+npm run build
+npm run preview
+```
+
+## Notes
+- Expenses and workouts are stored in MongoDB.
+- The dashboard uses the current month by default, but supports selecting other months.

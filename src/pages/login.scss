@@ -1,0 +1,77 @@
+.login {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+
+.login__card {
+  width: 100%;
+  max-width: 420px;
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,0.10);
+  background: rgba(255,255,255,0.04);
+  padding: 22px;
+}
+
+.login__title {
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.login__subtitle {
+  margin-top: 4px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.login__form {
+  display: grid;
+  gap: 10px;
+  margin-top: 16px;
+}
+
+.login__label {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  opacity: 0.7;
+}
+
+.login__input {
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.95);
+}
+
+.login__input:focus {
+  outline: none;
+  border-color: rgba(29, 209, 161, 0.7);
+  box-shadow: 0 0 0 2px rgba(29, 209, 161, 0.15);
+}
+
+.login__error {
+  font-size: 12px;
+  color: #ff9c9c;
+}
+
+.login__btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.95);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.login__btn:hover {
+  background: rgba(255,255,255,0.16);
+}
+
+.login__btn--ghost {
+  background: transparent;
+  border-color: rgba(255,255,255,0.12);
+}

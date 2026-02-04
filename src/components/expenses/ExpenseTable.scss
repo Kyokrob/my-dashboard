@@ -1,12 +1,14 @@
 .table {
   display: grid;
   gap: 8px;
+  overflow-x: auto;
 
   &__row {
     display: grid;
 
     // ✅ Add Actions column (last) + make it wide enough for icon buttons
     grid-template-columns: 0.9fr 0.8fr 0.9fr 1fr 0.6fr 120px;
+    min-width: 720px;
 
 
     gap: 10px;
@@ -23,6 +25,7 @@
 }
 
 .right { text-align: right; }
+.center { text-align: center; }
 
 
 .table input,
@@ -103,5 +106,35 @@
     display: flex;
     justify-content: center; // ⬅️ pagination centered
     padding-top: 12px;
+  }
+}
+
+@media (max-width: 720px) {
+  .etable {
+    gap: 14px;
+
+    &__controls {
+      grid-template-columns: 1fr;
+      gap: 10px;
+    }
+
+    &__meta {
+      justify-self: start;
+    }
+  }
+
+  .table__row {
+    padding: 6px 0;
+  }
+
+  .etable__field {
+    width: 100%;
+  }
+
+  .table__row {
+    grid-template-columns: 0.8fr 0.7fr 0.8fr 0.9fr 0.5fr 96px;
+    gap: 8px;
+    min-width: 640px;
+    font-size: 12px;
   }
 }

@@ -1,0 +1,113 @@
+.form {
+  display: grid;
+  gap: 14px;
+}
+
+.form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+
+.form__row {
+  display: grid;
+  gap: 6px;
+}
+
+.form__row--full {
+  grid-column: 1 / -1;
+}
+
+.form__label {
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.form__input,
+.form__select,
+.form__textarea {
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.22);
+  background: rgba(255,255,255,0.10);
+  color: rgba(109,109,109,0.95);
+  outline: none;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 10px rgba(0,0,0,0.20);
+}
+
+//  .form__input::placeholder,
+//  .form__textarea::placeholder {
+//    color: rgba(255,255,255,0.55);
+//  }
+
+/* Improve date input legibility in WebKit */
+.form__input[type="date"]::-webkit-datetime-edit,
+.form__input[type="date"]::-webkit-datetime-edit-text,
+.form__input[type="date"]::-webkit-datetime-edit-month-field,
+.form__input[type="date"]::-webkit-datetime-edit-day-field,
+.form__input[type="date"]::-webkit-datetime-edit-year-field {
+  color: rgba(109, 109, 109, 0.95);
+}
+
+.form__input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(1) brightness(0.9);
+  opacity: 0.85;
+}
+
+/* Native select menu text */
+.form__select option {
+  color: #111;
+}
+
+.form__input:focus,
+.form__select:focus,
+.form__textarea:focus {
+  border-color: rgba(29, 209, 161, 0.7);
+  box-shadow: 0 0 0 2px rgba(29, 209, 161, 0.15);
+}
+
+.form__hint {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
+.form__checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  opacity: 0.9;
+}
+
+.form__actions {
+  display: flex;
+  justify-content: center;
+}
+
+
+.form__btn {
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.18);
+  background: rgba(109, 109, 109, 0.748);
+  color: rgba(255,255,255,0.95);
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.form__btn:hover {
+  background: rgba(45, 45, 45, 0.7);
+}
+
+@media (max-width: 720px) {
+  .form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .form__btn {
+    width: 100%;
+  }
+}

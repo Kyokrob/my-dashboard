@@ -1,7 +1,13 @@
 import { useEffect, useState } from "react";
+import "../../styles/forms.scss";
+
+function todayISO() {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+}
 
 const DEFAULT = {
-  date: "",
+  date: todayISO(),
   workoutType: "Running",
   intensity: 3,
   weight: "",
@@ -17,7 +23,7 @@ export default function WorkoutForm({ initial, onSubmit }) {
   useEffect(() => {
     if (initial?.id) {
       setForm({
-        date: initial.date || "",
+        date: initial.date || todayISO(),
         workoutType: initial.workoutType || "Running",
         intensity: initial.intensity ?? 3,
         weight: initial.weight ?? "",
@@ -27,7 +33,7 @@ export default function WorkoutForm({ initial, onSubmit }) {
         note: initial.note || "",
       });
     } else {
-      setForm(DEFAULT);
+      setForm({ ...DEFAULT, date: todayISO() });
     }
   }, [initial]);
 
@@ -54,48 +60,113 @@ export default function WorkoutForm({ initial, onSubmit }) {
   }
 
   return (
-    <form onSubmit={submit} style={{ display: "grid", gap: 10 }}>
-      <input type="date" name="date" value={form.date} onChange={handleChange} />
+    <form onSubmit={submit} className="form">
+      <div className="form__grid">
+        <div className="form__row">
+          <label className="form__label" htmlFor="wo-date">Date</label>
+          <input
+            id="wo-date"
+            className="form__input"
+            type="date"
+            name="date"
+            value={form.date}
+            onChange={handleChange}
+          />
+        </div>
 
-      <select name="workoutType" value={form.workoutType} onChange={handleChange}>
-        {["Running", "Weight Training", "HIIT", "Swim", "Golf range", "Golf course", "Rest"].map((t) => (
-          <option key={t} value={t}>{t}</option>
-        ))}
-      </select>
+        <div className="form__row">
+          <label className="form__label" htmlFor="wo-type">Workout</label>
+          <select
+            id="wo-type"
+            className="form__select"
+            name="workoutType"
+            value={form.workoutType}
+            onChange={handleChange}
+          >
+            {["Running", "Weight Training", "HIIT", "Swim", "Golf range", "Golf course", "Rest"].map((t) => (
+              <option key={t} value={t}>{t}</option>
+            ))}
+          </select>
+        </div>
 
-      <select name="intensity" value={form.intensity} onChange={handleChange}>
-        {[1, 2, 3, 4, 5].map((i) => (
-          <option key={i} value={i}>{i}</option>
-        ))}
-      </select>
+        <div className="form__row">
+          <label className="form__label" htmlFor="wo-intensity">Intensity</label>
+          <select
+            id="wo-intensity"
+            className="form__select"
+            name="intensity"
+            value={form.intensity}
+            onChange={handleChange}
+          >
+            {[1, 2, 3, 4, 5].map((i) => (
+              <option key={i} value={i}>{i}</option>
+            ))}
+          </select>
+        </div>
 
-      <input
-        name="weight"
-        type="number"
-        step="0.1"
-        placeholder="Weight (kg)"
-        value={form.weight}
-        onChange={handleChange}
-      />
+        <div className="form__row">
+          <label className="form__label" htmlFor="wo-weight">Weight (kg)</label>
+          <input
+            id="wo-weight"
+            className="form__input"
+            name="weight"
+            type="number"
+            step="0.1"
+            placeholder="Optional"
+            value={form.weight}
+            onChange={handleChange}
+          />
+        </div>
 
-      <input
-        name="bodyFat"
-        type="number"
-        step="0.1"
-        placeholder="Body fat (%)"
-        value={form.bodyFat}
-        onChange={handleChange}
-      />
+        <div className="form__row">
+          <label className="form__label" htmlFor="wo-bf">Body fat (%)</label>
+          <input
+            id="wo-bf"
+            className="form__input"
+            name="bodyFat"
+            type="number"
+            step="0.1"
+            placeholder="Optional"
+            value={form.bodyFat}
+            onChange={handleChange}
+          />
+        </div>
 
-      <input name="feel" placeholder="Feel (e.g., Fresh/Tired)" value={form.feel} onChange={handleChange} />
-      <input name="note" placeholder="Note" value={form.note} onChange={handleChange} />
+        <div className="form__row">
+          <label className="form__label" htmlFor="wo-feel">Feel</label>
+          <input
+            id="wo-feel"
+            className="form__input"
+            name="feel"
+            placeholder="eg., Fresh / Tired"
+            value={form.feel}
+            onChange={handleChange}
+          />
+        </div>
 
-      <label style={{ display: "flex", alignItems: "center", gap: 8, opacity: 0.9 }}>
-        <input type="checkbox" name="drink" checked={form.drink} onChange={handleChange} />
-        Drink
-      </label>
+        <div className="form__row form__row--full">
+          <label className="form__label" htmlFor="wo-note">Note</label>
+          <input
+            id="wo-note"
+            className="form__input"
+            name="note"
+            placeholder="Optional note"
+            value={form.note}
+            onChange={handleChange}
+          />
+        </div>
 
-      <button type="submit">{initial?.id ? "Save Changes" : "Add Workout"}</button>
+        <div className="form__row form__row--full">
+          <label className="form__checkbox">
+            <input type="checkbox" name="drink" checked={form.drink} onChange={handleChange} />
+            Drink
+          </label>
+        </div>
+      </div>
+
+      <div className="form__actions">
+        <button className="form__btn" type="submit">{initial?.id ? "Save Changes" : "Add Workout"}</button>
+      </div>
     </form>
   );
 }
