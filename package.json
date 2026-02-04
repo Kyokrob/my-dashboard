@@ -7,9 +7,9 @@
     "dev": "concurrently -n client,server -c blue,green \"npm run dev:client\" \"npm --prefix server run dev\"",
     "dev:client": "vite",
     "dev:server": "npm --prefix server run dev",
-    "build": "vite build",
+    "build": "npx vite build",
     "preview": "vite preview",
-    "render-build": "npm ci && npm --prefix server ci && npm run build",
+    "render-build": "npm ci --include=dev && npm --prefix server ci && npm run build",
     "start": "npm --prefix server start"
   },
   "dependencies": {
