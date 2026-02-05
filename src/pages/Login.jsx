@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 import "./login.scss";
 
 export default function Login() {
@@ -13,10 +15,23 @@ export default function Login() {
   const [name, setName] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
 
   useEffect(() => {
     if (user) navigate("/", { replace: true });
   }, [user, navigate]);
+
+  useEffect(() => {
+    try {
+      const flash = sessionStorage.getItem("flash");
+      if (flash === "signed_out") {
+        setSnack({ open: true, message: "Signed out", severity: "success" });
+        sessionStorage.removeItem("flash");
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
 
   async function handleLogin(e) {
     e.preventDefault();
@@ -26,7 +41,9 @@ export default function Login() {
       await login(email, password);
       navigate("/", { replace: true });
     } catch (err) {
-      setError(err.message || "Login failed");
+      const message = err.message || "Login failed";
+      setError(message);
+      setSnack({ open: true, message, severity: "error" });
     } finally {
       setLoading(false);
     }
@@ -40,7 +57,9 @@ export default function Login() {
       await bootstrap(email, password, name || "Admin");
       navigate("/", { replace: true });
     } catch (err) {
-      setError(err.message || "Failed to create admin");
+      const message = err.message || "Failed to create admin";
+      setError(message);
+      setSnack({ open: true, message, severity: "error" });
     } finally {
       setLoading(false);
     }
@@ -107,6 +126,25 @@ export default function Login() {
           </Button>
         </form>
       </div>
+
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={2200}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        onClose={(e, reason) => {
+          if (reason === "clickaway") return;
+          setSnack((s) => ({ ...s, open: false }));
+        }}
+      >
+        <Alert
+          severity={snack.severity}
+          variant="filled"
+          onClose={() => setSnack((s) => ({ ...s, open: false }))}
+          sx={{ fontSize: 13 }}
+        >
+          {snack.message}
+        </Alert>
+      </Snackbar>
     </div>
   );
 }

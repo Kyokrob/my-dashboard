@@ -20,6 +20,14 @@ export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  function setFlash(key) {
+    try {
+      sessionStorage.setItem("flash", key);
+    } catch {
+      // ignore storage errors
+    }
+  }
+
   async function refresh() {
     try {
       const data = await apiFetch("/api/auth/me");
@@ -41,6 +49,7 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ email, password }),
     });
     setUser(data.user);
+    setFlash("signed_in");
     return data.user;
   }
 
@@ -50,12 +59,14 @@ export function AuthProvider({ children }) {
       body: JSON.stringify({ email, password, name }),
     });
     setUser(data.user);
+    setFlash("signed_in");
     return data.user;
   }
 
   async function logout() {
     await apiFetch("/api/auth/logout", { method: "POST" });
     setUser(null);
+    setFlash("signed_out");
   }
 
   const value = useMemo(

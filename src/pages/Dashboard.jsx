@@ -111,6 +111,18 @@ export default function Dashboard() {
     load();
   }, []);
 
+  useEffect(() => {
+    try {
+      const flash = sessionStorage.getItem("flash");
+      if (flash === "signed_in") {
+        showSnack("Signed in", "success");
+        sessionStorage.removeItem("flash");
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
 
   
 
