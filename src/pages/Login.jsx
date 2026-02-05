@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import "./login.scss";
 
 export default function Login() {
@@ -58,7 +60,7 @@ export default function Login() {
             type="email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="admin@email.com"
+            placeholder="••••••••"
             required
           />
 
@@ -80,18 +82,29 @@ export default function Login() {
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Admin"
+            placeholder="••••••••"
           />
 
           {error ? <div className="login__error">{error}</div> : null}
 
-          <button className="login__btn" type="submit" disabled={loading}>
+          <Button
+            type="submit"
+            disabled={loading}
+            fullWidth
+            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
+          >
             {loading ? "Signing in..." : "Sign In"}
-          </button>
+          </Button>
 
-          <button className="login__btn login__btn--ghost" onClick={handleBootstrap} disabled={loading}>
+          <Button
+            variant="outlined"
+            onClick={handleBootstrap}
+            disabled={loading}
+            fullWidth
+            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
+          >
             Create Admin (first time)
-          </button>
+          </Button>
         </form>
       </div>
     </div>

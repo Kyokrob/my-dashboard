@@ -60,6 +60,21 @@
     background: rgba(255, 255, 255, 0.06);
     border-color: rgba(255, 255, 255, 0.16);
   }
+
+  &.has-exp {
+    background: linear-gradient(135deg, rgba(29, 209, 161, 0.18), rgba(255, 255, 255, 0.04));
+    border-color: rgba(29, 209, 161, 0.28);
+  }
+
+  &.has-wo {
+    background: linear-gradient(135deg, rgba(100, 181, 246, 0.18), rgba(255, 255, 255, 0.04));
+    border-color: rgba(100, 181, 246, 0.28);
+  }
+
+  &.has-both {
+    background: linear-gradient(135deg, rgba(29, 209, 161, 0.2), rgba(100, 181, 246, 0.18));
+    border-color: rgba(255, 255, 255, 0.22);
+  }
 }
 
 .mcal__day {
@@ -77,20 +92,20 @@
 }
 
 .chip {
-  font-size: 10px;
-  padding: 2px 6px;
+  width: 8px;
+  height: 8px;
   border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  opacity: 0.9;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  opacity: 0.95;
 
   &--exp {
-    border-color: rgba(29, 209, 161, 0.35);
-    color: #1dd1a1;
+    background: rgba(29, 209, 161, 0.95);
+    border-color: rgba(29, 209, 161, 0.5);
   }
 
   &--wo {
-    border-color: rgba(100, 181, 246, 0.35);
-    color: rgba(140, 200, 255, 0.95);
+    background: rgba(100, 181, 246, 0.95);
+    border-color: rgba(100, 181, 246, 0.5);
   }
 }
 
@@ -177,8 +192,8 @@
   }
 
   .chip {
-    font-size: 8px;
-    padding: 1px 4px;
+    width: 6px;
+    height: 6px;
   }
 
   .mcal__tooltip {

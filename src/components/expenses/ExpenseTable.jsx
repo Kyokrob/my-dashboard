@@ -194,6 +194,8 @@ export default function ExpenseTable({
                 {isEdit ? (
                   <input
                     type="number"
+                    inputMode="decimal"
+                    pattern="[0-9.]*"
                     value={draft.amount ?? ""}
                     onChange={(e) => setDraft({ ...draft, amount: Number(e.target.value) })}
                   />

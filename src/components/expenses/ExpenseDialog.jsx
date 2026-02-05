@@ -18,8 +18,8 @@ export default function ExpenseDialog({ open, onClose, onAdd }) {
 
       <DialogContent dividers>
         <ExpenseForm
-          onAdd={(row) => {
-            onAdd(row);
+          onAdd={async (row) => {
+            await onAdd?.(row);
             onClose();
           }}
         />

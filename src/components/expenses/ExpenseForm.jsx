@@ -1,4 +1,6 @@
 import { useState } from "react";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import "../../styles/forms.scss";
 
 function todayISO() {
@@ -14,22 +16,27 @@ export default function ExpenseForm({ onAdd }) {
     subCategory: "",
     type: "",
   });
+  const [submitting, setSubmitting] = useState(false);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
   }
 
-  function handleSubmit(e) {
+  async function handleSubmit(e) {
     e.preventDefault();
     if (!form.date || !form.amount) return;
 
-    onAdd({
-      id: crypto.randomUUID(),
-      ...form,
-      amount: Number(form.amount),
-    });
-
-    setForm({ date: todayISO(), amount: "", category: "Eat", subCategory: "", type: "" });
+    try {
+      setSubmitting(true);
+      await onAdd?.({
+        id: crypto.randomUUID(),
+        ...form,
+        amount: Number(form.amount),
+      });
+      setForm({ date: todayISO(), amount: "", category: "Eat", subCategory: "", type: "" });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -53,6 +60,8 @@ export default function ExpenseForm({ onAdd }) {
             id="expense-amount"
             className="form__input"
             type="number"
+            inputMode="decimal"
+            pattern="[0-9.]*"
             name="amount"
             placeholder="0"
             value={form.amount}
@@ -106,7 +115,14 @@ export default function ExpenseForm({ onAdd }) {
       </div>
 
       <div className="form__actions">
-        <button className="form__btn" type="submit">Add Expense</button>
+        <Button
+          type="submit"
+          fullWidth
+          disabled={submitting}
+          startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
+        >
+          {submitting ? "Saving..." : "Add Expense"}
+        </Button>
       </div>
     </form>
   );

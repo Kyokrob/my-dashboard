@@ -1,17 +1,17 @@
 .dashboard-grid {
   display: grid;
   grid-template-columns: 1.1fr 0.9fr;
-  gap: 16px;
+  gap: 14px;
   align-items: start;
 }
 
 .dashboard-col {
   display: grid;
-  gap: 16px;
+  gap: 14px;
 }
 
 .dashboard-full {
-  margin-top: 16px;
+  margin-top: 14px;
 }
 
 
@@ -63,7 +63,7 @@
 
 @media (max-width: 720px) {
   .dashboard-grid {
-    gap: 12px;
+    gap: 10px;
   }
 
   .weekly-spend__row {

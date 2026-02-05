@@ -64,6 +64,9 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }
           const key = fmtDate(year, month, day);
           const dayExpenses = expByDate[key] || [];
           const dayWorkouts = woByDate[key] || [];
+          const hasExp = dayExpenses.length > 0;
+          const hasWo = dayWorkouts.length > 0;
+          const hasBoth = hasExp && hasWo;
 
           const spend = dayExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
           const workoutTypes = dayWorkouts.map((w) => w.workoutType || w.workout || "Workout");
@@ -95,7 +98,7 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }
             </div>
           );
 
-          const hasAnything = dayExpenses.length || dayWorkouts.length;
+          const hasAnything = hasExp || hasWo;
 
           return (
             <Tooltip
@@ -117,13 +120,15 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }
                 arrow: { className: "mcal__tooltipArrow" },
               }}
             >
-              <div className={`mcal__cell ${hasAnything ? "has-data" : ""}`}>
+              <div
+                className={`mcal__cell ${hasAnything ? "has-data" : ""} ${hasExp ? "has-exp" : ""} ${hasWo ? "has-wo" : ""} ${hasBoth ? "has-both" : ""}`}
+              >
                 <div className="mcal__day">{day}</div>
 
                 {/* tiny signals */}
                 <div className="mcal__chips">
-                  {dayExpenses.length > 0 && <span className="chip chip--exp">฿</span>}
-                  {dayWorkouts.length > 0 && <span className="chip chip--wo">W</span>}
+                  {hasExp && <span className="chip chip--exp" aria-hidden="true" />}
+                  {hasWo && <span className="chip chip--wo" aria-hidden="true" />}
                 </div>
               </div>
             </Tooltip>

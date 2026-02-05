@@ -23,8 +23,8 @@ export default function WorkoutDialog({ open, onClose, onSubmit, initial }) {
       <DialogContent dividers>
         <WorkoutForm
           initial={initial}
-          onSubmit={(row) => {
-            onSubmit(row);
+          onSubmit={async (row) => {
+            await onSubmit?.(row);
             onClose();
           }}
         />

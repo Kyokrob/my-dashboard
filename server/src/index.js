@@ -9,6 +9,7 @@ import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
 import expensesRoutes from "./routes/expenses.routes.js";
 import workoutsRoutes from "./routes/workouts.routes.js";
+import todosRoutes from "./routes/todos.routes.js";
 import { errorHandler } from "./middleware/error.js";
 import { requireAuth, attachUser } from "./middleware/auth.js";
 
@@ -76,6 +77,7 @@ app.get("/health", (req, res) => res.json({ ok: true }));
 app.use("/api/auth", authRoutes);
 app.use("/api/expenses", requireAuth, expensesRoutes);
 app.use("/api/workouts", requireAuth, workoutsRoutes);
+app.use("/api/todos", requireAuth, todosRoutes);
 
 /* ======================
    SERVE FRONTEND IN PROD

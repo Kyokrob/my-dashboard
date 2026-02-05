@@ -10,11 +10,15 @@ export default function TodoList({ rows = [], onAdd, onUpdate, onDelete }) {
   const [draft, setDraft] = useState("");
   const [editingId, setEditingId] = useState(null);
   const [editingText, setEditingText] = useState("");
+  const [showDone, setShowDone] = useState(false);
 
-  function handleAdd() {
+  const activeRows = rows.filter((r) => !r.done);
+  const doneRows = rows.filter((r) => r.done);
+
+  async function handleAdd() {
     if (!draft.trim()) return;
 
-    onAdd({
+    await onAdd?.({
       id: crypto.randomUUID(),
       text: draft.trim(),
       done: false,
@@ -24,18 +28,18 @@ export default function TodoList({ rows = [], onAdd, onUpdate, onDelete }) {
     setDraft("");
   }
 
-  function toggleDone(row) {
-    onUpdate({ ...row, done: !row.done });
+  async function toggleDone(row) {
+    await onUpdate?.({ ...row, done: !row.done });
   }
 
   function startEdit(row) {
-    setEditingId(row.id);
+    setEditingId(row.id ?? row._id);
     setEditingText(row.text);
   }
 
-  function saveEdit(row) {
+  async function saveEdit(row) {
     if (!editingText.trim()) return;
-    onUpdate({ ...row, text: editingText.trim() });
+    await onUpdate?.({ ...row, text: editingText.trim() });
     setEditingId(null);
     setEditingText("");
   }
@@ -61,9 +65,9 @@ export default function TodoList({ rows = [], onAdd, onUpdate, onDelete }) {
           <div className="todo__empty">No tasks yet</div>
         )}
 
-        {rows.map((row) => (
+        {activeRows.map((row) => (
           <div
-            key={row.id}
+            key={row.id ?? row._id}
             className={`todo__row ${row.done ? "is-done" : ""}`}
           >
             <button
@@ -71,7 +75,7 @@ export default function TodoList({ rows = [], onAdd, onUpdate, onDelete }) {
               onClick={() => toggleDone(row)}
             />
 
-            {editingId === row.id ? (
+            {editingId === (row.id ?? row._id) ? (
               <input
                 className="todo__editInput"
                 value={editingText}
@@ -83,7 +87,7 @@ export default function TodoList({ rows = [], onAdd, onUpdate, onDelete }) {
             )}
 
             <div className="todo__actions">
-              {editingId === row.id ? (
+              {editingId === (row.id ?? row._id) ? (
                 <>
                   <button
                     className="icon-btn success"
@@ -100,15 +104,17 @@ export default function TodoList({ rows = [], onAdd, onUpdate, onDelete }) {
                 </>
               ) : (
                 <>
-                  <button
-                    className="icon-btn neutral"
-                    onClick={() => startEdit(row)}
-                  >
-                    <EditIcon fontSize="small" />
-                  </button>
+                  {!row.done && (
+                    <button
+                      className="icon-btn neutral"
+                      onClick={() => startEdit(row)}
+                    >
+                      <EditIcon fontSize="small" />
+                    </button>
+                  )}
                   <button
                     className="icon-btn danger"
-                    onClick={() => onDelete(row.id)}
+                    onClick={() => onDelete(row.id ?? row._id)}
                   >
                     <DeleteIcon fontSize="small" />
                   </button>
@@ -117,6 +123,72 @@ export default function TodoList({ rows = [], onAdd, onUpdate, onDelete }) {
             </div>
           </div>
         ))}
+
+        {doneRows.length > 0 && (
+          <div className="todo__done">
+            <button
+              className="todo__doneToggle"
+              onClick={() => setShowDone((s) => !s)}
+            >
+              {showDone ? "Hide" : "Show"} completed ({doneRows.length})
+            </button>
+
+            {showDone && (
+              <div className="todo__doneList">
+                {doneRows.map((row) => (
+                  <div
+                    key={row.id ?? row._id}
+                    className={`todo__row ${row.done ? "is-done" : ""}`}
+                  >
+                    <button
+                      className={`todo__check ${row.done ? "checked" : ""}`}
+                      onClick={() => toggleDone(row)}
+                    />
+
+                    {editingId === (row.id ?? row._id) ? (
+                      <input
+                        className="todo__editInput"
+                        value={editingText}
+                        onChange={(e) => setEditingText(e.target.value)}
+                        onKeyDown={(e) => e.key === "Enter" && saveEdit(row)}
+                      />
+                    ) : (
+                      <div className="todo__text">{row.text}</div>
+                    )}
+
+                    <div className="todo__actions">
+                      {editingId === (row.id ?? row._id) ? (
+                        <>
+                          <button
+                            className="icon-btn success"
+                            onClick={() => saveEdit(row)}
+                          >
+                            <CheckIcon fontSize="small" />
+                          </button>
+                          <button
+                            className="icon-btn neutral"
+                            onClick={() => setEditingId(null)}
+                          >
+                            <CloseIcon fontSize="small" />
+                          </button>
+                        </>
+                      ) : (
+                        <>
+                          <button
+                            className="icon-btn danger"
+                            onClick={() => onDelete(row.id ?? row._id)}
+                          >
+                            <DeleteIcon fontSize="small" />
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

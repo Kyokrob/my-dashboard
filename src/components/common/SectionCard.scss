@@ -1,26 +1,33 @@
 .card {
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.04);
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
 
   &__head {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    padding: 12px 14px;
+    padding: 14px 16px;
     border-bottom: 1px solid rgba(255,255,255,0.08);
   }
 
   &__title {
     margin: 0;
-    font-size: 14px;
+    font-size: var(--title-md);
     letter-spacing: 0.2px;
-    opacity: 0.9;
+    opacity: 0.95;
   }
 
   &__body {
-    padding: 12px 14px;
+    padding: 14px 16px;
+    display: grid;
+    gap: 12px;
+  }
+
+  &__body > * + * {
+    padding-top: 12px;
+    border-top: 1px solid rgba(255,255,255,0.06);
   }
 }
 
@@ -33,5 +40,14 @@
 
   .card__title {
     font-size: 13px;
+  }
+
+  .card__body {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .card__body > * + * {
+    padding-top: 10px;
   }
 }

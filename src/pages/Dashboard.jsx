@@ -76,57 +76,104 @@ export default function Dashboard() {
   /* ======================
    Load from API (STRICT)
 ====================== */
-useEffect(() => {
-  const load = async () => {
-    try {
-      const exp = await fetchExpenses();
-      setExpenseRows(exp);
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const exp = await fetchExpenses();
+        setExpenseRows(exp);
     } catch (err) {
       console.error("Failed to load expenses:", err);
       setExpenseRows([]);
       showSnack("Failed to load expenses", "error");
     }
 
-    try {
-      const wo = await fetchWorkouts();
-      setWorkoutRows(wo);
-    } catch (err) {
-      console.error("Failed to load workouts:", err);
-      setWorkoutRows([]);
-      showSnack("Failed to load workouts", "error");
-    }
-  };
+      try {
+        const wo = await fetchWorkouts();
+        setWorkoutRows(wo);
+      } catch (err) {
+        console.error("Failed to load workouts:", err);
+        setWorkoutRows([]);
+        showSnack("Failed to load workouts", "error");
+      }
 
-  load();
-}, []);
+      try {
+        const td = await fetchTodos();
+        setTodos(td);
+      } catch (err) {
+        console.error("Failed to load todos:", err);
+        setTodos([]);
+        showSnack("Failed to load tasks", "error");
+      }
+    };
+
+    load();
+  }, []);
 
 
   
 
   /* ======================
-     Todo List (localStorage ok)
+     Todo List (API)
   ====================== */
-  const LS_TODO = "mydash:v1:todos";
+  const [todos, setTodos] = useState([]);
+  const normalizeTodo = (t) => ({ ...t, id: t.id ?? t._id });
 
-  const [todos, setTodos] = useState(() => {
-    const raw = localStorage.getItem(LS_TODO);
-    return raw ? JSON.parse(raw) : [];
-  });
-
-  useEffect(() => {
-    localStorage.setItem(LS_TODO, JSON.stringify(todos));
-  }, [todos]);
-
-  function addTodo(row) {
-    setTodos((prev) => [row, ...prev]);
+  async function fetchTodos() {
+    const data = await apiFetch("/api/todos");
+    if (!Array.isArray(data)) return [];
+    return data.map(normalizeTodo);
   }
 
-  function updateTodo(updated) {
-    setTodos((prev) => prev.map((r) => (r.id === updated.id ? updated : r)));
+  async function addTodo(row) {
+    try {
+      const payload = { ...row };
+      delete payload.id;
+      const created = normalizeTodo(
+        await apiFetch("/api/todos", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        })
+      );
+      setTodos((prev) => [created, ...prev]);
+      showSnack("Task added", "success");
+    } catch (err) {
+      console.error(err);
+      showSnack("Failed to add task", "error");
+    }
   }
 
-  function deleteTodo(id) {
-    setTodos((prev) => prev.filter((r) => r.id !== id));
+  async function updateTodo(updated) {
+    try {
+      const id = updated.id ?? updated._id;
+      if (!id) throw new Error("Missing todo id");
+
+      const payload = { ...updated };
+      delete payload.id;
+      delete payload._id;
+
+      const saved = normalizeTodo(
+        await apiFetch(`/api/todos/${id}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        })
+      );
+
+      setTodos((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
+    } catch (err) {
+      console.error(err);
+      showSnack("Failed to update task", "error");
+    }
+  }
+
+  async function deleteTodo(id) {
+    try {
+      if (!id) return;
+      await apiFetch(`/api/todos/${id}`, { method: "DELETE" });
+      setTodos((prev) => prev.filter((r) => r.id !== id));
+    } catch (err) {
+      console.error(err);
+      showSnack("Failed to delete task", "error");
+    }
   }
 
   /* ======================

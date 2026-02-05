@@ -199,6 +199,8 @@ export default function WorkoutTable({
                 {isEdit ? (
                   <input
                     type="number"
+                    inputMode="decimal"
+                    pattern="[0-9.]*"
                     step="0.1"
                     value={draft.weight ?? ""}
                     onChange={(e) => setDraft({ ...draft, weight: e.target.value })}
@@ -212,6 +214,8 @@ export default function WorkoutTable({
                 {isEdit ? (
                   <input
                     type="number"
+                    inputMode="decimal"
+                    pattern="[0-9.]*"
                     step="0.1"
                     value={draft.bodyFat ?? ""}
                     onChange={(e) => setDraft({ ...draft, bodyFat: e.target.value })}

@@ -1,4 +1,6 @@
 import { useEffect, useState } from "react";
+import Button from "@mui/material/Button";
+import CircularProgress from "@mui/material/CircularProgress";
 import "../../styles/forms.scss";
 
 function todayISO() {
@@ -19,6 +21,7 @@ const DEFAULT = {
 
 export default function WorkoutForm({ initial, onSubmit }) {
   const [form, setForm] = useState(DEFAULT);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     if (initial?.id) {
@@ -42,21 +45,26 @@ export default function WorkoutForm({ initial, onSubmit }) {
     setForm((p) => ({ ...p, [name]: type === "checkbox" ? checked : value }));
   }
 
-  function submit(e) {
+  async function submit(e) {
     e.preventDefault();
     if (!form.date || !form.workoutType) return;
 
-    onSubmit({
-      id: initial?.id ?? crypto.randomUUID(),
-      date: form.date,
-      workoutType: form.workoutType,
-      intensity: Number(form.intensity || 0),
-      weight: form.weight === "" ? null : Number(form.weight),
-      bodyFat: form.bodyFat === "" ? null : Number(form.bodyFat),
-      feel: form.feel,
-      drink: Boolean(form.drink),
-      note: form.note,
-    });
+    try {
+      setSubmitting(true);
+      await onSubmit?.({
+        id: initial?.id ?? crypto.randomUUID(),
+        date: form.date,
+        workoutType: form.workoutType,
+        intensity: Number(form.intensity || 0),
+        weight: form.weight === "" ? null : Number(form.weight),
+        bodyFat: form.bodyFat === "" ? null : Number(form.bodyFat),
+        feel: form.feel,
+        drink: Boolean(form.drink),
+        note: form.note,
+      });
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   return (
@@ -111,6 +119,8 @@ export default function WorkoutForm({ initial, onSubmit }) {
             className="form__input"
             name="weight"
             type="number"
+            inputMode="decimal"
+            pattern="[0-9.]*"
             step="0.1"
             placeholder="Optional"
             value={form.weight}
@@ -125,6 +135,8 @@ export default function WorkoutForm({ initial, onSubmit }) {
             className="form__input"
             name="bodyFat"
             type="number"
+            inputMode="decimal"
+            pattern="[0-9.]*"
             step="0.1"
             placeholder="Optional"
             value={form.bodyFat}
@@ -165,7 +177,14 @@ export default function WorkoutForm({ initial, onSubmit }) {
       </div>
 
       <div className="form__actions">
-        <button className="form__btn" type="submit">{initial?.id ? "Save Changes" : "Add Workout"}</button>
+        <Button
+          type="submit"
+          fullWidth
+          disabled={submitting}
+          startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
+        >
+          {submitting ? "Saving..." : initial?.id ? "Save Changes" : "Add Workout"}
+        </Button>
       </div>
     </form>
   );
