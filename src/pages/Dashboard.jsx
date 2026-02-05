@@ -26,6 +26,7 @@ import WorkoutTable from "../components/workouts/WorkoutTable.jsx";
 import WorkoutDialog from "../components/workouts/WorkoutDialog.jsx";
 
 import { useDashboard } from "../context/DashboardContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { sumExpensesByCategory } from "../utils/rollups.js";
 import { inMonth } from "../utils/date.js";
 
@@ -36,6 +37,7 @@ import { budgetByCategory, categoryOrder } from "../config/budget.js";
 
 export default function Dashboard() {
   const { monthKey, setMonthKey, tier, setTier } = useDashboard();
+  const { logout } = useAuth();
 
   /* ======================
      Snackbar
@@ -159,6 +161,7 @@ export default function Dashboard() {
       );
 
       setTodos((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
+      showSnack("Task updated", "info");
     } catch (err) {
       console.error(err);
       showSnack("Failed to update task", "error");
@@ -170,6 +173,7 @@ export default function Dashboard() {
       if (!id) return;
       await apiFetch(`/api/todos/${id}`, { method: "DELETE" });
       setTodos((prev) => prev.filter((r) => r.id !== id));
+      showSnack("Task deleted", "warning");
     } catch (err) {
       console.error(err);
       showSnack("Failed to delete task", "error");
@@ -575,6 +579,7 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
       <FabSpeedDial
         onAddExpense={() => setIsExpenseDialogOpen(true)}
         onAddWorkout={() => setIsWorkoutDialogOpen(true)}
+        onLogout={logout}
       />
 
       {/* Confirm delete */}

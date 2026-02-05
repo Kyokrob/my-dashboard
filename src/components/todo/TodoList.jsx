@@ -112,12 +112,6 @@ export default function TodoList({ rows = [], onAdd, onUpdate, onDelete }) {
                       <EditIcon fontSize="small" />
                     </button>
                   )}
-                  <button
-                    className="icon-btn danger"
-                    onClick={() => onDelete(row.id ?? row._id)}
-                  >
-                    <DeleteIcon fontSize="small" />
-                  </button>
                 </>
               )}
             </div>

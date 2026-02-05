@@ -31,11 +31,17 @@
 .table input,
 .table select {
   width: 100%;
+  max-width: 100%;
   padding: 6px 8px;
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.14);
   background: rgba(255,255,255,0.06);
   color: rgba(255,255,255,0.92);
+}
+
+.table input[type="date"] {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .table__row.is-edit {

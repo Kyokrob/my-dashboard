@@ -4,8 +4,9 @@ import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import LogoutIcon from "@mui/icons-material/Logout";
 
-export default function FabSpeedDial({ onAddExpense, onAddWorkout }) {
+export default function FabSpeedDial({ onAddExpense, onAddWorkout, onLogout }) {
   return (
     <SpeedDial
       ariaLabel="Quick actions"
@@ -30,6 +31,16 @@ export default function FabSpeedDial({ onAddExpense, onAddWorkout }) {
           e.preventDefault();
           e.stopPropagation();
           onAddWorkout?.();
+        }}
+      />
+
+      <SpeedDialAction
+        icon={<LogoutIcon />}
+        tooltipTitle="Logout"
+        onClick={(e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          onLogout?.();
         }}
       />
     </SpeedDial>
