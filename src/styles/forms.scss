@@ -59,8 +59,13 @@
 }
 
 .form__input[type="date"] {
+  -webkit-appearance: none;
+  appearance: none;
+  display: block;
   min-width: 0;
   max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* Native select menu text */
