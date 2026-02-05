@@ -21,7 +21,7 @@ export default function ConfirmDialog({
         <Button onClick={onClose} variant="outlined">
           {cancelText}
         </Button>
-        <Button onClick={onConfirm} variant="contained">
+        <Button onClick={onConfirm} variant="outlined" color="error">
           {confirmText}
         </Button>
       </DialogActions>

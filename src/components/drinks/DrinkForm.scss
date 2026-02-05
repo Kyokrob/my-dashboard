@@ -1,0 +1,140 @@
+.drink-form {
+  display: grid;
+  gap: 14px;
+}
+
+.drink-form .form__input,
+.drink-form .form__select,
+.drink-form .form__textarea {
+  color: rgba(255,255,255,0.92);
+}
+
+.drink-form .form__input[type="date"]::-webkit-datetime-edit,
+.drink-form .form__input[type="date"]::-webkit-datetime-edit-text,
+.drink-form .form__input[type="date"]::-webkit-datetime-edit-month-field,
+.drink-form .form__input[type="date"]::-webkit-datetime-edit-day-field,
+.drink-form .form__input[type="date"]::-webkit-datetime-edit-year-field {
+  color: rgba(255,255,255,0.92);
+}
+
+.drink-form .form__input[type="date"] {
+  color: rgba(255,255,255,0.92);
+}
+
+.drink-form__grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 14px;
+}
+
+.drink-form__row {
+  display: grid;
+  gap: 6px;
+}
+
+.drink-form__row--full {
+  grid-column: 1 / -1;
+}
+
+.drink-form__toggle {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.pill {
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.9);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+
+  &.is-active {
+    border-color: rgba(29, 209, 161, 0.6);
+    background: rgba(29, 209, 161, 0.18);
+    color: #eafff8;
+  }
+}
+
+.drink-form__level {
+  display: grid;
+  gap: 8px;
+}
+
+.beer {
+  text-align: left;
+  padding: 6px 8px;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  cursor: pointer;
+
+  &.is-active {
+    border-color: rgba(255,255,255,0.28);
+    background: rgba(29, 209, 161, 0.18);
+  }
+}
+
+.drink-form__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.chip-btn {
+  border: 1px solid rgba(255,255,255,0.12);
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.9);
+  border-radius: 999px;
+  padding: 6px 10px;
+  font-size: 12px;
+  cursor: pointer;
+
+  &.is-active {
+    border-color: rgba(29, 209, 161, 0.6);
+    background: rgba(29, 209, 161, 0.18);
+  }
+}
+
+.drink-form__emojis {
+  display: flex;
+  gap: 8px;
+}
+
+.emoji {
+  border: 1px solid rgba(255,255,255,0.14);
+  background: rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 6px 8px;
+  cursor: pointer;
+
+  &.is-active {
+    border-color: rgba(255,255,255,0.28);
+    background: rgba(29, 209, 161, 0.18);
+  }
+}
+
+.drink-form__more {
+  grid-column: 1 / -1;
+  justify-self: start;
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.75);
+  padding: 0;
+  cursor: pointer;
+  font-size: 12px;
+  text-decoration: underline;
+}
+
+
+@media (max-width: 720px) {
+  .drink-form__grid {
+    grid-template-columns: 1fr;
+  }
+
+  .beer {
+    font-size: 14px;
+  }
+}

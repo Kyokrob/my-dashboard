@@ -136,6 +136,15 @@ a {
   color: var(--text-soft);
 }
 
+.kpi__tag {
+  font-size: 11px;
+  color: rgba(255,255,255,0.7);
+  border: 1px solid rgba(255,255,255,0.16);
+  padding: 2px 8px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
 @media (max-width: 1100px) {
   .kpi-grid { grid-template-columns: repeat(2, 1fr); }
 }

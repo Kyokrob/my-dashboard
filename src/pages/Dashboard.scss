@@ -14,6 +14,38 @@
   margin-top: 14px;
 }
 
+.drink-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.drink-card {
+  border: 1px solid rgba(255,255,255,0.08);
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  padding: 12px;
+  display: grid;
+  gap: 6px;
+}
+
+.drink-card__title {
+  font-size: 12px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  opacity: 0.7;
+}
+
+.drink-card__value {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.drink-card__sub {
+  font-size: 11px;
+  opacity: 0.6;
+}
+
 
 .weekly-spend {
   display: flex;
@@ -59,11 +91,19 @@
   .dashboard-grid {
     grid-template-columns: 1fr;
   }
+
+  .drink-insights-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
   .dashboard-grid {
     gap: 10px;
+  }
+
+  .drink-insights-grid {
+    grid-template-columns: 1fr;
   }
 
   .weekly-spend__row {

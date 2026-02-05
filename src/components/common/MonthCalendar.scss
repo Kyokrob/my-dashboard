@@ -75,6 +75,11 @@
     background: linear-gradient(135deg, rgba(29, 209, 161, 0.2), rgba(100, 181, 246, 0.18));
     border-color: rgba(255, 255, 255, 0.22);
   }
+
+  &.has-drink {
+    background: linear-gradient(135deg, rgba(255, 193, 7, 0.18), rgba(255, 255, 255, 0.04));
+    border-color: rgba(255, 193, 7, 0.35);
+  }
 }
 
 .mcal__day {
@@ -106,6 +111,11 @@
   &--wo {
     background: rgba(100, 181, 246, 0.95);
     border-color: rgba(100, 181, 246, 0.5);
+  }
+
+  &--drink {
+    background: rgba(255, 193, 7, 0.95);
+    border-color: rgba(255, 193, 7, 0.5);
   }
 }
 

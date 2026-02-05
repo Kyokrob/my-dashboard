@@ -1,4 +1,5 @@
 import { Routes, Route, Navigate } from "react-router-dom";
+import CircularProgress from "@mui/material/CircularProgress";
 import Dashboard from "./pages/Dashboard.jsx";
 import Report from "./pages/Report.jsx";
 import { DashboardProvider } from "./context/DashboardContext.jsx";
@@ -7,7 +8,20 @@ import Login from "./pages/Login.jsx";
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
-  if (loading) return <div style={{ padding: 20, opacity: 0.7 }}>Loading...</div>;
+  if (loading) {
+    return (
+      <div
+        style={{
+          minHeight: "100vh",
+          display: "grid",
+          placeItems: "center",
+          background: "#141821",
+        }}
+      >
+        <CircularProgress />
+      </div>
+    );
+  }
   if (!user) return <Navigate to="/login" replace />;
   return children;
 }

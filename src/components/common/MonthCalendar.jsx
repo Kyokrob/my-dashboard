@@ -24,7 +24,7 @@ function fmtDate(y, m, d) {
   return `${y}-${String(m).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
 }
 
-export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }) {
+export default function MonthCalendar({ monthKey, expenses = [], workouts = [], drinks = [] }) {
   const { year, month, cells } = buildMonthGrid(monthKey);
 
   // group by date
@@ -37,6 +37,12 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }
   const woByDate = workouts.reduce((acc, w) => {
     const k = w.date;
     (acc[k] ||= []).push(w);
+    return acc;
+  }, {});
+
+  const drByDate = drinks.reduce((acc, d) => {
+    const k = d.date;
+    (acc[k] ||= []).push(d);
     return acc;
   }, {});
 
@@ -64,12 +70,15 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }
           const key = fmtDate(year, month, day);
           const dayExpenses = expByDate[key] || [];
           const dayWorkouts = woByDate[key] || [];
+          const dayDrinks = drByDate[key] || [];
           const hasExp = dayExpenses.length > 0;
           const hasWo = dayWorkouts.length > 0;
           const hasBoth = hasExp && hasWo;
+          const drank = dayDrinks.some((d) => d.drank);
 
           const spend = dayExpenses.reduce((s, e) => s + Number(e.amount || 0), 0);
           const workoutTypes = dayWorkouts.map((w) => w.workoutType || w.workout || "Workout");
+          const drinkLevel = dayDrinks.find((d) => d.drank)?.level || null;
 
           const tooltip = (
             <div className="mcal__tip">
@@ -85,6 +94,11 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }
                 <span>{dayWorkouts.length ? `${dayWorkouts.length} · ${workoutTypes.join(", ")}` : "-"}</span>
               </div>
 
+              <div className="mcal__tipRow">
+                <span className="mcal__tipLabel">Drank:</span>
+                <span>{drank ? `Yes${drinkLevel ? ` · Level ${drinkLevel}` : ""}` : "No"}</span>
+              </div>
+
               {!!dayExpenses.length && (
                 <div className="mcal__tipList">
                   {dayExpenses.slice(0, 4).map((e) => (
@@ -98,7 +112,7 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }
             </div>
           );
 
-          const hasAnything = hasExp || hasWo;
+          const hasAnything = hasExp || hasWo || drank;
 
           return (
             <Tooltip
@@ -121,7 +135,7 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }
               }}
             >
               <div
-                className={`mcal__cell ${hasAnything ? "has-data" : ""} ${hasExp ? "has-exp" : ""} ${hasWo ? "has-wo" : ""} ${hasBoth ? "has-both" : ""}`}
+                className={`mcal__cell ${hasAnything ? "has-data" : ""} ${hasExp ? "has-exp" : ""} ${hasWo ? "has-wo" : ""} ${hasBoth ? "has-both" : ""} ${drank ? "has-drink" : ""}`}
               >
                 <div className="mcal__day">{day}</div>
 
@@ -129,6 +143,7 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [] }
                 <div className="mcal__chips">
                   {hasExp && <span className="chip chip--exp" aria-hidden="true" />}
                   {hasWo && <span className="chip chip--wo" aria-hidden="true" />}
+                  {drank && <span className="chip chip--drink" aria-hidden="true" />}
                 </div>
               </div>
             </Tooltip>

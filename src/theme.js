@@ -39,6 +39,14 @@ const theme = createTheme({
           borderColor: "rgba(255,255,255,0.22)",
           color: "rgba(255,255,255,0.92)",
         },
+        outlinedError: {
+          borderColor: "rgba(255,107,107,0.45)",
+          color: "#ffb1b1",
+        },
+        containedError: {
+          background: "rgba(255,107,107,0.18)",
+          color: "#ffb1b1",
+        },
       },
     },
   },

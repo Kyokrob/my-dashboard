@@ -5,9 +5,6 @@ import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 
 import EditIcon from "@mui/icons-material/Edit";
-import SaveIcon from "@mui/icons-material/Check";
-import CancelIcon from "@mui/icons-material/Close";
-import DeleteIcon from "@mui/icons-material/Delete";
 
 import "./WorkoutTable.scss";
 
@@ -16,13 +13,8 @@ const INTENSITIES = ["All", 1, 2, 3, 4, 5];
 export default function WorkoutTable({
   rows,
   pageSize = 10,
-  onUpdate,
-  onRequestDelete,
+  onEdit,
 }) {
-  // inline edit
-  const [editingId, setEditingId] = useState(null);
-  const [draft, setDraft] = useState({});
-
   // filters + paging
   const [type, setType] = useState("All");
   const [intensity, setIntensity] = useState("All");
@@ -62,30 +54,6 @@ export default function WorkoutTable({
     },
     "& .MuiSvgIcon-root": { color: "rgba(255,255,255,0.7)" },
   };
-
-  function startEdit(row) {
-    setEditingId(row.id);
-    setDraft({ ...row });
-  }
-
-  function cancelEdit() {
-    setEditingId(null);
-    setDraft({});
-  }
-
-  function saveEdit() {
-    if (!draft?.id) return;
-
-    onUpdate({
-      ...draft,
-      intensity: draft.intensity === "" ? null : Number(draft.intensity),
-      weight: draft.weight === "" ? null : Number(draft.weight),
-      bodyFat: draft.bodyFat === "" ? null : Number(draft.bodyFat),
-      drink: Boolean(draft.drink),
-    });
-
-    cancelEdit();
-  }
 
   return (
     <div className="wtable">
@@ -142,154 +110,28 @@ export default function WorkoutTable({
           <div className="center">Intensity</div>
           <div className="right">Weight</div>
           <div className="right">BF%</div>
-          <div>Feel</div>
+          <div className="center">Feel</div>
            <div>Note</div>
-          <div className="center">Drink</div>
           <div className="right">Actions</div>
         </div>
 
         {pageRows.map((r) => {
-          const isEdit = editingId === r.id;
-
           return (
-            <div className={`wgrid__row ${isEdit ? "is-edit" : ""}`} key={r.id}>
-              <div>
-                {isEdit ? (
-                  <input
-                    type="date"
-                    value={draft.date || ""}
-                    onChange={(e) => setDraft({ ...draft, date: e.target.value })}
-                  />
-                ) : (
-                  r.date
-                )}
-              </div>
-
-              <div>
-                {isEdit ? (
-                  <input
-                    value={draft.workoutType || ""}
-                    onChange={(e) =>
-                      setDraft({ ...draft, workoutType: e.target.value })
-                    }
-                  />
-                ) : (
-                  r.workoutType
-                )}
-              </div>
-
-              <div className="center">
-                {isEdit ? (
-                  <select
-                    value={draft.intensity ?? 3}
-                    onChange={(e) => setDraft({ ...draft, intensity: e.target.value })}
-                  >
-                    {[1, 2, 3, 4, 5].map((i) => (
-                      <option key={i} value={i}>
-                        {i}
-                      </option>
-                    ))}
-                  </select>
-                ) : (
-                  r.intensity ?? "-"
-                )}
-              </div>
-
-              <div className="right">
-                {isEdit ? (
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    pattern="[0-9.]*"
-                    step="0.1"
-                    value={draft.weight ?? ""}
-                    onChange={(e) => setDraft({ ...draft, weight: e.target.value })}
-                  />
-                ) : (
-                  r.weight ?? "-"
-                )}
-              </div>
-
-              <div className="right">
-                {isEdit ? (
-                  <input
-                    type="number"
-                    inputMode="decimal"
-                    pattern="[0-9.]*"
-                    step="0.1"
-                    value={draft.bodyFat ?? ""}
-                    onChange={(e) => setDraft({ ...draft, bodyFat: e.target.value })}
-                  />
-                ) : (
-                  r.bodyFat ?? "-"
-                )}
-              </div>
-
-              <div>
-                {isEdit ? (
-                  <input
-                    value={draft.feel || ""}
-                    onChange={(e) => setDraft({ ...draft, feel: e.target.value })}
-                  />
-                ) : (
-                  r.feel || "-"
-                )}
-              </div>
-
-              <div>
-                {isEdit ? (
-                  <input
-                    value={draft.note || ""}
-                    onChange={(e) => setDraft({ ...draft, note: e.target.value })}
-                  />
-                ) : (
-                  r.note || "-"
-                )}
-              </div>
-
-              <div className="center">
-                {isEdit ? (
-                  <input
-                    type="checkbox"
-                    checked={Boolean(draft.drink)}
-                    onChange={(e) => setDraft({ ...draft, drink: e.target.checked })}
-                  />
-                ) : (
-                  r.drink ? "Yes" : "No"
-                )}
-              </div>
+            <div className="wgrid__row" key={r.id}>
+              <div>{r.date}</div>
+              <div>{r.workoutType}</div>
+              <div className="center">{r.intensity ?? "-"}</div>
+              <div className="right">{r.weight ?? "-"}</div>
+              <div className="right">{r.bodyFat ?? "-"}</div>
+              <div className="center">{r.feel || "-"}</div>
+              <div>{r.note || "-"}</div>
 
               <div className="actions">
-                {isEdit ? (
-                  <>
-                    <Tooltip title="Save">
-                      <button className="icon-btn success" onClick={saveEdit}>
-                        <SaveIcon fontSize="small" />
-                      </button>
-                    </Tooltip>
-
-                    <Tooltip title="Cancel">
-                      <button className="icon-btn neutral" onClick={cancelEdit}>
-                        <CancelIcon fontSize="small" />
-                      </button>
-                    </Tooltip>
-
-                    <Tooltip title="Delete">
-                      <button
-                        className="icon-btn danger"
-                        onClick={() => onRequestDelete(r.id)}
-                      >
-                        <DeleteIcon fontSize="small" />
-                      </button>
-                    </Tooltip>
-                  </>
-                ) : (
-                  <Tooltip title="Edit">
-                    <button className="icon-btn neutral" onClick={() => startEdit(r)}>
-                      <EditIcon fontSize="small" />
-                    </button>
-                  </Tooltip>
-                )}
+                <Tooltip title="Edit">
+                  <button className="icon-btn neutral" onClick={() => onEdit?.(r)}>
+                    <EditIcon fontSize="small" />
+                  </button>
+                </Tooltip>
               </div>
             </div>
           );

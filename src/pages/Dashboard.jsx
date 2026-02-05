@@ -3,6 +3,11 @@ import { apiFetch } from "../api/apiFetch.js";
 import "./Dashboard.scss";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import Button from "@mui/material/Button";
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import MonthCalendar from "../components/common/MonthCalendar.jsx";
 
@@ -24,6 +29,9 @@ import ExpenseDialog from "../components/expenses/ExpenseDialog.jsx";
 
 import WorkoutTable from "../components/workouts/WorkoutTable.jsx";
 import WorkoutDialog from "../components/workouts/WorkoutDialog.jsx";
+import DrinkDialog from "../components/drinks/DrinkDialog.jsx";
+import DrinkTable from "../components/drinks/DrinkTable.jsx";
+import DrinkLogsDialog from "../components/drinks/DrinkLogsDialog.jsx";
 
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -52,6 +60,7 @@ export default function Dashboard() {
   ====================== */
   const normalizeExpense = (e) => ({ ...e, id: e.id ?? e._id });
   const normalizeWorkout = (w) => ({ ...w, id: w.id ?? w._id });
+  const normalizeDrink = (d) => ({ ...d, id: d.id ?? d._id });
 
   async function fetchExpenses() {
     const data = await apiFetch("/api/expenses");
@@ -65,15 +74,28 @@ export default function Dashboard() {
     return data.map(normalizeWorkout);
   }
 
+  async function fetchDrinks() {
+    const data = await apiFetch("/api/drinks");
+    if (!Array.isArray(data)) return [];
+    return data.map(normalizeDrink);
+  }
+
   /* ======================
      State
   ====================== */
   // ✅ Both are DB source of truth now
   const [expenseRows, setExpenseRows] = useState([]);
   const [workoutRows, setWorkoutRows] = useState([]);
+  const [drinkRows, setDrinkRows] = useState([]);
 
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
   const [isWorkoutDialogOpen, setIsWorkoutDialogOpen] = useState(false);
+  const [isDrinkDialogOpen, setIsDrinkDialogOpen] = useState(false);
+  const [viewDrink, setViewDrink] = useState(null);
+  const [editingDrink, setEditingDrink] = useState(null);
+  const [drinkDelete, setDrinkDelete] = useState({ open: false, id: null });
+  const [editingExpense, setEditingExpense] = useState(null);
+  const [editingWorkout, setEditingWorkout] = useState(null);
 
   /* ======================
    Load from API (STRICT)
@@ -105,6 +127,15 @@ export default function Dashboard() {
         console.error("Failed to load todos:", err);
         setTodos([]);
         showSnack("Failed to load tasks", "error");
+      }
+
+      try {
+        const dr = await fetchDrinks();
+        setDrinkRows(dr);
+      } catch (err) {
+        console.error("Failed to load drinks:", err);
+        setDrinkRows([]);
+        showSnack("Failed to load drinks", "error");
       }
     };
 
@@ -164,6 +195,7 @@ export default function Dashboard() {
       const payload = { ...updated };
       delete payload.id;
       delete payload._id;
+      payload.drank = true;
 
       const saved = normalizeTodo(
         await apiFetch(`/api/todos/${id}`, {
@@ -189,6 +221,66 @@ export default function Dashboard() {
     } catch (err) {
       console.error(err);
       showSnack("Failed to delete task", "error");
+    }
+  }
+
+  async function addDrink(row) {
+    try {
+      const payload = { ...row };
+      delete payload.id;
+      const created = normalizeDrink(
+        await apiFetch("/api/drinks", {
+          method: "POST",
+          body: JSON.stringify(payload),
+        })
+      );
+      setDrinkRows((prev) => {
+        const exists = prev.find((d) => d.date === created.date);
+        if (exists) {
+          return prev.map((d) => (d.date === created.date ? created : d));
+        }
+        return [created, ...prev];
+      });
+      showSnack("Drink log saved", "success");
+    } catch (err) {
+      console.error(err);
+      showSnack("Failed to save drink log", "error");
+    }
+  }
+
+  async function updateDrink(updated) {
+    try {
+      const id = updated.id ?? updated._id;
+      if (!id) throw new Error("Missing drink id");
+
+      const payload = { ...updated };
+      delete payload.id;
+      delete payload._id;
+
+      const saved = normalizeDrink(
+        await apiFetch(`/api/drinks/${id}`, {
+          method: "PUT",
+          body: JSON.stringify(payload),
+        })
+      );
+
+      setDrinkRows((prev) => prev.map((d) => (d.id === saved.id ? saved : d)));
+      showSnack("Drink log updated", "info");
+    } catch (err) {
+      console.error(err);
+      showSnack("Failed to update drink log", "error");
+    }
+  }
+
+  async function deleteDrink(id) {
+    try {
+      if (!id) return;
+      await apiFetch(`/api/drinks/${id}`, { method: "DELETE" });
+      setDrinkRows((prev) => prev.filter((d) => d.id !== id));
+      showSnack("Drink log deleted", "warning");
+    } catch (err) {
+      console.error(err);
+      showSnack("Failed to delete drink log", "error");
     }
   }
 
@@ -355,6 +447,15 @@ export default function Dashboard() {
   ====================== */
   const monthExpenses = expenseRows.filter((e) => inMonth(e.date, monthKey));
   const monthWorkouts = workoutRows.filter((w) => inMonth(w.date, monthKey));
+  const monthDrinksAll = drinkRows.filter((d) => inMonth(d.date, monthKey));
+  const now = new Date();
+  const [curY, curM] = monthKey.split("-").map(Number);
+  const isCurrentMonth = now.getFullYear() === curY && now.getMonth() + 1 === curM;
+  const asOfDay = isCurrentMonth ? now.getDate() : new Date(curY, curM, 0).getDate();
+  const monthDrinks = monthDrinksAll.filter((d) => {
+    const day = Number(d.date.split("-")[2]);
+    return day <= asOfDay;
+  });
   const actualByCat = sumExpensesByCategory(expenseRows, monthKey);
 
   /* ======================
@@ -372,6 +473,47 @@ export default function Dashboard() {
   })();
 
   const workoutCount = monthWorkouts.length;
+  const drinkingDays = monthDrinks.filter((d) => d.drank).length;
+  const totalDays = asOfDay;
+  const topReasons = (() => {
+    const map = {};
+    monthDrinks.forEach((d) => {
+      (d.reasons || []).forEach((r) => {
+        map[r] = (map[r] || 0) + 1;
+      });
+    });
+    return Object.entries(map)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 2)
+      .map(([r]) => r)
+      .join(", ") || "-";
+  })();
+
+  const trendLabel = (() => {
+    if (!monthDrinks.length) return "Stable";
+    const splitDay = Math.max(1, Math.ceil(asOfDay / 2));
+    const early = monthDrinks.filter((d) => Number(d.date.split("-")[2]) <= splitDay && d.drank);
+    const recent = monthDrinks.filter((d) => Number(d.date.split("-")[2]) > splitDay && d.drank);
+    const avg = (arr) =>
+      arr.length ? arr.reduce((s, d) => s + Number(d.level || 1), 0) / arr.length : null;
+    const earlyAvg = avg(early);
+    const recentAvg = avg(recent);
+    if (earlyAvg === null || recentAvg === null) return "Stable";
+    const diff = recentAvg - earlyAvg;
+    if (diff > 0.3) return "Heavier this month";
+    if (diff < -0.3) return "Getting lighter";
+    return "Stable";
+  })();
+
+  const reflectionPrompt = (() => {
+    const prompts = [
+      "Was drinking mostly intentional this month?",
+      "Do you like how this month looks?",
+      "Anything you’d change next month?",
+    ];
+    const seed = `${monthKey}`.split("").reduce((s, c) => s + c.charCodeAt(0), 0);
+    return prompts[seed % prompts.length];
+  })();
 
   // Planned total based on selected tier
 const plannedTotal = categoryOrder.reduce((sum, cat) => {
@@ -469,8 +611,9 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
 <KpiCard title="Top Spending Category" value={topCat} sub="Highest total spend category this month" />
 <KpiCard
   title="Active Days"
-  value={`${activeDays} / ${daysInMonth}`}
+  value={`${activeDays} / ${asOfDay}`}
   sub="Days with at least one workout in this month"
+  right={<span className="kpi__tag">out of {daysInMonth} days</span>}
 />
 
 
@@ -487,22 +630,54 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
           <SectionCard title="Expenses (This Month)">
             <ExpenseTable
               rows={monthExpenses}
-              onUpdate={updateExpense}
-              onRequestDelete={requestDeleteExpense}
+              onEdit={(row) => {
+                setEditingExpense(row);
+                setIsExpenseDialogOpen(true);
+              }}
               pageSize={10}
             />
+          </SectionCard>
+          <SectionCard title="Drink Insights">
+            <div className="drink-insights-grid">
+              <div className="drink-card">
+                <div className="drink-card__title">Drinking Days</div>
+                <div className="drink-card__value">{drinkingDays} / {totalDays}</div>
+                <div className="drink-card__sub">As of today</div>
+              </div>
+              <div className="drink-card">
+                <div className="drink-card__title">Most Common Reason</div>
+                <div className="drink-card__value">{topReasons}</div>
+                <div className="drink-card__sub">This month</div>
+              </div>
+              <div className="drink-card">
+                <div className="drink-card__title">Trend</div>
+                <div className="drink-card__value">{trendLabel}</div>
+                <div className="drink-card__sub">Early vs recent level</div>
+              </div>
+              <div className="drink-card">
+                <div className="drink-card__title">Quick Reflection</div>
+                <div className="drink-card__value">{reflectionPrompt}</div>
+                <div className="drink-card__sub">No input required</div>
+              </div>
+            </div>
           </SectionCard>
           <SectionCard title="To-Do / Next Actions">
             <TodoList rows={todos} onAdd={addTodo} onUpdate={updateTodo} onDelete={deleteTodo} />
           </SectionCard>
-         
         </div>
 
         {/* RIGHT */}
         <div className="dashboard-col">
           <SectionCard title="Calendar">
-            <MonthCalendar monthKey={monthKey} expenses={monthExpenses} workouts={monthWorkouts} />
+            <MonthCalendar
+              monthKey={monthKey}
+              expenses={monthExpenses}
+              workouts={monthWorkouts}
+              drinks={monthDrinksAll}
+            />
           </SectionCard>
+
+          
 
           <SectionCard title="Workout Mix">
             <div
@@ -522,6 +697,10 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
               </div>
             </div>
           </SectionCard>
+
+          
+
+          
 
           <SectionCard title="Expense Breakdown (This Month)">
   <div style={{
@@ -556,19 +735,38 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
     ))}
   </div>
 </SectionCard>
+
+          
  
 
 
         </div>
       </div>
 
+      {/* FULL WIDTH DRINKS */}
+      <div className="dashboard-full">
+        <SectionCard title="Drinking Tracker">
+          <DrinkTable
+            rows={monthDrinksAll}
+            onEdit={(row) => {
+              setEditingDrink(row);
+              setIsDrinkDialogOpen(true);
+            }}
+            onDelete={deleteDrink}
+            onView={(row) => setViewDrink(row)}
+          />
+        </SectionCard>
+      </div>
+
       {/* FULL WIDTH WORKOUT */}
       <div className="dashboard-full">
         <SectionCard title="Workout Tracker">
-          <WorkoutTable
+      <WorkoutTable
             rows={monthWorkouts}
-            onUpdate={updateWorkout}
-            onRequestDelete={requestDeleteWorkout}
+            onEdit={(row) => {
+              setEditingWorkout(row);
+              setIsWorkoutDialogOpen(true);
+            }}
             pageSize={10}
           />
         </SectionCard>
@@ -577,20 +775,109 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
       {/* Dialogs */}
       <ExpenseDialog
         open={isExpenseDialogOpen}
-        onClose={() => setIsExpenseDialogOpen(false)}
-        onAdd={addExpense}
+        onClose={() => {
+          setIsExpenseDialogOpen(false);
+          setEditingExpense(null);
+        }}
+        initial={editingExpense}
+        onDelete={
+          editingExpense?.id || editingExpense?._id
+            ? () => {
+                setIsExpenseDialogOpen(false);
+                setEditingExpense(null);
+                setConfirm({ open: true, id: editingExpense.id ?? editingExpense._id, kind: "expense" });
+              }
+            : null
+        }
+        onSubmit={(row) => {
+          if (editingExpense?.id || editingExpense?._id) return updateExpense({ ...editingExpense, ...row });
+          return addExpense(row);
+        }}
       />
 
       <WorkoutDialog
         open={isWorkoutDialogOpen}
-        onClose={() => setIsWorkoutDialogOpen(false)}
-        onSubmit={addWorkout}
+        onClose={() => {
+          setIsWorkoutDialogOpen(false);
+          setEditingWorkout(null);
+        }}
+        initial={editingWorkout}
+        onDelete={
+          editingWorkout?.id || editingWorkout?._id
+            ? () => {
+                setIsWorkoutDialogOpen(false);
+                setEditingWorkout(null);
+                setConfirm({ open: true, id: editingWorkout.id ?? editingWorkout._id, kind: "workout" });
+              }
+            : null
+        }
+        onSubmit={(row) => {
+          if (editingWorkout?.id || editingWorkout?._id) return updateWorkout({ ...editingWorkout, ...row });
+          return addWorkout(row);
+        }}
       />
+
+      <DrinkDialog
+        open={isDrinkDialogOpen}
+        onClose={() => {
+          setIsDrinkDialogOpen(false);
+          setEditingDrink(null);
+        }}
+        initial={editingDrink}
+        onDelete={
+          editingDrink?.id || editingDrink?._id
+            ? () => {
+                setIsDrinkDialogOpen(false);
+                setEditingDrink(null);
+                setDrinkDelete({ open: true, id: editingDrink.id ?? editingDrink._id });
+              }
+            : null
+        }
+        onSubmit={(row) => {
+          if (editingDrink?.id || editingDrink?._id) return updateDrink({ ...editingDrink, ...row });
+          return addDrink(row);
+        }}
+      />
+
+      <DrinkLogsDialog
+        open={Boolean(viewDrink)}
+        onClose={() => setViewDrink(null)}
+        row={viewDrink}
+      />
+
+      <Dialog open={drinkDelete.open} onClose={() => setDrinkDelete({ open: false, id: null })}>
+        <DialogTitle>Delete drink log?</DialogTitle>
+        <DialogContent>
+          This action cannot be undone.
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDrinkDelete({ open: false, id: null })} variant="outlined">
+            Cancel
+          </Button>
+          <Button
+            onClick={() => {
+              if (drinkDelete.id) deleteDrink(drinkDelete.id);
+              setDrinkDelete({ open: false, id: null });
+            }}
+            color="error"
+            variant="contained"
+          >
+            Delete
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Speed Dial */}
       <FabSpeedDial
-        onAddExpense={() => setIsExpenseDialogOpen(true)}
-        onAddWorkout={() => setIsWorkoutDialogOpen(true)}
+        onAddExpense={() => {
+          setEditingExpense(null);
+          setIsExpenseDialogOpen(true);
+        }}
+        onAddWorkout={() => {
+          setEditingWorkout(null);
+          setIsWorkoutDialogOpen(true);
+        }}
+        onAddDrink={() => setIsDrinkDialogOpen(true)}
         onLogout={logout}
       />
 

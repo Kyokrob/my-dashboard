@@ -6,7 +6,7 @@ import CloseIcon from "@mui/icons-material/Close";
 
 import WorkoutForm from "./WorkoutForm.jsx";
 
-export default function WorkoutDialog({ open, onClose, onSubmit, initial }) {
+export default function WorkoutDialog({ open, onClose, onSubmit, initial, onDelete }) {
   const isEdit = Boolean(initial?.id);
 
   return (
@@ -23,6 +23,7 @@ export default function WorkoutDialog({ open, onClose, onSubmit, initial }) {
       <DialogContent dividers>
         <WorkoutForm
           initial={initial}
+          onDelete={onDelete}
           onSubmit={async (row) => {
             await onSubmit?.(row);
             onClose();

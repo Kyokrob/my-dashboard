@@ -1,0 +1,40 @@
+.dtable {
+  display: grid;
+  gap: 8px;
+  overflow-x: auto;
+}
+
+.dtable__row {
+  display: grid;
+  grid-template-columns: 0.9fr 0.9fr 0.7fr 0.7fr 1.2fr 0.8fr 1.2fr 140px;
+  gap: 10px;
+  padding: 8px 0;
+  border-bottom: 1px dashed rgba(255,255,255,0.08);
+
+  &--head {
+    border-bottom: 1px solid rgba(255,255,255,0.12);
+    opacity: 0.8;
+    font-size: 12px;
+    padding-top: 0;
+  }
+}
+
+.dtable__reasons {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.dtable__note {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@media (max-width: 720px) {
+  .dtable__row {
+    grid-template-columns: 0.9fr 0.9fr 0.8fr 0.8fr 1.2fr 0.8fr 1.2fr 120px;
+    min-width: 760px;
+    font-size: 12px;
+  }
+}

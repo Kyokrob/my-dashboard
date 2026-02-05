@@ -34,7 +34,7 @@
   border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.22);
   background: rgba(255,255,255,0.10);
-  color: rgba(109,109,109,0.95);
+  color: rgba(255,255,255,0.92);
   outline: none;
   box-shadow: inset 0 1px 0 rgba(255,255,255,0.05), 0 2px 10px rgba(0,0,0,0.20);
 }
@@ -50,7 +50,7 @@
 .form__input[type="date"]::-webkit-datetime-edit-month-field,
 .form__input[type="date"]::-webkit-datetime-edit-day-field,
 .form__input[type="date"]::-webkit-datetime-edit-year-field {
-  color: rgba(109, 109, 109, 0.95);
+  color: rgba(255,255,255,0.92);
 }
 
 .form__input[type="date"]::-webkit-calendar-picker-indicator {

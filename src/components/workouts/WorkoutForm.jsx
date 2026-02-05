@@ -15,11 +15,10 @@ const DEFAULT = {
   weight: "",
   bodyFat: "",
   feel: "",
-  drink: false,
   note: "",
 };
 
-export default function WorkoutForm({ initial, onSubmit }) {
+export default function WorkoutForm({ initial, onSubmit, onDelete }) {
   const [form, setForm] = useState(DEFAULT);
   const [submitting, setSubmitting] = useState(false);
 
@@ -32,7 +31,6 @@ export default function WorkoutForm({ initial, onSubmit }) {
         weight: initial.weight ?? "",
         bodyFat: initial.bodyFat ?? "",
         feel: initial.feel || "",
-        drink: Boolean(initial.drink),
         note: initial.note || "",
       });
     } else {
@@ -59,7 +57,6 @@ export default function WorkoutForm({ initial, onSubmit }) {
         weight: form.weight === "" ? null : Number(form.weight),
         bodyFat: form.bodyFat === "" ? null : Number(form.bodyFat),
         feel: form.feel,
-        drink: Boolean(form.drink),
         note: form.note,
       });
     } finally {
@@ -168,12 +165,6 @@ export default function WorkoutForm({ initial, onSubmit }) {
           />
         </div>
 
-        <div className="form__row form__row--full">
-          <label className="form__checkbox">
-            <input type="checkbox" name="drink" checked={form.drink} onChange={handleChange} />
-            Drink
-          </label>
-        </div>
       </div>
 
       <div className="form__actions">
@@ -186,6 +177,14 @@ export default function WorkoutForm({ initial, onSubmit }) {
           {submitting ? "Saving..." : initial?.id ? "Save Changes" : "Add Workout"}
         </Button>
       </div>
+
+      {onDelete && (
+        <div className="form__actions">
+          <Button variant="outlined" color="error" onClick={onDelete} fullWidth>
+            Delete Log
+          </Button>
+        </div>
+      )}
     </form>
   );
 }

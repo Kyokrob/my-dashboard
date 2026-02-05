@@ -47,9 +47,8 @@
     100px        /* BF */
     1fr         /* Feel */
     1.2fr      /* Note */
-    50px        /* Drink */
     88px;       /* Actions */
-  min-width: 900px;
+  min-width: 820px;
 
   &--head {
     border-bottom: 1px solid rgba(255, 255, 255, 0.12);
@@ -58,12 +57,6 @@
     padding-top: 0;
   }
 
-  &.is-edit {
-    background: rgba(255, 255, 255, 0.04);
-    border-radius: 10px;
-    padding-left: 8px;
-    padding-right: 8px;
-  }
 }
 
 @media (max-width: 720px) {
@@ -97,10 +90,9 @@
       72px       /* BF */
       0.9fr      /* Feel */
       1fr        /* Note */
-      42px       /* Drink */
       72px;      /* Actions */
     gap: 8px;
-    min-width: 820px;
+    min-width: 740px;
     font-size: 12px;
   }
 }
@@ -108,18 +100,6 @@
 
 .center { text-align: center; }
 .right { text-align: right; }
-
-/* Compact inputs so edit mode doesn’t explode the layout */
-.wgrid input,
-.wgrid select {
-  width: 100%;
-  padding: 5px 6px;
-  border-radius: 8px;
-  font-size: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.14);
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.92);
-}
 
 /* Keep action buttons on one row */
 .actions {

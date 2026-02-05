@@ -3,22 +3,20 @@ import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import IconButton from "@mui/material/IconButton";
 import CloseIcon from "@mui/icons-material/Close";
+import DrinkForm from "./DrinkForm.jsx";
 
-import ExpenseForm from "./ExpenseForm.jsx";
-
-export default function ExpenseDialog({ open, onClose, onSubmit, initial, onDelete }) {
-  const isEdit = Boolean(initial?.id);
+export default function DrinkDialog({ open, onClose, onSubmit, initial, onDelete }) {
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        {isEdit ? "Edit Expense" : "Add Expense"}
+      <DialogTitle sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+        Log Drink
         <IconButton onClick={onClose} size="small">
           <CloseIcon fontSize="small" />
         </IconButton>
       </DialogTitle>
 
       <DialogContent dividers>
-        <ExpenseForm
+        <DrinkForm
           initial={initial}
           onDelete={onDelete}
           onSubmit={async (row) => {

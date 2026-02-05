@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import "../../styles/forms.scss";
@@ -8,7 +8,7 @@ function todayISO() {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }
 
-export default function ExpenseForm({ onAdd }) {
+export default function ExpenseForm({ initial, onSubmit, onDelete }) {
   const [form, setForm] = useState({
     date: todayISO(),
     amount: "",
@@ -17,6 +17,20 @@ export default function ExpenseForm({ onAdd }) {
     type: "",
   });
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (initial?.id) {
+      setForm({
+        date: initial.date || todayISO(),
+        amount: initial.amount ?? "",
+        category: initial.category || "Eat",
+        subCategory: initial.subCategory || "",
+        type: initial.type || "",
+      });
+    } else {
+      setForm({ date: todayISO(), amount: "", category: "Eat", subCategory: "", type: "" });
+    }
+  }, [initial]);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -28,8 +42,8 @@ export default function ExpenseForm({ onAdd }) {
 
     try {
       setSubmitting(true);
-      await onAdd?.({
-        id: crypto.randomUUID(),
+      await onSubmit?.({
+        id: initial?.id ?? crypto.randomUUID(),
         ...form,
         amount: Number(form.amount),
       });
@@ -121,9 +135,17 @@ export default function ExpenseForm({ onAdd }) {
           disabled={submitting}
           startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
         >
-          {submitting ? "Saving..." : "Add Expense"}
+          {submitting ? "Saving..." : initial?.id ? "Save Changes" : "Add Expense"}
         </Button>
       </div>
+
+      {onDelete && (
+        <div className="form__actions">
+          <Button variant="outlined" color="error" onClick={onDelete} fullWidth>
+            Delete Log
+          </Button>
+        </div>
+      )}
     </form>
   );
 }
