@@ -3,6 +3,7 @@ import cors from "cors";
 import fs from "fs";
 import dotenv from "dotenv";
 import session from "express-session";
+import MongoStore from "connect-mongo";
 import path from "path";
 
 import { connectDB } from "./config/db.js";
@@ -56,11 +57,15 @@ app.use(
     resave: false,
     saveUninitialized: false,
     proxy: true, // ✅ important when trust proxy is enabled
+    store: MongoStore.create({
+      mongoUrl: process.env.MONGODB_URI,
+      ttl: 60 * 60 * 24, // 1 day in seconds
+    }),
     cookie: {
       httpOnly: true,
       secure: isProd, // true on HTTPS (Render/Vercel)
       sameSite: isProd ? "none" : "lax", // allow cross-site cookie in prod
-      maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
     },
   })
 );

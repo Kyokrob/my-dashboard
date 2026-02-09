@@ -21,6 +21,22 @@
   color: rgba(255,255,255,0.92);
 }
 
+@media (max-width: 720px) {
+  .drink-form .form__input,
+  .drink-form .form__select,
+  .drink-form .form__textarea {
+    color: #222;
+  }
+
+  .drink-form .form__input[type="date"]::-webkit-datetime-edit,
+  .drink-form .form__input[type="date"]::-webkit-datetime-edit-text,
+  .drink-form .form__input[type="date"]::-webkit-datetime-edit-month-field,
+  .drink-form .form__input[type="date"]::-webkit-datetime-edit-day-field,
+  .drink-form .form__input[type="date"]::-webkit-datetime-edit-year-field {
+    color: #222;
+  }
+}
+
 .drink-form__grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

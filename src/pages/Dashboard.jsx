@@ -626,17 +626,6 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
           <SectionCard title="Tracking Projection" right={<TierSelector value={tier} onChange={setTier} />}>
             <ProjectionTable tier={tier} actualByCat={actualByCat} />
           </SectionCard>
-
-          <SectionCard title="Expenses (This Month)">
-            <ExpenseTable
-              rows={monthExpenses}
-              onEdit={(row) => {
-                setEditingExpense(row);
-                setIsExpenseDialogOpen(true);
-              }}
-              pageSize={10}
-            />
-          </SectionCard>
           <SectionCard title="Drink Insights">
             <div className="drink-insights-grid">
               <div className="drink-card">
@@ -744,6 +733,19 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
       </div>
 
       {/* FULL WIDTH DRINKS */}
+
+      <div className="dashboard-full">
+        <SectionCard title="Expenses (This Month)">
+            <ExpenseTable
+              rows={monthExpenses}
+              onEdit={(row) => {
+                setEditingExpense(row);
+                setIsExpenseDialogOpen(true);
+              }}
+              pageSize={10}
+            />
+          </SectionCard>
+      </div>
       <div className="dashboard-full">
         <SectionCard title="Drinking Tracker">
           <DrinkTable
@@ -757,6 +759,7 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
           />
         </SectionCard>
       </div>
+
 
       {/* FULL WIDTH WORKOUT */}
       <div className="dashboard-full">

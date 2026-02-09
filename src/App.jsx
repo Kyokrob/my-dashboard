@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dashboard from "./pages/Dashboard.jsx";
 import Report from "./pages/Report.jsx";
@@ -26,10 +27,19 @@ function RequireAuth({ children }) {
   return children;
 }
 
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+  }, [pathname]);
+  return null;
+}
+
 export default function App() {
   return (
     <AuthProvider>
       <DashboardProvider>
+        <ScrollToTop />
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route

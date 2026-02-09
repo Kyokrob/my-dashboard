@@ -128,6 +128,14 @@
     font-size: 16px;
   }
 
+  .form__input[type="date"]::-webkit-datetime-edit,
+  .form__input[type="date"]::-webkit-datetime-edit-text,
+  .form__input[type="date"]::-webkit-datetime-edit-month-field,
+  .form__input[type="date"]::-webkit-datetime-edit-day-field,
+  .form__input[type="date"]::-webkit-datetime-edit-year-field {
+    color: #222;
+  }
+
   .form__btn {
     width: 100%;
   }
