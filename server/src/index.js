@@ -74,6 +74,9 @@ app.use(
 // (If your attachUser sometimes throws, you can early-return for assets/api here)
 app.use(attachUser);
 
+// ✅ Root (public)
+app.get("/", (req, res) => res.json({ ok: true, message: "API is running" }));
+
 // ✅ Health (public)
 app.get("/health", (req, res) => res.json({ ok: true }));
 

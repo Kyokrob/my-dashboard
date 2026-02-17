@@ -43,6 +43,24 @@ router.post("/logout", async (req, res) => {
   });
 });
 
+// Reset password (must be logged in)
+router.post("/reset-password", async (req, res, next) => {
+  try {
+    if (!req.session?.userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const schema = z.object({
+      password: z.string().min(6),
+    });
+    const { password } = schema.parse(req.body);
+
+    const passwordHash = await User.hashPassword(password);
+    await User.findByIdAndUpdate(req.session.userId, { passwordHash });
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
 // Create the first admin (only if no users exist)
 router.post("/bootstrap", async (req, res, next) => {
   try {

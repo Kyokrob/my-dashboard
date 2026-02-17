@@ -623,7 +623,7 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
       <div className="dashboard-grid">
         {/* LEFT */}
         <div className="dashboard-col">
-          <SectionCard title="Tracking Projection" right={<TierSelector value={tier} onChange={setTier} />}>
+          <SectionCard title="Overview" right={<TierSelector value={tier} onChange={setTier} />}>
             <ProjectionTable tier={tier} actualByCat={actualByCat} />
           </SectionCard>
           <SectionCard title="Drink Insights">
@@ -732,10 +732,10 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
         </div>
       </div>
 
-      {/* FULL WIDTH DRINKS */}
 
+      {/* FีULL WIDTH EXPENSES */}
       <div className="dashboard-full">
-        <SectionCard title="Expenses (This Month)">
+        <SectionCard title="Spending Tracker">
             <ExpenseTable
               rows={monthExpenses}
               onEdit={(row) => {
@@ -746,6 +746,23 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
             />
           </SectionCard>
       </div>
+
+
+      {/* FULL WIDTH WORKOUT */}
+      <div className="dashboard-full">
+        <SectionCard title="Training Tracker">
+      <WorkoutTable
+            rows={monthWorkouts}
+            onEdit={(row) => {
+              setEditingWorkout(row);
+              setIsWorkoutDialogOpen(true);
+            }}
+            pageSize={10}
+          />
+        </SectionCard>
+      </div>
+
+            {/* FULL WIDTH DRINKS */}
       <div className="dashboard-full">
         <SectionCard title="Drinking Tracker">
           <DrinkTable
@@ -756,21 +773,6 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
             }}
             onDelete={deleteDrink}
             onView={(row) => setViewDrink(row)}
-          />
-        </SectionCard>
-      </div>
-
-
-      {/* FULL WIDTH WORKOUT */}
-      <div className="dashboard-full">
-        <SectionCard title="Workout Tracker">
-      <WorkoutTable
-            rows={monthWorkouts}
-            onEdit={(row) => {
-              setEditingWorkout(row);
-              setIsWorkoutDialogOpen(true);
-            }}
-            pageSize={10}
           />
         </SectionCard>
       </div>
