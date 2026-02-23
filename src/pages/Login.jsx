@@ -13,6 +13,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
+  const [remember, setRemember] = useState(true);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
@@ -25,7 +26,7 @@ export default function Login() {
     try {
       const flash = sessionStorage.getItem("flash");
       if (flash === "signed_out") {
-        setSnack({ open: true, message: "Signed out", severity: "success" });
+        setSnack({ open: true, message: "Signed out", severity: "info" });
         sessionStorage.removeItem("flash");
       }
     } catch {
@@ -38,7 +39,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await login(email, password);
+      await login(email, password, remember);
       navigate("/", { replace: true });
     } catch (err) {
       const message = err.message || "Login failed";
@@ -54,7 +55,7 @@ export default function Login() {
     setError("");
     setLoading(true);
     try {
-      await bootstrap(email, password, name || "Admin");
+      await bootstrap(email, password, name || "Admin", remember);
       navigate("/", { replace: true });
     } catch (err) {
       const message = err.message || "Failed to create admin";
@@ -68,8 +69,8 @@ export default function Login() {
   return (
     <div className="login">
       <div className="login__card">
-        <div className="login__title">Admin Sign In</div>
-        <div className="login__subtitle">Access your dashboard</div>
+        <div className="login__title">Hello Kyokrob</div>
+        <div className="login__subtitle">Sign in to continue</div>
 
         <form className="login__form" onSubmit={handleLogin}>
           <label className="login__label" htmlFor="login-email">Email</label>
@@ -94,15 +95,16 @@ export default function Login() {
             required
           />
 
-          <label className="login__label" htmlFor="login-name">Admin Name (first time only)</label>
-          <input
-            id="login-name"
-            className="login__input"
-            type="text"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="••••••••"
-          />
+          {/* Admin bootstrap fields hidden for now */}
+
+          <label className="login__remember">
+            <input
+              type="checkbox"
+              checked={remember}
+              onChange={(e) => setRemember(e.target.checked)}
+            />
+            Remember me (7 days)
+          </label>
 
           {error ? <div className="login__error">{error}</div> : null}
 
@@ -115,22 +117,15 @@ export default function Login() {
             {loading ? "Signing in..." : "Sign In"}
           </Button>
 
-          <Button
-            variant="outlined"
-            onClick={handleBootstrap}
-            disabled={loading}
-            fullWidth
-            startIcon={loading ? <CircularProgress size={16} color="inherit" /> : null}
-          >
-            Create Admin (first time)
-          </Button>
+          {/* Create Admin (first time) hidden for now */}
         </form>
       </div>
 
       <Snackbar
         open={snack.open}
         autoHideDuration={2200}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        sx={{ top: "50%", transform: "translateY(-50%)" }}
         onClose={(e, reason) => {
           if (reason === "clickaway") return;
           setSnack((s) => ({ ...s, open: false }));

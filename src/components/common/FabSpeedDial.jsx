@@ -3,7 +3,6 @@ import SpeedDialAction from "@mui/material/SpeedDialAction";
 import RemoveIcon from "@mui/icons-material/Remove";
 import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
-import LogoutIcon from "@mui/icons-material/Logout";
 import LocalBarIcon from "@mui/icons-material/LocalBar";
 
 const KIcon = () => (
@@ -18,13 +17,14 @@ const KIcon = () => (
       fontSize: 24,
       letterSpacing: 0.5,
       color: "rgba(255, 255, 255, 1)",
+      background: "rgba(20, 24, 33, 0.95)",
     }}
   >
     K
   </div>
 );
 
-export default function FabSpeedDial({ onAddExpense, onAddWorkout, onAddDrink, onLogout }) {
+export default function FabSpeedDial({ onAddExpense, onAddWorkout, onAddDrink }) {
   return (
     <SpeedDial
       ariaLabel="Quick actions"
@@ -33,8 +33,11 @@ export default function FabSpeedDial({ onAddExpense, onAddWorkout, onAddDrink, o
         bottom: 24,
         right: 24,
         "& .MuiFab-root": {
-          border: "1px solid rgba(255,255,255,0.18)",
+          background: "rgba(20, 24, 33, 0.95)",
           boxShadow: "0 10px 24px rgba(0,0,0,0.35)",
+        },
+        "& .MuiFab-root:hover": {
+          background: "rgba(20, 24, 33, 0.95)",
         },
       }}
       icon={<KIcon />}
@@ -70,15 +73,6 @@ export default function FabSpeedDial({ onAddExpense, onAddWorkout, onAddDrink, o
         }}
       />
 
-      <SpeedDialAction
-        icon={<LogoutIcon />}
-        tooltipTitle="Logout"
-        onClick={(e) => {
-          e.preventDefault();
-          e.stopPropagation();
-          onLogout?.();
-        }}
-      />
     </SpeedDial>
   );
 }

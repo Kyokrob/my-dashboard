@@ -3,9 +3,12 @@ import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import CircularProgress from "@mui/material/CircularProgress";
 import Dashboard from "./pages/Dashboard.jsx";
 import Report from "./pages/Report.jsx";
+import Trackers from "./pages/Trackers.jsx";
+import Settings from "./pages/Settings.jsx";
 import { DashboardProvider } from "./context/DashboardContext.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import Login from "./pages/Login.jsx";
+import AppShell from "./components/layout/AppShell.jsx";
 
 function RequireAuth({ children }) {
   const { user, loading } = useAuth();
@@ -46,7 +49,19 @@ export default function App() {
             path="/"
             element={
               <RequireAuth>
-                <Dashboard />
+                <AppShell>
+                  <Dashboard />
+                </AppShell>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/trackers"
+            element={
+              <RequireAuth>
+                <AppShell>
+                  <Trackers />
+                </AppShell>
               </RequireAuth>
             }
           />
@@ -54,7 +69,19 @@ export default function App() {
             path="/report"
             element={
               <RequireAuth>
-                <Report />
+                <AppShell>
+                  <Report />
+                </AppShell>
+              </RequireAuth>
+            }
+          />
+          <Route
+            path="/settings"
+            element={
+              <RequireAuth>
+                <AppShell>
+                  <Settings />
+                </AppShell>
               </RequireAuth>
             }
           />

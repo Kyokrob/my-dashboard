@@ -1,0 +1,71 @@
+.trackers-charts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 14px;
+}
+
+.trackers-chart {
+  min-height: 220px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.trackers-chart__empty {
+  font-size: 12px;
+  opacity: 0.65;
+}
+
+.drink-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+}
+
+.drink-bars__row {
+  display: grid;
+  grid-template-columns: 24px 1fr 28px;
+  gap: 10px;
+  align-items: center;
+  font-size: 12px;
+}
+
+.drink-bars__label {
+  opacity: 0.7;
+}
+
+.drink-bars__track {
+  height: 8px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.drink-bars__fill {
+  height: 100%;
+  background: linear-gradient(90deg, rgba(255, 193, 7, 0.85), rgba(255, 214, 102, 0.9));
+  border-radius: 999px;
+}
+
+.drink-bars__value {
+  text-align: right;
+  opacity: 0.7;
+}
+
+@media (max-width: 1100px) {
+  .trackers-charts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 720px) {
+  .trackers-charts {
+    grid-template-columns: 1fr;
+  }
+
+  .trackers-chart {
+    min-height: 200px;
+  }
+}

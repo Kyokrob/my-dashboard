@@ -59,7 +59,7 @@ app.use(
     proxy: true, // ✅ important when trust proxy is enabled
     store: MongoStore.create({
       mongoUrl: process.env.MONGODB_URI,
-      ttl: 60 * 60 * 24, // 1 day in seconds
+      ttl: 60 * 60 * 24 * 7, // allow up to 7 days
     }),
     cookie: {
       httpOnly: true,

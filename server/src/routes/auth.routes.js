@@ -7,12 +7,14 @@ const router = express.Router();
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
+  remember: z.boolean().optional(),
 });
 
 const bootstrapSchema = z.object({
   email: z.string().email(),
   password: z.string().min(6),
   name: z.string().min(1).optional(),
+  remember: z.boolean().optional(),
 });
 
 router.get("/me", async (req, res) => {
@@ -24,11 +26,12 @@ router.get("/me", async (req, res) => {
 
 router.post("/login", async (req, res, next) => {
   try {
-    const { email, password } = loginSchema.parse(req.body);
+    const { email, password, remember } = loginSchema.parse(req.body);
     const user = await User.findOne({ email: email.toLowerCase(), isActive: true });
     if (!user) return res.status(401).json({ error: "Invalid credentials" });
     const ok = await user.verifyPassword(password);
     if (!ok) return res.status(401).json({ error: "Invalid credentials" });
+    req.session.cookie.maxAge = remember ? 1000 * 60 * 60 * 24 * 7 : 1000 * 60 * 60 * 24;
     req.session.userId = user.id;
     res.json({ user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   } catch (err) {
@@ -43,8 +46,8 @@ router.post("/logout", async (req, res) => {
   });
 });
 
-// Reset password (must be logged in)
-router.post("/reset-password", async (req, res, next) => {
+// Verify current password (must be logged in)
+router.post("/verify-password", async (req, res, next) => {
   try {
     if (!req.session?.userId) return res.status(401).json({ error: "Unauthorized" });
 
@@ -53,7 +56,36 @@ router.post("/reset-password", async (req, res, next) => {
     });
     const { password } = schema.parse(req.body);
 
-    const passwordHash = await User.hashPassword(password);
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+    const ok = await user.verifyPassword(password);
+    if (!ok) return res.status(401).json({ error: "Invalid password" });
+
+    res.json({ ok: true });
+  } catch (err) {
+    next(err);
+  }
+});
+
+// Reset password (must be logged in)
+router.post("/reset-password", async (req, res, next) => {
+  try {
+    if (!req.session?.userId) return res.status(401).json({ error: "Unauthorized" });
+
+    const schema = z.object({
+      currentPassword: z.string().min(6),
+      newPassword: z.string().min(6),
+    });
+    const { currentPassword, newPassword } = schema.parse(req.body);
+
+    const user = await User.findById(req.session.userId);
+    if (!user) return res.status(401).json({ error: "Unauthorized" });
+
+    const ok = await user.verifyPassword(currentPassword);
+    if (!ok) return res.status(401).json({ error: "Invalid current password" });
+
+    const passwordHash = await User.hashPassword(newPassword);
     await User.findByIdAndUpdate(req.session.userId, { passwordHash });
     res.json({ ok: true });
   } catch (err) {
@@ -66,7 +98,7 @@ router.post("/bootstrap", async (req, res, next) => {
   try {
     const count = await User.countDocuments();
     if (count > 0) return res.status(409).json({ error: "Admin already exists" });
-    const { email, password, name } = bootstrapSchema.parse(req.body);
+    const { email, password, name, remember } = bootstrapSchema.parse(req.body);
     const passwordHash = await User.hashPassword(password);
     const user = await User.create({
       email: email.toLowerCase(),
@@ -74,6 +106,7 @@ router.post("/bootstrap", async (req, res, next) => {
       passwordHash,
       role: "admin",
     });
+    req.session.cookie.maxAge = remember ? 1000 * 60 * 60 * 24 * 7 : 1000 * 60 * 60 * 24;
     req.session.userId = user.id;
     res.status(201).json({ user: { id: user.id, email: user.email, name: user.name, role: user.role } });
   } catch (err) {

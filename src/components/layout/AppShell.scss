@@ -1,0 +1,167 @@
+.shell {
+  display: flex;
+  min-height: 100vh;
+}
+
+.shell__sidebar {
+  width: 220px;
+  background: rgba(18, 22, 31, 0.98);
+  border-right: 1px solid rgba(255,255,255,0.08);
+  padding: 14px 12px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  z-index: 40;
+  transition: width 0.2s ease, transform 0.2s ease;
+  display: flex;
+  flex-direction: column;
+}
+
+.shell__sidebar.is-collapsed {
+  width: 72px;
+}
+
+.shell__sidebar.is-open {
+  transform: translateX(0);
+}
+
+.shell__brand {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+
+.shell__logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  color: rgba(255,255,255,0.9);
+}
+
+.shell__logo--button {
+  cursor: pointer;
+}
+
+.shell__title {
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.shell__collapse-btn,
+.shell__close-btn {
+  border: none;
+  background: transparent;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+}
+
+@media (min-width: 901px) {
+  .shell__close-btn {
+    display: none;
+  }
+}
+
+
+.shell__nav {
+  display: grid;
+  gap: 6px;
+}
+
+.shell__link {
+  padding: 8px 10px;
+  border-radius: 10px;
+  color: rgba(255,255,255,0.85);
+  border: 1px solid transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.shell__link--button {
+  background: transparent;
+  cursor: pointer;
+  width: 100%;
+  text-align: left;
+}
+
+.shell__link.active {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.12);
+  color: #fff;
+}
+
+.shell__content {
+  margin-left: 220px;
+  width: 100%;
+}
+
+.shell.is-collapsed .shell__content {
+  margin-left: 72px;
+}
+
+.shell__menu {
+  display: none;
+}
+
+.shell__backdrop {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  .shell__sidebar {
+    transform: translateX(-100%);
+  }
+
+  .shell__sidebar.is-open {
+    transform: translateX(0);
+  }
+
+  .shell__content {
+    margin-left: 0;
+  }
+
+  .shell__menu {
+    display: inline-flex;
+    position: fixed;
+    top: 12px;
+    left: 12px;
+    z-index: 50;
+    border: 1px solid rgba(255,255,255,0.18);
+    background: rgba(20, 24, 33, 0.9);
+    color: rgba(255,255,255,0.9);
+    border-radius: 10px;
+    padding: 6px 10px;
+    cursor: pointer;
+  }
+
+  .shell__backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    z-index: 30;
+  }
+}
+
+.shell__footer {
+  margin-top: auto;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  display: grid;
+  gap: 6px;
+}
+
+.shell__logout {
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  cursor: pointer;
+}

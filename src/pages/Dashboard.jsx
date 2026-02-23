@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense, lazy } from "react";
 import { apiFetch } from "../api/apiFetch.js";
 import "./Dashboard.scss";
 import Snackbar from "@mui/material/Snackbar";
@@ -12,8 +12,8 @@ import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import MonthCalendar from "../components/common/MonthCalendar.jsx";
 
 import KpiCard from "../components/common/KpiCard.jsx";
-import WorkoutTypePie from "../components/workouts/WorkoutTypePie.jsx";
-import ExpenseCategoryBar from "../components/expenses/ExpenseCategoryBar.jsx";
+const WorkoutTypePie = lazy(() => import("../components/workouts/WorkoutTypePie.jsx"));
+const ExpenseCategoryBar = lazy(() => import("../components/expenses/ExpenseCategoryBar.jsx"));
 import TodoList from "../components/todo/TodoList.jsx";
 import DashboardLayout from "../components/layout/DashboardLayout.jsx";
 import MonthPicker from "../components/layout/MonthPicker.jsx";
@@ -146,7 +146,7 @@ export default function Dashboard() {
     try {
       const flash = sessionStorage.getItem("flash");
       if (flash === "signed_in") {
-        showSnack("Signed in", "success");
+        showSnack("Signed in", "info");
         sessionStorage.removeItem("flash");
       }
     } catch {
@@ -471,6 +471,18 @@ export default function Dashboard() {
     }, {});
     return Object.entries(byCat).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
   })();
+  const top3Cats = (() => {
+    const byCat = monthExpenses.reduce((acc, e) => {
+      const k = e.category || "Other";
+      acc[k] = (acc[k] || 0) + Number(e.amount || 0);
+      return acc;
+    }, {});
+    return Object.entries(byCat)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([k]) => k)
+      .join(" · ") || "-";
+  })();
 
   const workoutCount = monthWorkouts.length;
   const drinkingDays = monthDrinks.filter((d) => d.drank).length;
@@ -488,6 +500,74 @@ export default function Dashboard() {
       .map(([r]) => r)
       .join(", ") || "-";
   })();
+
+  const [prevY, prevM] = (() => {
+    const d = new Date(curY, curM - 2, 1);
+    return [d.getFullYear(), d.getMonth() + 1];
+  })();
+  const prevMonthKey = `${prevY}-${String(prevM).padStart(2, "0")}`;
+  const prevMonthExpenses = expenseRows.filter((e) => inMonth(e.date, prevMonthKey));
+  const prevMonthMTD = prevMonthExpenses
+    .filter((e) => Number(e.date.split("-")[2]) <= asOfDay)
+    .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const thisMonthMTD = monthExpenses
+    .filter((e) => Number(e.date.split("-")[2]) <= asOfDay)
+    .reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const mtdPct = prevMonthMTD > 0 ? ((thisMonthMTD - prevMonthMTD) / prevMonthMTD) * 100 : null;
+  const mtdLabel = mtdPct === null ? "—" : `${mtdPct > 0 ? "+" : ""}${mtdPct.toFixed(1)}% vs last month`;
+  const mtdTone = mtdPct === null ? "neutral" : mtdPct > 0 ? "bad" : "good";
+  const weekendWeekday = (() => {
+    let weekend = 0;
+    let weekday = 0;
+    monthExpenses.forEach((e) => {
+      const d = new Date(e.date);
+      const day = d.getDay();
+      const amt = Number(e.amount || 0);
+      if (day === 0 || day === 6) weekend += amt;
+      else weekday += amt;
+    });
+    const total = weekend + weekday;
+    const weekendPct = total ? (weekend / total) * 100 : 0;
+    const label = weekend >= weekday ? "Weekend heavier" : "Weekday heavier";
+    const sub = total ? `Weekend ${weekendPct.toFixed(0)}% of spend` : "No data yet";
+    return { label, sub };
+  })();
+
+  const biggestCategoryIncrease = (() => {
+    const sumByCat = (rows) =>
+      rows.reduce((acc, e) => {
+        const k = e.category || "Other";
+        acc[k] = (acc[k] || 0) + Number(e.amount || 0);
+        return acc;
+      }, {});
+    const cur = sumByCat(monthExpenses);
+    const prev = sumByCat(prevMonthExpenses);
+    const cats = new Set([...Object.keys(cur), ...Object.keys(prev)]);
+    let bestCat = null;
+    let bestDiff = 0;
+    cats.forEach((k) => {
+      const diff = (cur[k] || 0) - (prev[k] || 0);
+      if (diff > bestDiff) {
+        bestDiff = diff;
+        bestCat = k;
+      }
+    });
+    if (!bestCat || bestDiff <= 0) return { label: "No increase", sub: "Vs last month" };
+    return { label: `${bestCat} +฿${Math.round(bestDiff).toLocaleString()}`, sub: "Vs last month" };
+  })();
+  const biggestIncreaseTone = biggestCategoryIncrease.label === "No increase" ? "neutral" : "bad";
+
+  const drinkingDates = new Set(monthDrinksAll.filter((d) => d.drank).map((d) => d.date));
+  const drinkDaySpend = monthExpenses.filter((e) => drinkingDates.has(e.date));
+  const avgDrinkDaySpend = drinkDaySpend.length
+    ? drinkDaySpend.reduce((s, e) => s + Number(e.amount || 0), 0) / new Set(drinkDaySpend.map((e) => e.date)).size
+    : 0;
+
+  const drinkingDaysPct = totalDays ? (drinkingDays / totalDays) * 100 : 0;
+  const avgDrinkLevel = monthDrinksAll.filter((d) => d.drank).length
+    ? monthDrinksAll.filter((d) => d.drank).reduce((s, d) => s + Number(d.level || 1), 0) /
+      monthDrinksAll.filter((d) => d.drank).length
+    : 0;
 
   const trendLabel = (() => {
     if (!monthDrinks.length) return "Stable";
@@ -626,6 +706,33 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
           <SectionCard title="Overview" right={<TierSelector value={tier} onChange={setTier} />}>
             <ProjectionTable tier={tier} actualByCat={actualByCat} />
           </SectionCard>
+          <SectionCard title="Monthly Insights">
+            <div className="drink-insights-grid">
+              <div className="drink-card">
+                <div className="drink-card__title">Spending vs Last Month (MTD)</div>
+                <div className={`drink-card__value drink-card__value--${mtdTone}`}>{mtdLabel}</div>
+                <div className="drink-card__sub">Same-day window</div>
+              </div>
+              <div className="drink-card">
+                <div className="drink-card__title">Weekend vs Weekday</div>
+                <div className="drink-card__value">{weekendWeekday.label}</div>
+                <div className="drink-card__sub">{weekendWeekday.sub}</div>
+              </div>
+              <div className="drink-card">
+                <div className="drink-card__title">Top 3 Categories</div>
+                <div className="drink-card__value">{top3Cats}</div>
+                <div className="drink-card__sub">This month</div>
+              </div>
+              <div className="drink-card">
+                <div className="drink-card__title">Biggest Increase (Category)</div>
+                <div className={`drink-card__value drink-card__value--${biggestIncreaseTone}`}>
+                  {biggestCategoryIncrease.label}
+                </div>
+                <div className="drink-card__sub">{biggestCategoryIncrease.sub}</div>
+              </div>
+            </div>
+          </SectionCard>
+          
           <SectionCard title="Drink Insights">
             <div className="drink-insights-grid">
               <div className="drink-card">
@@ -639,14 +746,14 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
                 <div className="drink-card__sub">This month</div>
               </div>
               <div className="drink-card">
-                <div className="drink-card__title">Trend</div>
-                <div className="drink-card__value">{trendLabel}</div>
-                <div className="drink-card__sub">Early vs recent level</div>
+                <div className="drink-card__title">Avg Spend on Drinking Days</div>
+                <div className="drink-card__value">฿{Math.round(avgDrinkDaySpend).toLocaleString()}</div>
+                <div className="drink-card__sub">This month</div>
               </div>
               <div className="drink-card">
-                <div className="drink-card__title">Quick Reflection</div>
-                <div className="drink-card__value">{reflectionPrompt}</div>
-                <div className="drink-card__sub">No input required</div>
+                <div className="drink-card__title">Avg Drink Level</div>
+                <div className="drink-card__value">{avgDrinkLevel ? avgDrinkLevel.toFixed(1) : "—"}</div>
+                <div className="drink-card__sub">This month</div>
               </div>
             </div>
           </SectionCard>
@@ -682,7 +789,9 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
               <div style={{ fontSize: 14, fontWeight: 600 }}>Distribution by workout type</div>
               <div style={{ fontSize: 12, opacity: 0.65 }}>Based on logged workouts this month</div>
               <div style={{ marginTop: 8 }}>
-                <WorkoutTypePie rows={monthWorkouts} />
+                <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
+                  <WorkoutTypePie rows={monthWorkouts} />
+                </Suspense>
               </div>
             </div>
           </SectionCard>
@@ -691,7 +800,7 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
 
           
 
-          <SectionCard title="Expense Breakdown (This Month)">
+<SectionCard title="Expense Breakdown (This Month)">
   <div style={{
     display: "flex",
     flexDirection: "column",
@@ -699,7 +808,11 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
     padding: "8px 0 4px",
     gap: 6,
     color: "white",
-  }}> <ExpenseCategoryBar rows={monthExpenses}  /></div>
+  }}>
+    <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
+      <ExpenseCategoryBar rows={monthExpenses} />
+    </Suspense>
+  </div>
 </SectionCard>
 
  <SectionCard title="Spending by Day (This Month)">
@@ -733,175 +846,23 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
       </div>
 
 
-      {/* FีULL WIDTH EXPENSES */}
-      <div className="dashboard-full">
-        <SectionCard title="Spending Tracker">
-            <ExpenseTable
-              rows={monthExpenses}
-              onEdit={(row) => {
-                setEditingExpense(row);
-                setIsExpenseDialogOpen(true);
-              }}
-              pageSize={10}
-            />
-          </SectionCard>
-      </div>
-
-
-      {/* FULL WIDTH WORKOUT */}
-      <div className="dashboard-full">
-        <SectionCard title="Training Tracker">
-      <WorkoutTable
-            rows={monthWorkouts}
-            onEdit={(row) => {
-              setEditingWorkout(row);
-              setIsWorkoutDialogOpen(true);
-            }}
-            pageSize={10}
-          />
-        </SectionCard>
-      </div>
-
-            {/* FULL WIDTH DRINKS */}
-      <div className="dashboard-full">
-        <SectionCard title="Drinking Tracker">
-          <DrinkTable
-            rows={monthDrinksAll}
-            onEdit={(row) => {
-              setEditingDrink(row);
-              setIsDrinkDialogOpen(true);
-            }}
-            onDelete={deleteDrink}
-            onView={(row) => setViewDrink(row)}
-          />
-        </SectionCard>
-      </div>
-
-      {/* Dialogs */}
-      <ExpenseDialog
-        open={isExpenseDialogOpen}
-        onClose={() => {
-          setIsExpenseDialogOpen(false);
-          setEditingExpense(null);
-        }}
-        initial={editingExpense}
-        onDelete={
-          editingExpense?.id || editingExpense?._id
-            ? () => {
-                setIsExpenseDialogOpen(false);
-                setEditingExpense(null);
-                setConfirm({ open: true, id: editingExpense.id ?? editingExpense._id, kind: "expense" });
-              }
-            : null
-        }
-        onSubmit={(row) => {
-          if (editingExpense?.id || editingExpense?._id) return updateExpense({ ...editingExpense, ...row });
-          return addExpense(row);
-        }}
-      />
-
-      <WorkoutDialog
-        open={isWorkoutDialogOpen}
-        onClose={() => {
-          setIsWorkoutDialogOpen(false);
-          setEditingWorkout(null);
-        }}
-        initial={editingWorkout}
-        onDelete={
-          editingWorkout?.id || editingWorkout?._id
-            ? () => {
-                setIsWorkoutDialogOpen(false);
-                setEditingWorkout(null);
-                setConfirm({ open: true, id: editingWorkout.id ?? editingWorkout._id, kind: "workout" });
-              }
-            : null
-        }
-        onSubmit={(row) => {
-          if (editingWorkout?.id || editingWorkout?._id) return updateWorkout({ ...editingWorkout, ...row });
-          return addWorkout(row);
-        }}
-      />
-
-      <DrinkDialog
-        open={isDrinkDialogOpen}
-        onClose={() => {
-          setIsDrinkDialogOpen(false);
-          setEditingDrink(null);
-        }}
-        initial={editingDrink}
-        onDelete={
-          editingDrink?.id || editingDrink?._id
-            ? () => {
-                setIsDrinkDialogOpen(false);
-                setEditingDrink(null);
-                setDrinkDelete({ open: true, id: editingDrink.id ?? editingDrink._id });
-              }
-            : null
-        }
-        onSubmit={(row) => {
-          if (editingDrink?.id || editingDrink?._id) return updateDrink({ ...editingDrink, ...row });
-          return addDrink(row);
-        }}
-      />
-
-      <DrinkLogsDialog
-        open={Boolean(viewDrink)}
-        onClose={() => setViewDrink(null)}
-        row={viewDrink}
-      />
-
-      <Dialog open={drinkDelete.open} onClose={() => setDrinkDelete({ open: false, id: null })}>
-        <DialogTitle>Delete drink log?</DialogTitle>
-        <DialogContent>
-          This action cannot be undone.
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setDrinkDelete({ open: false, id: null })} variant="outlined">
-            Cancel
-          </Button>
-          <Button
-            onClick={() => {
-              if (drinkDelete.id) deleteDrink(drinkDelete.id);
-              setDrinkDelete({ open: false, id: null });
-            }}
-            color="error"
-            variant="contained"
-          >
-            Delete
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       {/* Speed Dial */}
       <FabSpeedDial
         onAddExpense={() => {
-          setEditingExpense(null);
-          setIsExpenseDialogOpen(true);
+          window.location.assign("/trackers");
         }}
         onAddWorkout={() => {
-          setEditingWorkout(null);
-          setIsWorkoutDialogOpen(true);
+          window.location.assign("/trackers");
         }}
-        onAddDrink={() => setIsDrinkDialogOpen(true)}
-        onLogout={logout}
-      />
-
-      {/* Confirm delete */}
-      <ConfirmDialog
-        open={confirm.open}
-        title={confirm.kind === "workout" ? "Delete workout?" : "Delete expense?"}
-        description="This action cannot be undone."
-        confirmText="Delete"
-        cancelText="Cancel"
-        onClose={() => setConfirm({ open: false, id: null, kind: "expense" })}
-        onConfirm={confirmDelete}
+        onAddDrink={() => window.location.assign("/trackers")}
       />
 
       {/* Snackbar */}
       <Snackbar
         open={snack.open}
         autoHideDuration={2200}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        sx={{ top: "50%", transform: "translateY(-50%)" }}
         onClose={(e, reason) => {
           if (reason === "clickaway") return;
           setSnack((s) => ({ ...s, open: false }));

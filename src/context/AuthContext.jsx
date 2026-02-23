@@ -43,20 +43,20 @@ export function AuthProvider({ children }) {
     refresh();
   }, []);
 
-  async function login(email, password) {
+  async function login(email, password, remember = false) {
     const data = await apiFetch("/api/auth/login", {
       method: "POST",
-      body: JSON.stringify({ email, password }),
+      body: JSON.stringify({ email, password, remember }),
     });
     setUser(data.user);
     setFlash("signed_in");
     return data.user;
   }
 
-  async function bootstrap(email, password, name) {
+  async function bootstrap(email, password, name, remember = false) {
     const data = await apiFetch("/api/auth/bootstrap", {
       method: "POST",
-      body: JSON.stringify({ email, password, name }),
+      body: JSON.stringify({ email, password, name, remember }),
     });
     setUser(data.user);
     setFlash("signed_in");

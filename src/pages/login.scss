@@ -57,6 +57,18 @@
   color: #ff9c9c;
 }
 
+.login__remember {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  opacity: 0.8;
+
+  input {
+    accent-color: #1dd1a1;
+  }
+}
+
 .login__btn {
   padding: 10px 14px;
   border-radius: 10px;

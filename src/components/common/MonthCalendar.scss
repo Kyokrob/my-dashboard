@@ -80,6 +80,11 @@
     background: linear-gradient(135deg, rgba(255, 193, 7, 0.18), rgba(255, 255, 255, 0.04));
     border-color: rgba(255, 193, 7, 0.35);
   }
+
+  &.is-today {
+    border-color: rgba(151, 185, 167, 0.9);
+    box-shadow: 0 0 0 1px rgba(63, 111, 86, 0.6), 0 8px 18px rgba(22, 160, 133, 0.22);
+  }
 }
 
 .mcal__day {

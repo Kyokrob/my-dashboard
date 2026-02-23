@@ -26,6 +26,8 @@ function fmtDate(y, m, d) {
 
 export default function MonthCalendar({ monthKey, expenses = [], workouts = [], drinks = [] }) {
   const { year, month, cells } = buildMonthGrid(monthKey);
+  const today = new Date();
+  const todayKey = fmtDate(today.getFullYear(), today.getMonth() + 1, today.getDate());
 
   // group by date
   const expByDate = expenses.reduce((acc, e) => {
@@ -68,6 +70,7 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [], 
           if (!day) return <div key={idx} className="mcal__cell is-empty" />;
 
           const key = fmtDate(year, month, day);
+          const isToday = key === todayKey;
           const dayExpenses = expByDate[key] || [];
           const dayWorkouts = woByDate[key] || [];
           const dayDrinks = drByDate[key] || [];
@@ -135,7 +138,7 @@ export default function MonthCalendar({ monthKey, expenses = [], workouts = [], 
               }}
             >
               <div
-                className={`mcal__cell ${hasAnything ? "has-data" : ""} ${hasExp ? "has-exp" : ""} ${hasWo ? "has-wo" : ""} ${hasBoth ? "has-both" : ""} ${drank ? "has-drink" : ""}`}
+                className={`mcal__cell ${hasAnything ? "has-data" : ""} ${hasExp ? "has-exp" : ""} ${hasWo ? "has-wo" : ""} ${hasBoth ? "has-both" : ""} ${drank ? "has-drink" : ""} ${isToday ? "is-today" : ""}`}
               >
                 <div className="mcal__day">{day}</div>
 
