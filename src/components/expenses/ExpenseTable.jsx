@@ -3,6 +3,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Pagination from "@mui/material/Pagination";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Skeleton from "@mui/material/Skeleton";
 
 import EditIcon from "@mui/icons-material/Edit";
 
@@ -15,6 +16,7 @@ export default function ExpenseTable({
   rows,
   onEdit,
   pageSize = 10,
+  loading = false,
 }) {
   // filters + paging
   const [category, setCategory] = useState("All");
@@ -41,6 +43,8 @@ export default function ExpenseTable({
   const safePage = Math.min(page, totalPages);
   const start = (safePage - 1) * pageSize;
   const pageRows = filteredSorted.slice(start, start + pageSize);
+  const isEmpty = !loading && rows.length === 0;
+  const isNoMatch = !loading && rows.length > 0 && pageRows.length === 0;
 
   return (
     <div className="etable">
@@ -153,7 +157,28 @@ export default function ExpenseTable({
           <div className="right">Actions</div>
         </div>
 
-        {pageRows.map((r) => {
+        {loading
+          ? Array.from({ length: pageSize }).map((_, idx) => (
+              <div className="table__row" key={`sk-${idx}`}>
+                <div><Skeleton height={18} width="70%" /></div>
+                <div className="right"><Skeleton height={18} width="60%" /></div>
+                <div className="center"><Skeleton height={18} width="60%" /></div>
+                <div className="center"><Skeleton height={18} width="60%" /></div>
+                <div className="center"><Skeleton height={18} width="60%" /></div>
+                <div className="actions right"><Skeleton height={18} width={24} /></div>
+              </div>
+            ))
+          : isEmpty ? (
+            <div className="table__empty">
+              <div className="table__emptyTitle">No data yet</div>
+              <div className="table__emptySub">Log your first expense to see insights.</div>
+            </div>
+          ) : isNoMatch ? (
+            <div className="table__empty">
+              <div className="table__emptyTitle">No results</div>
+              <div className="table__emptySub">Try a different category or search.</div>
+            </div>
+          ) : pageRows.map((r) => {
           return (
             <div className="table__row" key={r.id}>
               <div>

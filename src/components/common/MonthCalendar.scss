@@ -82,8 +82,8 @@
   }
 
   &.is-today {
-    border-color: rgba(151, 185, 167, 0.9);
-    box-shadow: 0 0 0 1px rgba(63, 111, 86, 0.6), 0 8px 18px rgba(22, 160, 133, 0.22);
+    border: 2px solid rgba(155, 155, 155, 0.9);
+    box-shadow: 0 0 0 1px rgba(63, 111, 86, 0.357), 0 8px 18px rgba(22, 160, 133, 0.22);
   }
 }
 

@@ -10,10 +10,22 @@ function getCurrentMonthKey() {
 export function DashboardProvider({ children }) {
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey()); // ✅ current month
   const [tier, setTier] = useState("low"); // low | mid | high
+  const [lastUpdate, setLastUpdate] = useState(null);
+  const [refreshKey, setRefreshKey] = useState(0);
+  const bumpRefresh = () => setRefreshKey((k) => k + 1);
 
   const value = useMemo(
-    () => ({ monthKey, setMonthKey, tier, setTier }),
-    [monthKey, tier]
+    () => ({
+      monthKey,
+      setMonthKey,
+      tier,
+      setTier,
+      lastUpdate,
+      setLastUpdate,
+      refreshKey,
+      bumpRefresh,
+    }),
+    [monthKey, tier, lastUpdate, refreshKey]
   );
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

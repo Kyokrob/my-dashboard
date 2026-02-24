@@ -3,6 +3,7 @@ import Tooltip from "@mui/material/Tooltip";
 import Pagination from "@mui/material/Pagination";
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
+import Skeleton from "@mui/material/Skeleton";
 
 import EditIcon from "@mui/icons-material/Edit";
 
@@ -14,6 +15,7 @@ export default function WorkoutTable({
   rows,
   pageSize = 10,
   onEdit,
+  loading = false,
 }) {
   // filters + paging
   const [type, setType] = useState("All");
@@ -38,6 +40,8 @@ export default function WorkoutTable({
   const safePage = Math.min(page, totalPages);
   const start = (safePage - 1) * pageSize;
   const pageRows = filteredSorted.slice(start, start + pageSize);
+  const isEmpty = !loading && rows.length === 0;
+  const isNoMatch = !loading && rows.length > 0 && pageRows.length === 0;
 
   const fieldSx = {
     "& .MuiInputLabel-root": { color: "rgba(255,255,255,0.65)" },
@@ -115,7 +119,30 @@ export default function WorkoutTable({
           <div className="right">Actions</div>
         </div>
 
-        {pageRows.map((r) => {
+        {loading
+          ? Array.from({ length: pageSize }).map((_, idx) => (
+              <div className="wgrid__row" key={`sk-${idx}`}>
+                <div><Skeleton height={18} width="70%" /></div>
+                <div><Skeleton height={18} width="70%" /></div>
+                <div className="center"><Skeleton height={18} width="40%" /></div>
+                <div className="right"><Skeleton height={18} width="50%" /></div>
+                <div className="right"><Skeleton height={18} width="50%" /></div>
+                <div className="center"><Skeleton height={18} width="60%" /></div>
+                <div><Skeleton height={18} width="70%" /></div>
+                <div className="actions right"><Skeleton height={18} width={24} /></div>
+              </div>
+            ))
+          : isEmpty ? (
+            <div className="wgrid__empty">
+              <div className="wgrid__emptyTitle">No data yet</div>
+              <div className="wgrid__emptySub">Log your first workout to see insights.</div>
+            </div>
+          ) : isNoMatch ? (
+            <div className="wgrid__empty">
+              <div className="wgrid__emptyTitle">No results</div>
+              <div className="wgrid__emptySub">Try a different type or intensity.</div>
+            </div>
+          ) : pageRows.map((r) => {
           return (
             <div className="wgrid__row" key={r.id}>
               <div>{r.date}</div>

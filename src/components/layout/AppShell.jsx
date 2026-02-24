@@ -9,11 +9,17 @@ import InsightsIcon from "@mui/icons-material/Insights";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAuth } from "../../context/AuthContext.jsx";
+import { useDashboard } from "../../context/DashboardContext.jsx";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import "./AppShell.scss";
+import FabSpeedDial from "../common/FabSpeedDial.jsx";
+import ExpenseDialog from "../expenses/ExpenseDialog.jsx";
+import WorkoutDialog from "../workouts/WorkoutDialog.jsx";
+import DrinkDialog from "../drinks/DrinkDialog.jsx";
+import { apiFetch } from "../../api/apiFetch.js";
 
 export default function AppShell({ children }) {
   const [open, setOpen] = useState(false);
@@ -23,8 +29,26 @@ export default function AppShell({ children }) {
   const [settingsPassword, setSettingsPassword] = useState("");
   const [settingsError, setSettingsError] = useState("");
   const [settingsLoading, setSettingsLoading] = useState(false);
+  const [addExpenseOpen, setAddExpenseOpen] = useState(false);
+  const [addWorkoutOpen, setAddWorkoutOpen] = useState(false);
+  const [addDrinkOpen, setAddDrinkOpen] = useState(false);
+  const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
   const { logout } = useAuth();
+  const { lastUpdate, setLastUpdate, bumpRefresh } = useDashboard();
   const navigate = useNavigate();
+
+  function showSnack(message, severity = "success") {
+    setSnack({ open: true, message, severity });
+  }
+  const lastUpdatedText = lastUpdate
+    ? new Date(lastUpdate).toLocaleString("en-US", {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+      })
+    : "—";
 
   async function verifySettingsAccess() {
     setSettingsError("");
@@ -101,6 +125,12 @@ export default function AppShell({ children }) {
             <LogoutIcon fontSize="small" />
             {!collapsed && <span>Logout</span>}
           </button>
+          {!collapsed && (
+            <div className="shell__update">
+              <div className="shell__updateLabel">Last Log updated</div>
+              <div className="shell__updateValue">{lastUpdatedText}</div>
+            </div>
+          )}
         </div>
       </aside>
 
@@ -110,6 +140,78 @@ export default function AppShell({ children }) {
       {open && <div className="shell__backdrop" onClick={() => setOpen(false)} />}
 
       <div className="shell__content">{children}</div>
+
+      <FabSpeedDial
+        onAddExpense={() => setAddExpenseOpen(true)}
+        onAddWorkout={() => setAddWorkoutOpen(true)}
+        onAddDrink={() => setAddDrinkOpen(true)}
+      />
+
+      <ExpenseDialog
+        open={addExpenseOpen}
+        onClose={() => setAddExpenseOpen(false)}
+        initial={null}
+        onSubmit={async (row) => {
+          try {
+            const payload = { ...row };
+            delete payload.id;
+            await apiFetch("/api/expenses", {
+              method: "POST",
+              body: JSON.stringify(payload),
+            });
+            setAddExpenseOpen(false);
+            setLastUpdate(new Date().toISOString());
+            bumpRefresh();
+            showSnack("Expense added", "success");
+          } catch (err) {
+            showSnack(err.message || "Failed to add expense", "error");
+          }
+        }}
+      />
+
+      <WorkoutDialog
+        open={addWorkoutOpen}
+        onClose={() => setAddWorkoutOpen(false)}
+        initial={null}
+        onSubmit={async (row) => {
+          try {
+            const payload = { ...row };
+            delete payload.id;
+            await apiFetch("/api/workouts", {
+              method: "POST",
+              body: JSON.stringify(payload),
+            });
+            setAddWorkoutOpen(false);
+            setLastUpdate(new Date().toISOString());
+            bumpRefresh();
+            showSnack("Workout added", "success");
+          } catch (err) {
+            showSnack(err.message || "Failed to add workout", "error");
+          }
+        }}
+      />
+
+      <DrinkDialog
+        open={addDrinkOpen}
+        onClose={() => setAddDrinkOpen(false)}
+        initial={null}
+        onSubmit={async (row) => {
+          try {
+            const payload = { ...row };
+            delete payload.id;
+            await apiFetch("/api/drinks", {
+              method: "POST",
+              body: JSON.stringify(payload),
+            });
+            setAddDrinkOpen(false);
+            setLastUpdate(new Date().toISOString());
+            bumpRefresh();
+            showSnack("Drink log saved", "success");
+          } catch (err) {
+            showSnack(err.message || "Failed to save drink log", "error");
+          }
+        }}
+      />
 
       <Dialog
         open={settingsGateOpen}
@@ -187,6 +289,26 @@ export default function AppShell({ children }) {
           sx={{ fontSize: 13 }}
         >
           Confirm logout?
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={snack.open}
+        autoHideDuration={2200}
+        anchorOrigin={{ vertical: "top", horizontal: "center" }}
+        sx={{ top: "50%", transform: "translateY(-50%)" }}
+        onClose={(e, reason) => {
+          if (reason === "clickaway") return;
+          setSnack((s) => ({ ...s, open: false }));
+        }}
+      >
+        <Alert
+          severity={snack.severity}
+          variant="filled"
+          onClose={() => setSnack((s) => ({ ...s, open: false }))}
+          sx={{ fontSize: 13 }}
+        >
+          {snack.message}
         </Alert>
       </Snackbar>
     </div>

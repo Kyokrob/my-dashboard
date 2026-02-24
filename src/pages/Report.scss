@@ -1,0 +1,42 @@
+.report-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.report-card {
+  min-height: 140px;
+  display: grid;
+  grid-template-rows: 1fr auto;
+  align-items: center;
+  justify-items: center;
+  gap: 6px;
+}
+
+.report-card__value {
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.report-card__sub {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.report-card__value--good {
+  color: #9FC8B3;
+}
+
+.report-card__value--bad {
+  color: #E3A6A1;
+}
+
+.report-card__value--neutral {
+  color: #E7E4DF;
+}
+
+@media (max-width: 720px) {
+  .report-grid {
+    grid-template-columns: 1fr;
+  }
+}

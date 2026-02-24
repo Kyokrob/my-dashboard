@@ -19,7 +19,6 @@ import DashboardLayout from "../components/layout/DashboardLayout.jsx";
 import MonthPicker from "../components/layout/MonthPicker.jsx";
 import SectionCard from "../components/common/SectionCard.jsx";
 
-import FabSpeedDial from "../components/common/FabSpeedDial.jsx";
 import ConfirmDialog from "../components/common/ConfirmDialog.jsx";
 
 import TierSelector from "../components/expenses/TierSelector.jsx";
@@ -44,7 +43,7 @@ import { budgetByCategory, categoryOrder } from "../config/budget.js";
 
 
 export default function Dashboard() {
-  const { monthKey, setMonthKey, tier, setTier } = useDashboard();
+  const { monthKey, setMonthKey, tier, setTier, setLastUpdate, refreshKey } = useDashboard();
   const { logout } = useAuth();
 
   /* ======================
@@ -80,6 +79,16 @@ export default function Dashboard() {
     return data.map(normalizeDrink);
   }
 
+  function computeLastUpdate(exp, wo, dr) {
+    const all = [...exp, ...wo, ...dr];
+    const latest = all.reduce((max, item) => {
+      const ts = item.updatedAt || item.createdAt || item.date;
+      const time = ts ? new Date(ts).getTime() : 0;
+      return time > max ? time : max;
+    }, 0);
+    if (latest) setLastUpdate(new Date(latest).toISOString());
+  }
+
   /* ======================
      State
   ====================== */
@@ -102,8 +111,11 @@ export default function Dashboard() {
 ====================== */
   useEffect(() => {
     const load = async () => {
+      let exp = [];
+      let wo = [];
+      let dr = [];
       try {
-        const exp = await fetchExpenses();
+        exp = await fetchExpenses();
         setExpenseRows(exp);
     } catch (err) {
       console.error("Failed to load expenses:", err);
@@ -112,7 +124,7 @@ export default function Dashboard() {
     }
 
       try {
-        const wo = await fetchWorkouts();
+        wo = await fetchWorkouts();
         setWorkoutRows(wo);
       } catch (err) {
         console.error("Failed to load workouts:", err);
@@ -130,17 +142,19 @@ export default function Dashboard() {
       }
 
       try {
-        const dr = await fetchDrinks();
+        dr = await fetchDrinks();
         setDrinkRows(dr);
       } catch (err) {
         console.error("Failed to load drinks:", err);
         setDrinkRows([]);
         showSnack("Failed to load drinks", "error");
       }
+
+      computeLastUpdate(exp, wo, dr);
     };
 
     load();
-  }, []);
+  }, [refreshKey]);
 
   useEffect(() => {
     try {
@@ -775,26 +789,30 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
 
           
 
-          <SectionCard title="Workout Mix">
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                padding: "8px 0 4px",
-                gap: 6,
-                color: "white",
-              }}
-            >
-              <div style={{ fontSize: 14, fontWeight: 600 }}>Distribution by workout type</div>
-              <div style={{ fontSize: 12, opacity: 0.65 }}>Based on logged workouts this month</div>
-              <div style={{ marginTop: 8 }}>
-                <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
-                  <WorkoutTypePie rows={monthWorkouts} />
-                </Suspense>
-              </div>
-            </div>
-          </SectionCard>
+      <SectionCard title="Workout Mix">
+        <div
+          style={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "center",
+            padding: "8px 0 4px",
+            gap: 6,
+            color: "white",
+          }}
+        >
+          <div style={{ fontSize: 14, fontWeight: 600 }}>Distribution by workout type</div>
+          <div style={{ fontSize: 12, opacity: 0.65 }}>Based on logged workouts this month</div>
+          <div style={{ marginTop: 8 }}>
+            {monthWorkouts.length ? (
+              <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
+                <WorkoutTypePie rows={monthWorkouts} />
+              </Suspense>
+            ) : (
+              <div className="chart-empty">No data yet. Log your first workout to see insights.</div>
+            )}
+          </div>
+        </div>
+      </SectionCard>
 
           
 
@@ -809,9 +827,13 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
     gap: 6,
     color: "white",
   }}>
-    <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
-      <ExpenseCategoryBar rows={monthExpenses} />
-    </Suspense>
+    {monthExpenses.length ? (
+      <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
+        <ExpenseCategoryBar rows={monthExpenses} />
+      </Suspense>
+    ) : (
+      <div className="chart-empty">No data yet. Log your first expense to see insights.</div>
+    )}
   </div>
 </SectionCard>
 
@@ -845,17 +867,6 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
         </div>
       </div>
 
-
-      {/* Speed Dial */}
-      <FabSpeedDial
-        onAddExpense={() => {
-          window.location.assign("/trackers");
-        }}
-        onAddWorkout={() => {
-          window.location.assign("/trackers");
-        }}
-        onAddDrink={() => window.location.assign("/trackers")}
-      />
 
       {/* Snackbar */}
       <Snackbar

@@ -159,6 +159,26 @@
   gap: 6px;
 }
 
+.shell__update {
+  padding: 6px 10px;
+  border-radius: 10px;
+  // background: rgba(255,255,255,0.04);
+  // border: 1px solid rgba(255,255,255,0.06);
+}
+
+.shell__updateLabel {
+  font-size: 8px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  opacity: 0.6;
+}
+
+.shell__updateValue {
+  font-size: 10px;
+  opacity: 0.85;
+  margin-top: 4px;
+}
+
 .shell__logout {
   width: 100%;
   text-align: left;

@@ -4,6 +4,23 @@
   overflow-x: auto;
 }
 
+.dtable__empty {
+  padding: 18px 0;
+  text-align: center;
+  color: rgba(255,255,255,0.7);
+}
+
+.dtable__emptyTitle {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.dtable__emptySub {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 4px;
+}
+
 .dtable__row {
   display: grid;
   grid-template-columns: 0.9fr 0.9fr 0.7fr 0.7fr 1.2fr 0.8fr 1.2fr 140px;

@@ -15,7 +15,6 @@ import DrinkTable from "../components/drinks/DrinkTable.jsx";
 import DrinkDialog from "../components/drinks/DrinkDialog.jsx";
 import DrinkLogsDialog from "../components/drinks/DrinkLogsDialog.jsx";
 import ConfirmDialog from "../components/common/ConfirmDialog.jsx";
-import FabSpeedDial from "../components/common/FabSpeedDial.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 
 import { apiFetch } from "../api/apiFetch.js";
@@ -48,7 +47,7 @@ function DrinkLevelBars({ rows }) {
 }
 
 export default function Trackers() {
-  const { monthKey, setMonthKey } = useDashboard();
+  const { monthKey, setMonthKey, setLastUpdate, refreshKey } = useDashboard();
   const { logout } = useAuth();
 
   const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
@@ -63,6 +62,9 @@ export default function Trackers() {
   const [expenseRows, setExpenseRows] = useState([]);
   const [workoutRows, setWorkoutRows] = useState([]);
   const [drinkRows, setDrinkRows] = useState([]);
+  const [loadingExp, setLoadingExp] = useState(true);
+  const [loadingWo, setLoadingWo] = useState(true);
+  const [loadingDr, setLoadingDr] = useState(true);
 
   const [editingExpense, setEditingExpense] = useState(null);
   const [editingWorkout, setEditingWorkout] = useState(null);
@@ -94,28 +96,54 @@ export default function Trackers() {
     return data.map(normalizeDrink);
   }
 
+  function computeLastUpdate(exp, wo, dr) {
+    const all = [...exp, ...wo, ...dr];
+    const latest = all.reduce((max, item) => {
+      const ts = item.updatedAt || item.createdAt || item.date;
+      const time = ts ? new Date(ts).getTime() : 0;
+      return time > max ? time : max;
+    }, 0);
+    if (latest) setLastUpdate(new Date(latest).toISOString());
+  }
+
   useEffect(() => {
     const load = async () => {
+      let exp = [];
+      let wo = [];
+      let dr = [];
+
       try {
-        setExpenseRows(await fetchExpenses());
+        exp = await fetchExpenses();
+        setExpenseRows(exp);
+        setLoadingExp(false);
       } catch {
         showSnack("Failed to load expenses", "error");
+        setLoadingExp(false);
       }
 
       try {
-        setWorkoutRows(await fetchWorkouts());
+        wo = await fetchWorkouts();
+        setWorkoutRows(wo);
+        setLoadingWo(false);
       } catch {
         showSnack("Failed to load workouts", "error");
+        setLoadingWo(false);
       }
 
       try {
-        setDrinkRows(await fetchDrinks());
+        dr = await fetchDrinks();
+        setDrinkRows(dr);
+        setLoadingDr(false);
       } catch {
         showSnack("Failed to load drinks", "error");
+        setLoadingDr(false);
       }
+
+      computeLastUpdate(exp, wo, dr);
     };
     load();
-  }, []);
+  }, [refreshKey]);
+
 
   async function addExpense(row) {
     try {
@@ -128,6 +156,7 @@ export default function Trackers() {
         })
       );
       setExpenseRows((prev) => [...prev, created]);
+      setLastUpdate(new Date().toISOString());
       showSnack("Expense added", "success");
     } catch {
       showSnack("Failed to add expense", "error");
@@ -148,6 +177,7 @@ export default function Trackers() {
         })
       );
       setExpenseRows((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
+      setLastUpdate(new Date().toISOString());
       showSnack("Expense updated", "info");
     } catch {
       showSnack("Failed to update expense", "error");
@@ -158,6 +188,7 @@ export default function Trackers() {
     try {
       await apiFetch(`/api/expenses/${id}`, { method: "DELETE" });
       setExpenseRows((prev) => prev.filter((r) => r.id !== id));
+      setLastUpdate(new Date().toISOString());
       showSnack("Expense deleted", "warning");
     } catch {
       showSnack("Failed to delete expense", "error");
@@ -175,6 +206,7 @@ export default function Trackers() {
         })
       );
       setWorkoutRows((prev) => [...prev, created]);
+      setLastUpdate(new Date().toISOString());
       showSnack("Workout added", "success");
     } catch {
       showSnack("Failed to add workout", "error");
@@ -195,6 +227,7 @@ export default function Trackers() {
         })
       );
       setWorkoutRows((prev) => prev.map((r) => (r.id === saved.id ? saved : r)));
+      setLastUpdate(new Date().toISOString());
       showSnack("Workout updated", "info");
     } catch {
       showSnack("Failed to update workout", "error");
@@ -205,6 +238,7 @@ export default function Trackers() {
     try {
       await apiFetch(`/api/workouts/${id}`, { method: "DELETE" });
       setWorkoutRows((prev) => prev.filter((r) => r.id !== id));
+      setLastUpdate(new Date().toISOString());
       showSnack("Workout deleted", "warning");
     } catch {
       showSnack("Failed to delete workout", "error");
@@ -226,6 +260,7 @@ export default function Trackers() {
         if (exists) return prev.map((d) => (d.date === created.date ? created : d));
         return [created, ...prev];
       });
+      setLastUpdate(new Date().toISOString());
       showSnack("Drink log saved", "success");
     } catch {
       showSnack("Failed to save drink log", "error");
@@ -247,6 +282,7 @@ export default function Trackers() {
         })
       );
       setDrinkRows((prev) => prev.map((d) => (d.id === saved.id ? saved : d)));
+      setLastUpdate(new Date().toISOString());
       showSnack("Drink log updated", "info");
     } catch {
       showSnack("Failed to update drink log", "error");
@@ -257,6 +293,7 @@ export default function Trackers() {
     try {
       await apiFetch(`/api/drinks/${id}`, { method: "DELETE" });
       setDrinkRows((prev) => prev.filter((d) => d.id !== id));
+      setLastUpdate(new Date().toISOString());
       showSnack("Drink log deleted", "warning");
     } catch {
       showSnack("Failed to delete drink log", "error");
@@ -275,17 +312,29 @@ export default function Trackers() {
       <div className="trackers-charts">
         <SectionCard title="Spending Mix">
           <div className="trackers-chart">
-            <Suspense fallback={<div className="trackers-chart__empty">Loading chart…</div>}>
-              <ExpenseCategoryBar rows={monthExpenses} />
-            </Suspense>
+            {monthExpenses.length ? (
+              <Suspense fallback={<div className="trackers-chart__empty">Loading chart…</div>}>
+                <ExpenseCategoryBar rows={monthExpenses} />
+              </Suspense>
+            ) : (
+              <div className="trackers-chart__empty">
+                No data yet. Log your first expense to see insights.
+              </div>
+            )}
           </div>
         </SectionCard>
 
         <SectionCard title="Training Mix">
           <div className="trackers-chart">
-            <Suspense fallback={<div className="trackers-chart__empty">Loading chart…</div>}>
-              <WorkoutTypePie rows={monthWorkouts} />
-            </Suspense>
+            {monthWorkouts.length ? (
+              <Suspense fallback={<div className="trackers-chart__empty">Loading chart…</div>}>
+                <WorkoutTypePie rows={monthWorkouts} />
+              </Suspense>
+            ) : (
+              <div className="trackers-chart__empty">
+                No data yet. Log your first workout to see insights.
+              </div>
+            )}
           </div>
         </SectionCard>
 
@@ -294,7 +343,9 @@ export default function Trackers() {
             {monthDrinks.length ? (
               <DrinkLevelBars rows={monthDrinks} />
             ) : (
-              <div className="trackers-chart__empty">No drink logs yet</div>
+              <div className="trackers-chart__empty">
+                No data yet. Log your first drink to see insights.
+              </div>
             )}
           </div>
         </SectionCard>
@@ -304,6 +355,7 @@ export default function Trackers() {
         <SectionCard title="Spending Tracker">
           <ExpenseTable
             rows={monthExpenses}
+            loading={loadingExp}
             onEdit={(row) => {
               setEditingExpense(row);
               setIsExpenseDialogOpen(true);
@@ -317,6 +369,7 @@ export default function Trackers() {
         <SectionCard title="Training Tracker">
           <WorkoutTable
             rows={monthWorkouts}
+            loading={loadingWo}
             onEdit={(row) => {
               setEditingWorkout(row);
               setIsWorkoutDialogOpen(true);
@@ -330,6 +383,7 @@ export default function Trackers() {
         <SectionCard title="Drinking Tracker">
           <DrinkTable
             rows={monthDrinks}
+            loading={loadingDr}
             onEdit={(row) => {
               setEditingDrink(row);
               setIsDrinkDialogOpen(true);
@@ -455,20 +509,7 @@ export default function Trackers() {
         </Alert>
       </Snackbar>
 
-      <FabSpeedDial
-        onAddExpense={() => {
-          setEditingExpense(null);
-          setIsExpenseDialogOpen(true);
-        }}
-        onAddWorkout={() => {
-          setEditingWorkout(null);
-          setIsWorkoutDialogOpen(true);
-        }}
-        onAddDrink={() => {
-          setEditingDrink(null);
-          setIsDrinkDialogOpen(true);
-        }}
-      />
+      {/* Speed dial lives in AppShell */}
     </DashboardLayout>
   );
 }

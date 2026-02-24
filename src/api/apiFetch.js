@@ -12,6 +12,18 @@ export async function apiFetch(path, options = {}) {
 
   if (res.status === 204) return null;
 
+  if (res.status === 401) {
+    try {
+      if (window.location.pathname !== "/login") {
+        sessionStorage.setItem("flash", "signed_out");
+        window.location.assign("/login");
+      }
+    } catch {
+      // ignore storage/navigation errors
+    }
+    throw new Error("Unauthorized");
+  }
+
   const contentType = res.headers.get("content-type") || "";
   const data = contentType.includes("application/json")
     ? await res.json()
