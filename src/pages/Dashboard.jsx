@@ -14,6 +14,7 @@ import MonthCalendar from "../components/common/MonthCalendar.jsx";
 import KpiCard from "../components/common/KpiCard.jsx";
 const WorkoutTypePie = lazy(() => import("../components/workouts/WorkoutTypePie.jsx"));
 const ExpenseCategoryBar = lazy(() => import("../components/expenses/ExpenseCategoryBar.jsx"));
+const ExpenseCategoryPie = lazy(() => import("../components/expenses/ExpenseCategoryPie.jsx"));
 import TodoList from "../components/todo/TodoList.jsx";
 import DashboardLayout from "../components/layout/DashboardLayout.jsx";
 import MonthPicker from "../components/layout/MonthPicker.jsx";
@@ -817,6 +818,25 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
           
 
           
+
+<SectionCard title="Expense Mix (This Month)">
+  <div style={{
+    display: "flex",
+    flexDirection: "column",
+    alignItems: "center",
+    padding: "8px 0 4px",
+    gap: 6,
+    color: "white",
+  }}>
+    {monthExpenses.length ? (
+      <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
+        <ExpenseCategoryPie rows={monthExpenses} />
+      </Suspense>
+    ) : (
+      <div className="chart-empty">No data yet. Log your first expense to see insights.</div>
+    )}
+  </div>
+</SectionCard>
 
 <SectionCard title="Expense Breakdown (This Month)">
   <div style={{

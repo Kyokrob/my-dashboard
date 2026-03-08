@@ -57,8 +57,10 @@ export default function ExpenseCategoryPie({ rows = [] }) {
             paddingAngle: 3,
             cornerRadius: 6,
             valueFormatter: (v) => {
-              const pct = totalSpend ? Math.round((Number(v) / totalSpend) * 100) : 0;
-              return `฿${Number(v).toLocaleString()} (${pct}%)`;
+              const value = typeof v === "number" ? v : Number(v?.value ?? v);
+              const safe = Number.isFinite(value) ? value : 0;
+              const pct = totalSpend ? Math.round((safe / totalSpend) * 100) : 0;
+              return `฿${safe.toLocaleString()} (${pct}%)`;
             },
           },
         ]}
