@@ -37,6 +37,7 @@
   grid-auto-rows: 1fr;
   gap: 8px;
   align-items: stretch;
+  min-width: 0;
 }
 
 .mcal__cell {
@@ -50,6 +51,7 @@
   justify-content: space-between;
   align-items: flex-start;
   cursor: default;
+  min-width: 0;
 
   &.is-empty {
     background: rgba(255, 255, 255, 0.03);

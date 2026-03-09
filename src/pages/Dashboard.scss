@@ -3,11 +3,116 @@
   grid-template-columns: 1.1fr 0.9fr;
   gap: 14px;
   align-items: start;
+  min-width: 0;
 }
 
 .dashboard-col {
   display: grid;
   gap: 14px;
+  min-width: 0;
+}
+
+.kpi-grid {
+  min-width: 0;
+}
+
+.kpi-grid > * {
+  min-width: 0;
+}
+
+.kpi-grid .kpi {
+  height: 250px;
+}
+
+.kpi--tall .kpi {
+  height: 250px;
+}
+
+.kpi--short .kpi {
+  height: 250px;
+}
+
+.kpi--wide {
+  grid-column: span 2;
+}
+
+.kpi--wide .kpi {
+  height: 250px;
+}
+
+.kpi-weekly {
+  width: 100%;
+}
+
+.kpi--bottom .kpi {
+  display: flex;
+  flex-direction: column;
+}
+
+.kpi--bottom .kpi__value {
+  margin: auto 0;
+  flex: 1;
+}
+
+.kpi--bottom .kpi__sub {
+  margin-top: auto;
+  align-self: flex-start;
+}
+
+.kpi-today .kpi__value,
+.kpi--bottom .kpi__value {
+  margin: 12px 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.kpi-today .kpi__sub {
+  margin-top: 6px;
+  font-size: 11px;
+  opacity: 0.65;
+}
+
+.kpi-today__rows {
+  display: grid;
+  gap: 12px;
+}
+
+.kpi-today__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 0;
+  align-items: center;
+  min-height: 36px;
+}
+
+.kpi-today__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.75;
+}
+
+.kpi-today__value {
+  font-weight: 700;
+  text-align: right;
+}
+
+.kpi-today__value.is-good {
+  color: #9FC8B3;
+}
+
+.kpi-today__value.is-bad {
+  color: #E3A6A1;
+}
+
+.kpi-today__value.is-muted {
+  opacity: 0.7;
 }
 
 .dashboard-full {
@@ -18,6 +123,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 10px;
+  min-width: 0;
 }
 
 .drink-card {
@@ -40,9 +146,16 @@
 }
 
 .drink-card__value {
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1.2;
   min-height: 3.2em;
+  letter-spacing: 0.2px;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
 }
 
 .drink-card__sub {
@@ -51,6 +164,25 @@
   align-self: end;
   text-align: left;
   min-height: 2.4em;
+}
+
+.drink-card__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 11px;
+  opacity: 0.75;
+}
+
+.drink-card__list > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.drink-card__list span:last-child {
+  font-weight: 600;
+  opacity: 0.95;
 }
 
 .drink-card__value--good {
@@ -65,6 +197,166 @@
   color: #E7E4DF;
 }
 
+.runrate-card {
+  display: grid;
+  grid-template-columns: 1.1fr 1.2fr;
+  gap: 16px;
+  align-items: center;
+  min-width: 0;
+}
+
+.runrate-card__label {
+  font-size: 12px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.runrate-card__status {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.runrate-card__status--good {
+  color: #9FC8B3;
+}
+
+.runrate-card__status--bad {
+  color: #E3A6A1;
+}
+
+.runrate-card__status--neutral {
+  color: #E7E4DF;
+}
+
+.runrate-card__sub {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.runrate-card__metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.runrate-card__metrics > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.runrate-card__metrics span:last-child {
+  font-weight: 600;
+}
+
+.multiplier-card {
+  display: grid;
+  grid-template-columns: 1.05fr 1fr;
+  gap: 16px;
+  align-items: center;
+  min-width: 0;
+}
+
+.multiplier-card__label {
+  font-size: 12px;
+  opacity: 0.7;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.multiplier-card__value {
+  font-size: 24px;
+  font-weight: 700;
+  margin-top: 6px;
+}
+
+.multiplier-card__sub {
+  font-size: 12px;
+  opacity: 0.7;
+  margin-top: 6px;
+}
+
+.multiplier-card__metrics {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-size: 13px;
+  opacity: 0.85;
+}
+
+.multiplier-card__metrics > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  min-width: 0;
+}
+
+.multiplier-card__metrics span:last-child {
+  font-weight: 600;
+}
+
+ .momentum-list {
+   display: flex;
+   flex-direction: column;
+   gap: 10px;
+   font-size: 13px;
+ }
+
+.momentum-list--compact {
+  gap: 6px;
+}
+
+.momentum-item {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 0;
+}
+
+.momentum-item__label {
+  opacity: 0.8;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.momentum-item__value {
+  font-weight: 700;
+}
+
+.momentum-item__value--good {
+  color: #9FC8B3;
+}
+
+.momentum-item__value--bad {
+  color: #E3A6A1;
+}
+
+.momentum-item__value--neutral {
+  color: #E7E4DF;
+}
+
+.momentum-empty {
+  font-size: 12px;
+  opacity: 0.6;
+  text-align: center;
+}
+
+ 
 
 .weekly-spend {
   display: flex;
@@ -78,6 +370,7 @@
   align-items: center;
   gap: 12px;
   font-size: 13px;
+  min-width: 0;
 }
 
 .weekly-spend__label {
@@ -106,6 +399,11 @@
   opacity: 0.75;
 }
 
+.dashboard-col svg,
+.dashboard-col .MuiChartsSurface-root {
+  max-width: 100%;
+}
+
 .chart-empty {
   font-size: 12px;
   opacity: 0.65;
@@ -123,9 +421,26 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
     
   }
+
+  .runrate-card {
+    grid-template-columns: 1fr;
+  }
+
+  .multiplier-card {
+    grid-template-columns: 1fr;
+  }
+
 }
 
 @media (max-width: 720px) {
+  .kpi-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi--wide {
+    grid-column: span 1;
+  }
+
   .dashboard-grid {
     gap: 10px;
     display: flex;
@@ -149,4 +464,51 @@
     gap: 8px;
     font-size: 12px;
   }
+}
+.kpi-momentum {
+  display: grid;
+  gap: 12px;
+}
+
+.kpi-momentum__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 13px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  min-width: 0;
+  align-items: center;
+  min-height: 36px;
+}
+
+.kpi-momentum__label {
+  opacity: 0.8;
+  max-width: 60%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kpi-momentum__value {
+  font-weight: 700;
+}
+
+.kpi-momentum__value--good {
+  color: #9FC8B3;
+}
+
+.kpi-momentum__value--bad {
+  color: #E3A6A1;
+}
+
+.kpi-momentum__value--neutral {
+  color: #E7E4DF;
+}
+
+.kpi-momentum__empty {
+  font-size: 12px;
+  opacity: 0.6;
 }

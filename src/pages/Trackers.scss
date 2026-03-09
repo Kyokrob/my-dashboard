@@ -3,6 +3,15 @@
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 14px;
   margin-bottom: 14px;
+  align-items: stretch;
+}
+
+.trackers-charts > * {
+  height: 100%;
+}
+
+.trackers-charts .card {
+  height: 100%;
 }
 
 .trackers-chart {
@@ -10,6 +19,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  height: 100%;
 }
 
 .trackers-chart__empty {

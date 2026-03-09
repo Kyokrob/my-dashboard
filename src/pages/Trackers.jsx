@@ -310,88 +310,100 @@ export default function Trackers() {
       right={<MonthPicker value={monthKey} onChange={setMonthKey} />}
     >
       <div className="trackers-charts">
-        <SectionCard title="Spending Mix">
-          <div className="trackers-chart">
-            {monthExpenses.length ? (
-              <Suspense fallback={<div className="trackers-chart__empty">Loading chart…</div>}>
-                <ExpenseCategoryBar rows={monthExpenses} />
-              </Suspense>
-            ) : (
-              <div className="trackers-chart__empty">
-                No data yet. Log your first expense to see insights.
-              </div>
-            )}
-          </div>
-        </SectionCard>
+        <div className="theme-exp">
+          <SectionCard title="Spending Mix">
+            <div className="trackers-chart">
+              {monthExpenses.length ? (
+                <Suspense fallback={<div className="trackers-chart__empty">Loading chart…</div>}>
+                  <ExpenseCategoryBar rows={monthExpenses} />
+                </Suspense>
+              ) : (
+                <div className="trackers-chart__empty">
+                  No data yet. Log your first expense to see insights.
+                </div>
+              )}
+            </div>
+          </SectionCard>
+        </div>
 
-        <SectionCard title="Training Mix">
-          <div className="trackers-chart">
-            {monthWorkouts.length ? (
-              <Suspense fallback={<div className="trackers-chart__empty">Loading chart…</div>}>
-                <WorkoutTypePie rows={monthWorkouts} />
-              </Suspense>
-            ) : (
-              <div className="trackers-chart__empty">
-                No data yet. Log your first workout to see insights.
-              </div>
-            )}
-          </div>
-        </SectionCard>
+        <div className="theme-wo">
+          <SectionCard title="Training Mix">
+            <div className="trackers-chart">
+              {monthWorkouts.length ? (
+                <Suspense fallback={<div className="trackers-chart__empty">Loading chart…</div>}>
+                  <WorkoutTypePie rows={monthWorkouts} />
+                </Suspense>
+              ) : (
+                <div className="trackers-chart__empty">
+                  No data yet. Log your first workout to see insights.
+                </div>
+              )}
+            </div>
+          </SectionCard>
+        </div>
 
-        <SectionCard title="Drink Levels">
-          <div className="trackers-chart">
-            {monthDrinks.length ? (
-              <DrinkLevelBars rows={monthDrinks} />
-            ) : (
-              <div className="trackers-chart__empty">
-                No data yet. Log your first drink to see insights.
-              </div>
-            )}
-          </div>
-        </SectionCard>
+        <div className="theme-drink">
+          <SectionCard title="Drink Levels">
+            <div className="trackers-chart">
+              {monthDrinks.length ? (
+                <DrinkLevelBars rows={monthDrinks} />
+              ) : (
+                <div className="trackers-chart__empty">
+                  No data yet. Log your first drink to see insights.
+                </div>
+              )}
+            </div>
+          </SectionCard>
+        </div>
       </div>
 
       <div className="dashboard-full">
-        <SectionCard title="Spending Tracker">
-          <ExpenseTable
-            rows={monthExpenses}
-            loading={loadingExp}
-            onEdit={(row) => {
-              setEditingExpense(row);
-              setIsExpenseDialogOpen(true);
-            }}
-            pageSize={10}
-          />
-        </SectionCard>
+        <div className="theme-exp">
+          <SectionCard title="Spending Tracker">
+            <ExpenseTable
+              rows={monthExpenses}
+              loading={loadingExp}
+              onEdit={(row) => {
+                setEditingExpense(row);
+                setIsExpenseDialogOpen(true);
+              }}
+              pageSize={10}
+            />
+          </SectionCard>
+        </div>
       </div>
 
       <div className="dashboard-full">
-        <SectionCard title="Training Tracker">
-          <WorkoutTable
-            rows={monthWorkouts}
-            loading={loadingWo}
-            onEdit={(row) => {
-              setEditingWorkout(row);
-              setIsWorkoutDialogOpen(true);
-            }}
-            pageSize={10}
-          />
-        </SectionCard>
+        <div className="theme-wo">
+          <SectionCard title="Training Tracker">
+            <WorkoutTable
+              rows={monthWorkouts}
+              loading={loadingWo}
+              onEdit={(row) => {
+                setEditingWorkout(row);
+                setIsWorkoutDialogOpen(true);
+              }}
+              pageSize={10}
+            />
+          </SectionCard>
+        </div>
       </div>
 
       <div className="dashboard-full">
-        <SectionCard title="Drinking Tracker">
-          <DrinkTable
-            rows={monthDrinks}
-            loading={loadingDr}
-            onEdit={(row) => {
-              setEditingDrink(row);
-              setIsDrinkDialogOpen(true);
-            }}
-            onDelete={deleteDrink}
-            onView={(row) => setViewDrink(row)}
-          />
-        </SectionCard>
+        <div className="theme-drink">
+          <SectionCard title="Drinking Tracker">
+            <DrinkTable
+              rows={monthDrinks}
+              loading={loadingDr}
+              onEdit={(row) => {
+                setEditingDrink(row);
+                setIsDrinkDialogOpen(true);
+              }}
+              onDelete={deleteDrink}
+              onView={(row) => setViewDrink(row)}
+            />
+          </SectionCard>
+        </div>
       </div>
 
       <ExpenseDialog

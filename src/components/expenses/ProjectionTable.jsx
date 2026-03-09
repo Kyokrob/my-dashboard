@@ -1,10 +1,12 @@
-import { budgetByCategory, categoryOrder } from "../../../server/src/config/budget.js";
+import { budgetByCategory as defaultBudgets, categoryOrder } from "../../config/budget.js";
 import { formatTHB } from "../../utils/money.js";
 import { getStatus } from "../../utils/rollups.js";
 import StatusBadge from "../common/StatusBadge.jsx";
 import "./ProjectionTable.scss";
 
-export default function ProjectionTable({ tier, actualByCat }) {
+export default function ProjectionTable({ tier, actualByCat, budgets }) {
+  const budgetSource = budgets || defaultBudgets;
+
   return (
     <div className="proj">
       <div className="proj__grid proj__grid--head">
@@ -16,7 +18,7 @@ export default function ProjectionTable({ tier, actualByCat }) {
       </div>
 
       {categoryOrder.map((cat) => {
-        const budget = budgetByCategory[cat][tier];
+        const budget = budgetSource?.[cat]?.[tier] ?? 0;
         const actual = actualByCat[cat] || 0;
         const remaining = budget - actual;
         const status = getStatus(remaining, budget);

@@ -12,6 +12,7 @@ import expensesRoutes from "./routes/expenses.routes.js";
 import workoutsRoutes from "./routes/workouts.routes.js";
 import todosRoutes from "./routes/todos.routes.js";
 import drinksRoutes from "./routes/drinks.routes.js";
+import budgetsRoutes from "./routes/budgets.routes.js";
 import { errorHandler } from "./middleware/error.js";
 import { requireAuth, attachUser } from "./middleware/auth.js";
 
@@ -88,6 +89,7 @@ app.use("/api/expenses", requireAuth, expensesRoutes);
 app.use("/api/workouts", requireAuth, workoutsRoutes);
 app.use("/api/todos", requireAuth, todosRoutes);
 app.use("/api/drinks", requireAuth, drinksRoutes);
+app.use("/api/budgets", requireAuth, budgetsRoutes);
 
 /* ======================
    SERVE FRONTEND IN PROD

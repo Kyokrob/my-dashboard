@@ -106,6 +106,10 @@
   background: rgba(255, 255, 255, 0.03);
 }
 
+.report-stat--skeleton {
+  min-height: 96px;
+}
+
 .report-stat__label {
   font-size: 12px;
   opacity: 0.7;
@@ -156,4 +160,5 @@
   .report-extra-grid {
     grid-template-columns: 1fr;
   }
+
 }

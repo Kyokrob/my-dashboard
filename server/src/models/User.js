@@ -1,5 +1,6 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
+import { budgetByCategory } from "../config/budget.js";
 
 const UserSchema = new mongoose.Schema(
   {
@@ -8,6 +9,7 @@ const UserSchema = new mongoose.Schema(
     passwordHash: { type: String, required: true },
     role: { type: String, enum: ["admin"], default: "admin" },
     isActive: { type: Boolean, default: true },
+    budgets: { type: Object, default: budgetByCategory },
   },
   { timestamps: true }
 );

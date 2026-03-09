@@ -40,15 +40,6 @@ export default function AppShell({ children }) {
   function showSnack(message, severity = "success") {
     setSnack({ open: true, message, severity });
   }
-  const lastUpdatedText = lastUpdate
-    ? new Date(lastUpdate).toLocaleString("en-US", {
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-        hour: "2-digit",
-        minute: "2-digit",
-      })
-    : "—";
 
   async function verifySettingsAccess() {
     setSettingsError("");
@@ -127,8 +118,19 @@ export default function AppShell({ children }) {
           </button>
           {!collapsed && (
             <div className="shell__update">
-              <div className="shell__updateLabel">Last Log updated</div>
-              <div className="shell__updateValue">{lastUpdatedText}</div>
+              <div className="shell__updateLabel">Powered by Coremind lab</div>
+              <div className="shell__updateValue shell__updateValue--label">
+                Last log updated{" "}
+                {lastUpdate
+                  ? new Date(lastUpdate).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "—"}
+              </div>
             </div>
           )}
         </div>

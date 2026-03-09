@@ -1,4 +1,6 @@
-import { createContext, useContext, useMemo, useState } from "react";
+import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { apiFetch } from "../api/apiFetch.js";
+import { budgetByCategory as defaultBudgets } from "../config/budget.js";
 
 const DashboardContext = createContext(null);
 
@@ -12,7 +14,30 @@ export function DashboardProvider({ children }) {
   const [tier, setTier] = useState("low"); // low | mid | high
   const [lastUpdate, setLastUpdate] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [themeOn, setThemeOn] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("ui.themeOn") === "true";
+  });
+  const [budgets, setBudgets] = useState(null);
   const bumpRefresh = () => setRefreshKey((k) => k + 1);
+  const toggleTheme = () => setThemeOn((v) => !v);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("ui.themeOn", String(themeOn));
+  }, [themeOn]);
+
+  useEffect(() => {
+    const loadBudgets = async () => {
+      try {
+        const data = await apiFetch("/api/budgets");
+        setBudgets(data?.budgets || defaultBudgets);
+      } catch {
+        setBudgets(defaultBudgets);
+      }
+    };
+    loadBudgets();
+  }, []);
 
   const value = useMemo(
     () => ({
@@ -24,8 +49,13 @@ export function DashboardProvider({ children }) {
       setLastUpdate,
       refreshKey,
       bumpRefresh,
+      themeOn,
+      setThemeOn,
+      toggleTheme,
+      budgets,
+      setBudgets,
     }),
-    [monthKey, tier, lastUpdate, refreshKey]
+    [monthKey, tier, lastUpdate, refreshKey, themeOn, budgets]
   );
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

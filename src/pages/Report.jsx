@@ -4,6 +4,7 @@ import MonthPicker from "../components/layout/MonthPicker.jsx";
 import SectionCard from "../components/common/SectionCard.jsx";
 import MonthlyBarChart from "../components/insights/MonthlyBarChart.jsx";
 import MonthlyLineChart from "../components/insights/MonthlyLineChart.jsx";
+import Skeleton from "@mui/material/Skeleton";
 import { apiFetch } from "../api/apiFetch.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { inMonth } from "../utils/date.js";
@@ -33,26 +34,43 @@ export default function Report() {
   });
   const [expenses, setExpenses] = useState([]);
   const [drinks, setDrinks] = useState([]);
+  const [workouts, setWorkouts] = useState([]);
+  const [loadingExp, setLoadingExp] = useState(true);
+  const [loadingDr, setLoadingDr] = useState(true);
+  const [loadingWo, setLoadingWo] = useState(true);
 
   useEffect(() => {
     const load = async () => {
+      setLoadingExp(true);
+      setLoadingDr(true);
+      setLoadingWo(true);
       try {
         const exp = await apiFetch("/api/expenses");
         setExpenses(Array.isArray(exp) ? exp : []);
       } catch {
         setExpenses([]);
+      } finally {
+        setLoadingExp(false);
       }
       try {
         const dr = await apiFetch("/api/drinks");
         setDrinks(Array.isArray(dr) ? dr : []);
       } catch {
         setDrinks([]);
+      } finally {
+        setLoadingDr(false);
+      }
+      try {
+        const wo = await apiFetch("/api/workouts");
+        setWorkouts(Array.isArray(wo) ? wo : []);
+      } catch {
+        setWorkouts([]);
+      } finally {
+        setLoadingWo(false);
       }
     };
     load();
   }, []);
-
-  const [curY, curM] = monthKey.split("-").map(Number);
 
   function addMonths(key, offset) {
     const [y, m] = key.split("-").map(Number);
@@ -133,50 +151,6 @@ export default function Report() {
   const totalDrinkDays3mo = drinkDayTotals.reduce((sum, v) => sum + Number(v || 0), 0);
 
   const monthExpenses = expenses.filter((e) => inMonth(e.date, monthKey));
-  const monthDrinkDays = new Set(
-    drinks.filter((d) => inMonth(d.date, monthKey) && d.drank).map((d) => d.date)
-  ).size;
-  const [prevY, prevM] = (() => {
-    const d = new Date(curY, curM - 2, 1);
-    return [d.getFullYear(), d.getMonth() + 1];
-  })();
-  const prevMonthKey = `${prevY}-${String(prevM).padStart(2, "0")}`;
-  const prevMonthExpenses = expenses.filter((e) => inMonth(e.date, prevMonthKey));
-
-  const monthSpendTotal = monthExpenses.reduce((sum, e) => sum + parseAmount(e.amount), 0);
-  const avgSpendPerDrinkDay = monthDrinkDays ? monthSpendTotal / monthDrinkDays : 0;
-
-  const byCategory = (rows) =>
-    rows.reduce((acc, e) => {
-      const key = e.category || "Other";
-      const amt = parseAmount(e.amount);
-      acc[key] = (acc[key] || 0) + (Number.isFinite(amt) ? amt : 0);
-      return acc;
-    }, {});
-
-  const currByCat = byCategory(monthExpenses);
-  const prevByCat = byCategory(prevMonthExpenses);
-  const allCats = Array.from(new Set([...Object.keys(currByCat), ...Object.keys(prevByCat)]));
-  const varianceByCat = allCats.map((cat) => {
-    const curr = currByCat[cat] || 0;
-    const prev = prevByCat[cat] || 0;
-    return { cat, diff: curr - prev, curr, prev };
-  });
-  const biggestVariance = varianceByCat.sort((a, b) => Math.abs(b.diff) - Math.abs(a.diff))[0];
-  const varianceLabel = biggestVariance
-    ? `${biggestVariance.cat}`
-    : "—";
-  const varianceValue = biggestVariance
-    ? `${biggestVariance.diff >= 0 ? "+" : ""}฿${Math.round(biggestVariance.diff).toLocaleString()}`
-    : "—";
-
-  const topCategory = Object.entries(currByCat)
-    .sort((a, b) => b[1] - a[1])[0];
-  const topCategoryLabel = topCategory ? topCategory[0] : "—";
-  const topCategoryPct = topCategory && monthSpendTotal
-    ? Math.round((topCategory[1] / monthSpendTotal) * 100)
-    : 0;
-
   const cumulativeSpend = expenseTotals.reduce((acc, val) => {
     const last = acc.length ? acc[acc.length - 1] : 0;
     acc.push(last + Number(val || 0));
@@ -188,12 +162,27 @@ export default function Report() {
     return Number((Number(total || 0) / days).toFixed(2));
   });
 
-  const prevMonthSpendTotal = prevMonthExpenses.reduce((sum, e) => sum + parseAmount(e.amount), 0);
-  const spendChangePct =
-    prevMonthSpendTotal > 0 ? ((monthSpendTotal - prevMonthSpendTotal) / prevMonthSpendTotal) * 100 : null;
-  const spendChangeLabel =
-    spendChangePct === null ? "—" : `${spendChangePct > 0 ? "+" : ""}${spendChangePct.toFixed(1)}%`;
-  const spendChangeTone = spendChangePct === null ? "neutral" : spendChangePct > 0 ? "bad" : "good";
+  const workoutIntensityByMonth = useMemo(
+    () =>
+      monthKeys.map((key) => {
+        const rows = workouts.filter((w) => inMonth(w.date, key));
+        const sum = rows.reduce((acc, w) => acc + Number(w.intensity || 0), 0);
+        const count = rows.filter((w) => Number(w.intensity || 0) > 0).length;
+        return count ? Number((sum / count).toFixed(2)) : 0;
+      }),
+    [workouts, monthKeys]
+  );
+
+  const workoutCountByMonth = useMemo(
+    () => monthKeys.map((key) => workouts.filter((w) => inMonth(w.date, key)).length),
+    [workouts, monthKeys]
+  );
+
+  const totalWorkouts3mo = useMemo(
+    () => workoutCountByMonth.reduce((sum, v) => sum + Number(v || 0), 0),
+    [workoutCountByMonth]
+  );
+
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -210,201 +199,247 @@ export default function Report() {
     localStorage.setItem("insights.drinkMetric", drinkMetric);
   }, [drinkMetric]);
 
+  const isLoading = loadingExp || loadingDr || loadingWo;
+
   return (
     <DashboardLayout title="Insights" right={<MonthPicker value={monthKey} onChange={setMonthKey} />}>
-      <div className="report-stats-grid">
-        <div className="report-stat">
-          <div className="report-stat__label">Avg spend per drinking day</div>
-          <div className="report-stat__value">
-            {monthDrinkDays ? `฿${Math.round(avgSpendPerDrinkDay).toLocaleString()}` : "—"}
-          </div>
-          <div className="report-stat__sub">
-            {monthDrinkDays ? `${monthDrinkDays} drinking days` : "No drinking days"}
-          </div>
-        </div>
-        <div className="report-stat">
-          <div className="report-stat__label">Top category share</div>
-          <div className="report-stat__value">{topCategoryLabel}</div>
-          <div className="report-stat__sub">
-            {topCategoryLabel === "—" ? "No category data" : `${topCategoryPct}% of spend`}
-          </div>
-        </div>
-        <div className="report-stat">
-          <div className="report-stat__label">Largest variance vs last month</div>
-          <div className="report-stat__value">{varianceLabel}</div>
-          <div className="report-stat__sub">{varianceValue}</div>
-        </div>
-        <div className="report-stat">
-          <div className="report-stat__label">Spend vs last month</div>
-          <div className={`report-stat__value report-stat__value--${spendChangeTone}`}>
-            {spendChangeLabel}
-          </div>
-          <div className="report-stat__sub">
-            {prevMonthSpendTotal ? `Last month ฿${Math.round(prevMonthSpendTotal).toLocaleString()}` : "No prior data"}
-          </div>
-        </div>
-      </div>
-
       <div className="report-charts">
-        <SectionCard
-          title="Monthly Expense Summary"
-          right={
-            <div className="report-toggle report-toggle--compact" role="group" aria-label="Expense chart type">
-              <button
-                type="button"
-                className={`report-toggle__btn ${expenseChartType === "bar" ? "is-active" : ""}`}
-                onClick={() => setExpenseChartType("bar")}
-              >
-                Bar
-              </button>
-              <button
-                type="button"
-                className={`report-toggle__btn ${expenseChartType === "line" ? "is-active" : ""}`}
-                onClick={() => setExpenseChartType("line")}
-              >
-                Line
-              </button>
-            </div>
-          }
-        >
-          <div className="report-chart">
-            <div className="report-summary">
-              <div className="report-summary__label">3-mo total</div>
-              <div className="report-summary__value">฿{Math.round(totalExpense3mo).toLocaleString()}</div>
-            </div>
-            <div className="report-chart__sub">Total spend per month</div>
-            {expenseChartType === "line" ? (
-              <MonthlyLineChart
-                labels={monthLabels}
-                values={expenseTotals.map((v) => Math.round(v))}
-                seriesLabel="Spend"
-                color="#7c83fd"
-                valueFormatter={(v) => `฿${Number(v || 0).toLocaleString()}`}
-                emptyLabel="No expenses logged in these months."
-                dashed
-                showMarks
-              />
-            ) : (
-              <MonthlyBarChart
-                labels={monthLabels}
-                values={expenseTotals.map((v) => Math.round(v))}
-                seriesLabel="Spend"
-                color="#7c83fd"
-                valueFormatter={(v) => `฿${Number(v || 0).toLocaleString()}`}
-                emptyLabel="No expenses logged in these months."
-              />
-            )}
-          </div>
-        </SectionCard>
-
-        <SectionCard
-          title="Monthly Drinking Summary"
-          right={
-            <div className="report-header-controls">
-              <div className="report-toggle report-toggle--compact" role="group" aria-label="Drink chart type">
+        <div className="theme-exp">
+          <SectionCard
+            title="Monthly Expense Summary"
+            right={
+              <div className="report-toggle report-toggle--compact" role="group" aria-label="Expense chart type">
                 <button
                   type="button"
-                  className={`report-toggle__btn ${drinkChartType === "bar" ? "is-active" : ""}`}
-                  onClick={() => setDrinkChartType("bar")}
+                  className={`report-toggle__btn ${expenseChartType === "bar" ? "is-active" : ""}`}
+                  onClick={() => setExpenseChartType("bar")}
                 >
                   Bar
                 </button>
                 <button
                   type="button"
-                  className={`report-toggle__btn ${drinkChartType === "line" ? "is-active" : ""}`}
-                  onClick={() => setDrinkChartType("line")}
+                  className={`report-toggle__btn ${expenseChartType === "line" ? "is-active" : ""}`}
+                  onClick={() => setExpenseChartType("line")}
                 >
                   Line
                 </button>
               </div>
-              <div className="report-toggle report-toggle--compact" role="group" aria-label="Drinking metric">
-                <button
-                  type="button"
-                  className={`report-toggle__btn ${drinkMetric === "days" ? "is-active" : ""}`}
-                  onClick={() => setDrinkMetric("days")}
-                >
-                  Drink days
-                </button>
-                <button
-                  type="button"
-                  className={`report-toggle__btn ${drinkMetric === "avg" ? "is-active" : ""}`}
-                  onClick={() => setDrinkMetric("avg")}
-                >
-                  Avg level
-                </button>
+            }
+          >
+            <div className="report-chart">
+              <div className="report-summary">
+                <div className="report-summary__label">3-mo total</div>
+                <div className="report-summary__value">
+                  {isLoading ? <Skeleton variant="text" width={90} height={26} /> : `฿${Math.round(totalExpense3mo).toLocaleString()}`}
+                </div>
               </div>
+              <div className="report-chart__sub">Total spend per month</div>
+              {isLoading ? (
+                <Skeleton variant="rectangular" width="100%" height={240} />
+              ) : expenseChartType === "line" ? (
+                <MonthlyLineChart
+                  labels={monthLabels}
+                  values={expenseTotals.map((v) => Math.round(v))}
+                  seriesLabel="Spend"
+                  color="#7c83fd"
+                  valueFormatter={(v) => `฿${Number(v || 0).toLocaleString()}`}
+                  emptyLabel="No expenses logged in these months."
+                  dashed
+                  showMarks
+                />
+              ) : (
+                <MonthlyBarChart
+                  labels={monthLabels}
+                  values={expenseTotals.map((v) => Math.round(v))}
+                  seriesLabel="Spend"
+                  color="#7c83fd"
+                  valueFormatter={(v) => `฿${Number(v || 0).toLocaleString()}`}
+                  emptyLabel="No expenses logged in these months."
+                />
+              )}
             </div>
-          }
-        >
-          <div className="report-chart">
-            <div className="report-summary">
-              <div className="report-summary__label">
-                {drinkMetric === "avg" ? "3-mo avg level" : "3-mo total"}
+          </SectionCard>
+        </div>
+
+        <div className="theme-drink">
+          <SectionCard
+            title="Monthly Drinking Summary"
+            right={
+              <div className="report-header-controls">
+                <div className="report-toggle report-toggle--compact" role="group" aria-label="Drink chart type">
+                  <button
+                    type="button"
+                    className={`report-toggle__btn ${drinkChartType === "bar" ? "is-active" : ""}`}
+                    onClick={() => setDrinkChartType("bar")}
+                  >
+                    Bar
+                  </button>
+                  <button
+                    type="button"
+                    className={`report-toggle__btn ${drinkChartType === "line" ? "is-active" : ""}`}
+                    onClick={() => setDrinkChartType("line")}
+                  >
+                    Line
+                  </button>
+                </div>
+                <div className="report-toggle report-toggle--compact" role="group" aria-label="Drinking metric">
+                  <button
+                    type="button"
+                    className={`report-toggle__btn ${drinkMetric === "days" ? "is-active" : ""}`}
+                    onClick={() => setDrinkMetric("days")}
+                  >
+                    Drink days
+                  </button>
+                  <button
+                    type="button"
+                    className={`report-toggle__btn ${drinkMetric === "avg" ? "is-active" : ""}`}
+                    onClick={() => setDrinkMetric("avg")}
+                  >
+                    Avg level
+                  </button>
+                </div>
               </div>
-              <div className="report-summary__value">
-                {drinkMetric === "avg"
-                  ? drinkLevelWeightedAvg
-                    ? drinkLevelWeightedAvg.toFixed(2)
-                    : "—"
-                  : totalDrinkDays3mo}
+            }
+          >
+            <div className="report-chart">
+              <div className="report-summary">
+                <div className="report-summary__label">
+                  {drinkMetric === "avg" ? "3-mo avg level" : "3-mo total"}
+                </div>
+                <div className="report-summary__value">
+                  {isLoading ? (
+                    <Skeleton variant="text" width={64} height={26} />
+                  ) : drinkMetric === "avg" ? (
+                    drinkLevelWeightedAvg
+                      ? drinkLevelWeightedAvg.toFixed(2)
+                      : "—"
+                  ) : (
+                    totalDrinkDays3mo
+                  )}
+                </div>
               </div>
+              <div className="report-chart__sub">
+                {drinkMetric === "avg" ? "Average level per month" : "Drinking days per month"}
+              </div>
+              {isLoading ? (
+                <Skeleton variant="rectangular" width="100%" height={240} />
+              ) : drinkChartType === "line" ? (
+                <MonthlyLineChart
+                  labels={monthLabels}
+                  values={drinkMetric === "avg" ? drinkLevelAverages : drinkDayTotals}
+                  seriesLabel={drinkMetric === "avg" ? "Avg Level" : "Drink Days"}
+                  color={drinkMetric === "avg" ? "#F4C76E" : "#9FC8B3"}
+                  valueFormatter={(v) => `${Number(v || 0)}`}
+                  emptyLabel="No drinking logs in these months."
+                />
+              ) : (
+                <MonthlyBarChart
+                  labels={monthLabels}
+                  values={drinkMetric === "avg" ? drinkLevelAverages : drinkDayTotals}
+                  seriesLabel={drinkMetric === "avg" ? "Avg Level" : "Drink Days"}
+                  color={drinkMetric === "avg" ? "#F4C76E" : "#9FC8B3"}
+                  valueFormatter={(v) => `${Number(v || 0)}`}
+                  emptyLabel="No drinking logs in these months."
+                />
+              )}
             </div>
-            <div className="report-chart__sub">
-              {drinkMetric === "avg" ? "Average level per month" : "Drinking days per month"}
-            </div>
-            {drinkChartType === "line" ? (
-              <MonthlyLineChart
-                labels={monthLabels}
-                values={drinkMetric === "avg" ? drinkLevelAverages : drinkDayTotals}
-                seriesLabel={drinkMetric === "avg" ? "Avg Level" : "Drink Days"}
-                color={drinkMetric === "avg" ? "#F4C76E" : "#9FC8B3"}
-                valueFormatter={(v) => `${Number(v || 0)}`}
-                emptyLabel="No drinking logs in these months."
-              />
-            ) : (
-              <MonthlyBarChart
-                labels={monthLabels}
-                values={drinkMetric === "avg" ? drinkLevelAverages : drinkDayTotals}
-                seriesLabel={drinkMetric === "avg" ? "Avg Level" : "Drink Days"}
-                color={drinkMetric === "avg" ? "#F4C76E" : "#9FC8B3"}
-                valueFormatter={(v) => `${Number(v || 0)}`}
-                emptyLabel="No drinking logs in these months."
-              />
-            )}
-          </div>
-        </SectionCard>
+          </SectionCard>
+        </div>
       </div>
 
       <div className="report-extra-grid">
-        <SectionCard title="Cumulative Spend (3 Months)">
-          <div className="report-chart">
-            <div className="report-chart__sub">Running total across the window</div>
-            <MonthlyLineChart
-              labels={monthLabels}
-              values={cumulativeSpend.map((v) => Math.round(v))}
-              seriesLabel="Cumulative"
-              color="#9FC8B3"
-              valueFormatter={(v) => `฿${Number(v || 0).toLocaleString()}`}
-              emptyLabel="No expenses logged in these months."
-              showMarks
-            />
-          </div>
-        </SectionCard>
+        <div className="theme-exp">
+          <SectionCard title="Cumulative Spend (3 Months)">
+            <div className="report-chart">
+              <div className="report-chart__sub">Running total across the window</div>
+              {isLoading ? (
+                <Skeleton variant="rectangular" width="100%" height={220} />
+              ) : (
+                <MonthlyLineChart
+                  labels={monthLabels}
+                  values={cumulativeSpend.map((v) => Math.round(v))}
+                  seriesLabel="Cumulative"
+                  color="#9FC8B3"
+                  valueFormatter={(v) => `฿${Number(v || 0).toLocaleString()}`}
+                  emptyLabel="No expenses logged in these months."
+                  showMarks
+                />
+              )}
+            </div>
+          </SectionCard>
+        </div>
 
-        <SectionCard title="Avg Spend per Day (3 Months)">
-          <div className="report-chart">
-            <div className="report-chart__sub">Monthly total divided by days in month</div>
-            <MonthlyLineChart
-              labels={monthLabels}
-              values={avgSpendPerDayByMonth}
-              seriesLabel="Avg/Day"
-              color="#F4C76E"
-              valueFormatter={(v) => `฿${Number(v || 0).toLocaleString()}`}
-              emptyLabel="No expenses logged in these months."
-              showMarks
-            />
-          </div>
-        </SectionCard>
+        <div className="theme-exp">
+          <SectionCard title="Avg Spend per Day (3 Months)">
+            <div className="report-chart">
+              <div className="report-chart__sub">Monthly total divided by days in month</div>
+              {isLoading ? (
+                <Skeleton variant="rectangular" width="100%" height={220} />
+              ) : (
+                <MonthlyLineChart
+                  labels={monthLabels}
+                  values={avgSpendPerDayByMonth}
+                  seriesLabel="Avg/Day"
+                  color="#F4C76E"
+                  valueFormatter={(v) => `฿${Number(v || 0).toLocaleString()}`}
+                  emptyLabel="No expenses logged in these months."
+                  showMarks
+                />
+              )}
+            </div>
+          </SectionCard>
+        </div>
+
+        <div className="theme-wo">
+          <SectionCard title="Avg Workout Intensity (3 Months)">
+            <div className="report-chart">
+              <div className="report-chart__sub">Average intensity per month</div>
+              {isLoading ? (
+                <Skeleton variant="rectangular" width="100%" height={220} />
+              ) : (
+                <MonthlyLineChart
+                  labels={monthLabels}
+                  values={workoutIntensityByMonth}
+                  seriesLabel="Avg Intensity"
+                  color="#64B5F6"
+                  valueFormatter={(v) => `${Number(v || 0)}`}
+                  emptyLabel="No workouts logged in these months."
+                  showMarks
+                />
+              )}
+            </div>
+          </SectionCard>
+        </div>
+
+        <div className="theme-wo">
+          <SectionCard title="Workout Volume (3 Months)">
+            <div className="report-chart">
+              <div className="report-summary">
+                <div className="report-summary__label">Total workouts (3 months)</div>
+                <div className="report-summary__value">
+                  {isLoading ? (
+                    <Skeleton variant="text" width={90} height={26} />
+                  ) : (
+                    totalWorkouts3mo.toLocaleString()
+                  )}
+                </div>
+              </div>
+              <div className="report-chart__sub">Workouts per month</div>
+              {isLoading ? (
+                <Skeleton variant="rectangular" width="100%" height={220} />
+              ) : (
+                <MonthlyBarChart
+                  labels={monthLabels}
+                  values={workoutCountByMonth}
+                  seriesLabel="Workouts"
+                  color="#64B5F6"
+                  valueFormatter={(v) => `${Number(v || 0)}`}
+                  emptyLabel="No workouts logged in these months."
+                />
+              )}
+            </div>
+          </SectionCard>
+        </div>
       </div>
     </DashboardLayout>
   );

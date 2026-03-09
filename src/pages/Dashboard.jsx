@@ -9,6 +9,12 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
+import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import WarningAmberIcon from "@mui/icons-material/WarningAmber";
+import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import LocalBarIcon from "@mui/icons-material/LocalBar";
+import PaymentsIcon from "@mui/icons-material/Payments";
 import MonthCalendar from "../components/common/MonthCalendar.jsx";
 
 import KpiCard from "../components/common/KpiCard.jsx";
@@ -44,7 +50,7 @@ import { budgetByCategory, categoryOrder } from "../config/budget.js";
 
 
 export default function Dashboard() {
-  const { monthKey, setMonthKey, tier, setTier, setLastUpdate, refreshKey } = useDashboard();
+  const { monthKey, setMonthKey, tier, setTier, setLastUpdate, refreshKey, budgets } = useDashboard();
   const { logout } = useAuth();
 
   /* ======================
@@ -464,6 +470,9 @@ export default function Dashboard() {
   const monthWorkouts = workoutRows.filter((w) => inMonth(w.date, monthKey));
   const monthDrinksAll = drinkRows.filter((d) => inMonth(d.date, monthKey));
   const now = new Date();
+  const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
+    now.getDate()
+  ).padStart(2, "0")}`;
   const [curY, curM] = monthKey.split("-").map(Number);
   const isCurrentMonth = now.getFullYear() === curY && now.getMonth() + 1 === curM;
   const asOfDay = isCurrentMonth ? now.getDate() : new Date(curY, curM, 0).getDate();
@@ -486,6 +495,7 @@ export default function Dashboard() {
     }, {});
     return Object.entries(byCat).sort((a, b) => b[1] - a[1])[0]?.[0] ?? "-";
   })();
+
   const top3Cats = (() => {
     const byCat = monthExpenses.reduce((acc, e) => {
       const k = e.category || "Other";
@@ -511,7 +521,7 @@ export default function Dashboard() {
     });
     return Object.entries(map)
       .sort((a, b) => b[1] - a[1])
-      .slice(0, 2)
+      .slice(0, 1)
       .map(([r]) => r)
       .join(", ") || "-";
   })();
@@ -531,22 +541,15 @@ export default function Dashboard() {
   const mtdPct = prevMonthMTD > 0 ? ((thisMonthMTD - prevMonthMTD) / prevMonthMTD) * 100 : null;
   const mtdLabel = mtdPct === null ? "—" : `${mtdPct > 0 ? "+" : ""}${mtdPct.toFixed(1)}% vs last month`;
   const mtdTone = mtdPct === null ? "neutral" : mtdPct > 0 ? "bad" : "good";
-  const weekendWeekday = (() => {
-    let weekend = 0;
-    let weekday = 0;
-    monthExpenses.forEach((e) => {
-      const d = new Date(e.date);
-      const day = d.getDay();
-      const amt = Number(e.amount || 0);
-      if (day === 0 || day === 6) weekend += amt;
-      else weekday += amt;
-    });
-    const total = weekend + weekday;
-    const weekendPct = total ? (weekend / total) * 100 : 0;
-    const label = weekend >= weekday ? "Weekend heavier" : "Weekday heavier";
-    const sub = total ? `Weekend ${weekendPct.toFixed(0)}% of spend` : "No data yet";
-    return { label, sub };
-  })();
+  const prevMonthSpendTotal = prevMonthExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+  const spendChangePct =
+    prevMonthSpendTotal > 0 ? ((totalSpend - prevMonthSpendTotal) / prevMonthSpendTotal) * 100 : null;
+  const spendChangeLabel =
+    spendChangePct === null ? "—" : `${spendChangePct > 0 ? "+" : ""}${spendChangePct.toFixed(1)}%`;
+  const spendChangeTone = spendChangePct === null ? "neutral" : spendChangePct > 0 ? "bad" : "good";
+  const avgSpendPerDrinkDay = drinkingDays
+    ? totalSpend / drinkingDays
+    : 0;
 
   const biggestCategoryIncrease = (() => {
     const sumByCat = (rows) =>
@@ -571,6 +574,36 @@ export default function Dashboard() {
     return { label: `${bestCat} +฿${Math.round(bestDiff).toLocaleString()}`, sub: "Vs last month" };
   })();
   const biggestIncreaseTone = biggestCategoryIncrease.label === "No increase" ? "neutral" : "bad";
+
+  const categoryMomentum = (() => {
+    const sumByCat = (rows) =>
+      rows.reduce((acc, e) => {
+        const k = e.category || "Other";
+        acc[k] = (acc[k] || 0) + Number(e.amount || 0);
+        return acc;
+      }, {});
+    const cur = sumByCat(monthExpenses);
+    const prev = sumByCat(prevMonthExpenses);
+    const topCats = Object.entries(cur)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([cat]) => cat);
+    return topCats.map((cat) => {
+      const curVal = cur[cat] || 0;
+      const prevVal = prev[cat] || 0;
+      if (prevVal <= 0 && curVal > 0) {
+        return { cat, label: "New", tone: "neutral", arrow: "→" };
+      }
+      if (prevVal <= 0) {
+        return { cat, label: "—", tone: "neutral", arrow: "→" };
+      }
+      const pct = ((curVal - prevVal) / prevVal) * 100;
+      const arrow = pct > 0.5 ? "↑" : pct < -0.5 ? "↓" : "→";
+      const tone = pct > 0.5 ? "bad" : pct < -0.5 ? "good" : "neutral";
+      const label = `${pct > 0 ? "+" : ""}${pct.toFixed(0)}%`;
+      return { cat, label, tone, arrow };
+    });
+  })();
 
   const drinkingDates = new Set(monthDrinksAll.filter((d) => d.drank).map((d) => d.date));
   const drinkDaySpend = monthExpenses.filter((e) => drinkingDates.has(e.date));
@@ -611,8 +644,10 @@ export default function Dashboard() {
   })();
 
   // Planned total based on selected tier
+const budgetSource = budgets || budgetByCategory;
+
 const plannedTotal = categoryOrder.reduce((sum, cat) => {
-  const tierBudget = budgetByCategory?.[cat]?.[tier] ?? 0;
+  const tierBudget = budgetSource?.[cat]?.[tier] ?? 0;
   return sum + Number(tierBudget);
 }, 0);
 
@@ -631,15 +666,57 @@ const spendVarianceIsBad = spendVariance < 0;
    KPI – Active Days
 ====================== */
 
-const activeDays = new Set(
-  monthWorkouts.map((w) => w.date)
-).size;
-
 const daysInMonth = new Date(
   Number(monthKey.split("-")[0]),
   Number(monthKey.split("-")[1]),
   0
 ).getDate();
+
+/* ======================
+   Today Snapshot
+====================== */
+
+const todayExpenses = expenseRows.filter((e) => e.date === todayKey);
+const todaySpend = todayExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+const todayWorkouts = workoutRows.filter((w) => w.date === todayKey);
+const todayWorkoutLabel = todayWorkouts[0]?.workoutType || (todayWorkouts.length ? "Workout" : "None");
+const todayDrinks = drinkRows.filter((d) => d.date === todayKey && d.drank);
+const todayDrinkLabel = todayDrinks.length ? "Yes" : "None";
+
+/* ======================
+   Run-Rate Forecast
+====================== */
+
+const daysPassed = Math.max(1, asOfDay);
+const projectedSpend = (totalSpend / daysPassed) * daysInMonth;
+const hasBudget = plannedTotal > 0;
+const runRateStatus = !hasBudget
+  ? "No budget"
+  : projectedSpend <= plannedTotal
+  ? "On track ✓"
+  : "Over budget";
+const runRateTone = !hasBudget ? "neutral" : projectedSpend <= plannedTotal ? "good" : "bad";
+const RunRateIcon = !hasBudget
+  ? InfoOutlinedIcon
+  : projectedSpend <= plannedTotal
+  ? CheckCircleOutlineIcon
+  : WarningAmberIcon;
+
+/* ======================
+   Drinking Day Spend Multiplier
+====================== */
+
+const monthDrinkingDates = new Set(monthDrinksAll.filter((d) => d.drank).map((d) => d.date));
+const drinkDayExpenses = monthExpenses.filter((e) => monthDrinkingDates.has(e.date));
+const nonDrinkDayExpenses = monthExpenses.filter((e) => !monthDrinkingDates.has(e.date));
+const drinkDayTotal = drinkDayExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+const nonDrinkDayTotal = nonDrinkDayExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
+const drinkDayCount = new Set(drinkDayExpenses.map((e) => e.date)).size;
+const nonDrinkDayCount = new Set(nonDrinkDayExpenses.map((e) => e.date)).size;
+const avgSpendDrinkDay = drinkDayCount ? drinkDayTotal / drinkDayCount : 0;
+const avgSpendNonDrinkDay = nonDrinkDayCount ? nonDrinkDayTotal / nonDrinkDayCount : 0;
+const drinkSpendMultiplier =
+  avgSpendNonDrinkDay > 0 ? avgSpendDrinkDay / avgSpendNonDrinkDay : null;
 
 
 /* ======================
@@ -688,29 +765,91 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
     >
       {/* KPI STRIP */}
       <div className="kpi-grid">
-        <KpiCard
-          title="Total Spend"
-          value={`฿${totalSpend.toLocaleString()}`}
-          sub="Includes all logged this month expenses"
-        />
-        <KpiCard
-  title="Spend vs Plan"
-  value={
-    <span style={{ color: spendVarianceIsBad ? "#E3A6A1" : "#9FC8B3" }}>
-      {spendVarianceLabel}
-    </span>
-  }
-  sub={spendVarianceSub}
-/>
+        <div className="kpi-today kpi--tall kpi--bottom theme-mix">
+          <KpiCard
+            title="Today Snapshot"
+            value={
+              <div className="kpi-today__rows">
+                <div className="kpi-today__row">
+                  <span className="kpi-today__label">
+                    <PaymentsIcon fontSize="inherit" />
+                    Spend
+                  </span>
+                  <span className="kpi-today__value">฿{Math.round(todaySpend).toLocaleString()}</span>
+                </div>
+                <div className="kpi-today__row">
+                  <span className="kpi-today__label">
+                    <FitnessCenterIcon fontSize="inherit" />
+                    Workout
+                  </span>
+                  <span className={`kpi-today__value ${todayWorkouts.length ? "is-good" : "is-muted"}`}>
+                    {todayWorkouts.length ? `${todayWorkoutLabel} ✓` : "None"}
+                  </span>
+                </div>
+                <div className="kpi-today__row">
+                  <span className="kpi-today__label">
+                    <LocalBarIcon fontSize="inherit" />
+                    Drink
+                  </span>
+                  <span className={`kpi-today__value ${todayDrinks.length ? "is-bad" : "is-good"}`}>
+                    {todayDrinks.length ? "Yes" : "None"}
+                  </span>
+                </div>
+              </div>
+            }
+            sub={new Date(todayKey).toLocaleDateString("en-US", {
+              weekday: "short",
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+            })}
+          />
+        </div>
 
-<KpiCard title="Top Spending Category" value={topCat} sub="Highest total spend category this month" />
-<KpiCard
-  title="Active Days"
-  value={`${activeDays} / ${asOfDay}`}
-  sub="Days with at least one workout in this month"
-  right={<span className="kpi__tag">out of {daysInMonth} days</span>}
-/>
+        <div className="theme-exp kpi--short kpi--bottom">
+          <KpiCard
+            title="Category Momentum"
+            value={
+              <div className="kpi-momentum">
+                {categoryMomentum.length ? (
+                  categoryMomentum.map((row) => (
+                    <div key={row.cat} className="kpi-momentum__row">
+                      <span className="kpi-momentum__label">{row.cat}</span>
+                      <span className={`kpi-momentum__value kpi-momentum__value--${row.tone}`}>
+                        {row.arrow} {row.label}
+                      </span>
+                    </div>
+                  ))
+                ) : (
+                  <div className="kpi-momentum__empty">No categories yet</div>
+                )}
+              </div>
+            }
+            sub="Top 3 categories"
+          />
+        </div>
 
+        <div className="theme-exp kpi--wide">
+          <KpiCard
+            title="Spending by Day (This Month)"
+            value={
+              <div className="weekly-spend kpi-weekly">
+                {weeklySpend.map((d) => (
+                  <div key={d.label} className="weekly-spend__row">
+                    <div className="weekly-spend__label">{d.label}</div>
+                    <div className="weekly-spend__bar-wrap">
+                      <div
+                        className="weekly-spend__bar"
+                        style={{ width: `${(d.amount / maxWeeklySpend) * 100}%` }}
+                      />
+                    </div>
+                    <div className="weekly-spend__value">฿{d.amount.toLocaleString()}</div>
+                  </div>
+                ))}
+              </div>
+            }
+          />
+        </div>
 
       </div>
 
@@ -718,78 +857,156 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
       <div className="dashboard-grid">
         {/* LEFT */}
         <div className="dashboard-col">
-          <SectionCard title="Overview" right={<TierSelector value={tier} onChange={setTier} />}>
-            <ProjectionTable tier={tier} actualByCat={actualByCat} />
-          </SectionCard>
-          <SectionCard title="Monthly Insights">
-            <div className="drink-insights-grid">
-              <div className="drink-card">
-                <div className="drink-card__title">Spending vs Last Month (MTD)</div>
-                <div className={`drink-card__value drink-card__value--${mtdTone}`}>{mtdLabel}</div>
-                <div className="drink-card__sub">Same-day window</div>
+          <div className="theme-exp">
+            <SectionCard title="Overview" right={<TierSelector value={tier} onChange={setTier} />}>
+              <ProjectionTable tier={tier} actualByCat={actualByCat} budgets={budgetSource} />
+            </SectionCard>
+          </div>
+          <div className="theme-exp">
+            <SectionCard title="Run-Rate Forecast">
+              <div className="runrate-card">
+                <div>
+                  <div className="runrate-card__label">Status</div>
+                  <div className={`runrate-card__status runrate-card__status--${runRateTone}`}>
+                    <RunRateIcon fontSize="small" />
+                    {runRateStatus}
+                  </div>
+                  <div className="runrate-card__sub">
+                    {hasBudget ? "Based on current monthly pace" : "Add a budget to see tracking"}
+                  </div>
+                </div>
+                <div className="runrate-card__metrics">
+                  <div>
+                    <span>Monthly spend</span>
+                    <span>฿{Math.round(totalSpend).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span>Projected end</span>
+                    <span>฿{Math.round(projectedSpend).toLocaleString()}</span>
+                  </div>
+                  <div>
+                    <span>Budget</span>
+                    <span>{hasBudget ? `฿${Math.round(plannedTotal).toLocaleString()}` : "—"}</span>
+                  </div>
+                </div>
               </div>
-              <div className="drink-card">
-                <div className="drink-card__title">Weekend vs Weekday</div>
-                <div className="drink-card__value">{weekendWeekday.label}</div>
-                <div className="drink-card__sub">{weekendWeekday.sub}</div>
+            </SectionCard>
+          </div>
+
+          <div className="theme-drink">
+            <SectionCard title="Drinking Day Spend Multiplier">
+              <div className="multiplier-card">
+                <div>
+                  <div className="multiplier-card__label">On drinking days you spend</div>
+                  <div className="multiplier-card__value">
+                    {drinkSpendMultiplier ? `${drinkSpendMultiplier.toFixed(1)}× more` : "—"}
+                  </div>
+                  <div className="multiplier-card__sub">
+                    {drinkSpendMultiplier ? "Compared with non‑drinking days" : "Not enough data yet"}
+                  </div>
+                </div>
+                <div className="multiplier-card__metrics">
+                  <div>
+                    <span>Normal day avg</span>
+                    <span>{avgSpendNonDrinkDay ? `฿${Math.round(avgSpendNonDrinkDay).toLocaleString()}` : "—"}</span>
+                  </div>
+                  <div>
+                    <span>Drinking day avg</span>
+                    <span>{avgSpendDrinkDay ? `฿${Math.round(avgSpendDrinkDay).toLocaleString()}` : "—"}</span>
+                  </div>
+                </div>
               </div>
-              <div className="drink-card">
-                <div className="drink-card__title">Top 3 Categories</div>
-                <div className="drink-card__value">{top3Cats}</div>
-                <div className="drink-card__sub">This month</div>
+            </SectionCard>
+          </div>
+
+          <div className="theme-exp">
+            <SectionCard title="Monthly Insights">
+              <div className="drink-insights-grid">
+                <div className="drink-card theme-exp">
+                  <div className="drink-card__title">Spend vs last month</div>
+                  <div className={`drink-card__value drink-card__value--${spendChangeTone}`}>
+                    {spendChangeLabel}
+                </div>
+                <div className="drink-card__sub">
+                  {prevMonthSpendTotal
+                    ? `Last month ฿${Math.round(prevMonthSpendTotal).toLocaleString()}`
+                    : "No prior data"}
+                </div>
               </div>
-              <div className="drink-card">
+              <div className="drink-card theme-exp">
                 <div className="drink-card__title">Biggest Increase (Category)</div>
                 <div className={`drink-card__value drink-card__value--${biggestIncreaseTone}`}>
                   {biggestCategoryIncrease.label}
                 </div>
                 <div className="drink-card__sub">{biggestCategoryIncrease.sub}</div>
               </div>
+              <div className="drink-card theme-exp">
+                <div className="drink-card__title">Spend vs Plan</div>
+                <div className="drink-card__value">
+                  <span style={{ color: spendVarianceIsBad ? "#E3A6A1" : "#9FC8B3" }}>
+                    {spendVarianceLabel}
+                  </span>
+                </div>
+                <div className="drink-card__sub">{spendVarianceSub}</div>
+              </div>
+              <div className="drink-card theme-exp">
+                <div className="drink-card__title">Total Spend</div>
+                <div className="drink-card__value">฿{totalSpend.toLocaleString()}</div>
+                <div className="drink-card__sub">Includes all logged this month expenses</div>
+              </div>
             </div>
           </SectionCard>
+          </div>
           
-          <SectionCard title="Drink Insights">
-            <div className="drink-insights-grid">
-              <div className="drink-card">
-                <div className="drink-card__title">Drinking Days</div>
-                <div className="drink-card__value">{drinkingDays} / {totalDays}</div>
-                <div className="drink-card__sub">As of today</div>
+          <div className="theme-drink">
+            <SectionCard title="Drink Insights">
+              <div className="drink-insights-grid">
+                <div className="drink-card theme-drink">
+                  <div className="drink-card__title">Drinking Days</div>
+                  <div className="drink-card__value">{drinkingDays} / {totalDays}</div>
+                  <div className="drink-card__sub">As of today</div>
+                </div>
+                <div className="drink-card theme-drink">
+                  <div className="drink-card__title">Most Common Reason</div>
+                  <div className="drink-card__value">{topReasons}</div>
+                  <div className="drink-card__sub">This month</div>
+                </div>
+                <div className="drink-card theme-drink">
+                  <div className="drink-card__title">Avg Spend on Drinking Days</div>
+                  <div className="drink-card__value">฿{Math.round(avgDrinkDaySpend).toLocaleString()}</div>
+                  <div className="drink-card__sub">This month</div>
+                </div>
+                <div className="drink-card theme-drink">
+                  <div className="drink-card__title">Avg Drink Level</div>
+                  <div className="drink-card__value">{avgDrinkLevel ? avgDrinkLevel.toFixed(1) : "—"}</div>
+                  <div className="drink-card__sub">This month</div>
+                </div>
               </div>
-              <div className="drink-card">
-                <div className="drink-card__title">Most Common Reason</div>
-                <div className="drink-card__value">{topReasons}</div>
-                <div className="drink-card__sub">This month</div>
-              </div>
-              <div className="drink-card">
-                <div className="drink-card__title">Avg Spend on Drinking Days</div>
-                <div className="drink-card__value">฿{Math.round(avgDrinkDaySpend).toLocaleString()}</div>
-                <div className="drink-card__sub">This month</div>
-              </div>
-              <div className="drink-card">
-                <div className="drink-card__title">Avg Drink Level</div>
-                <div className="drink-card__value">{avgDrinkLevel ? avgDrinkLevel.toFixed(1) : "—"}</div>
-                <div className="drink-card__sub">This month</div>
-              </div>
-            </div>
-          </SectionCard>
-          <SectionCard title="To-Do / Next Actions">
-            <TodoList rows={todos} onAdd={addTodo} onUpdate={updateTodo} onDelete={deleteTodo} />
-          </SectionCard>
+            </SectionCard>
+          </div>
+          <div className="theme-neutral">
+            <SectionCard title="To-Do / Next Actions">
+              <TodoList rows={todos} onAdd={addTodo} onUpdate={updateTodo} onDelete={deleteTodo} />
+            </SectionCard>
+          </div>
         </div>
 
         {/* RIGHT */}
         <div className="dashboard-col">
-          <SectionCard title="Calendar">
-            <MonthCalendar
-              monthKey={monthKey}
-              expenses={monthExpenses}
-              workouts={monthWorkouts}
-              drinks={monthDrinksAll}
-            />
-          </SectionCard>
+          <div className="theme-neutral">
+            <SectionCard title="Calendar">
+              <MonthCalendar
+                monthKey={monthKey}
+                expenses={monthExpenses}
+                workouts={monthWorkouts}
+                drinks={monthDrinksAll}
+              />
+            </SectionCard>
+          </div>
 
           
 
+      <div className="theme-wo">
       <SectionCard title="Workout Mix">
         <div
           style={{
@@ -814,11 +1031,13 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
           </div>
         </div>
       </SectionCard>
+      </div>
 
           
 
           
 
+<div className="theme-exp">
 <SectionCard title="Expense Mix (This Month)">
   <div style={{
     display: "flex",
@@ -837,7 +1056,9 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
     )}
   </div>
 </SectionCard>
+</div>
 
+<div className="theme-exp">
 <SectionCard title="Expense Breakdown (This Month)">
   <div style={{
     display: "flex",
@@ -856,29 +1077,8 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
     )}
   </div>
 </SectionCard>
+</div>
 
- <SectionCard title="Spending by Day (This Month)">
-  <div className="weekly-spend">
-    {weeklySpend.map((d) => (
-      <div key={d.label} className="weekly-spend__row">
-        <div className="weekly-spend__label">{d.label}</div>
-
-        <div className="weekly-spend__bar-wrap">
-          <div
-            className="weekly-spend__bar"
-            style={{
-              width: `${(d.amount / maxWeeklySpend) * 100}%`,
-            }}
-          />
-        </div>
-
-        <div className="weekly-spend__value">
-          ฿{d.amount.toLocaleString()}
-        </div>
-      </div>
-    ))}
-  </div>
-</SectionCard>
 
           
  
@@ -886,7 +1086,6 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
 
         </div>
       </div>
-
 
       {/* Snackbar */}
       <Snackbar

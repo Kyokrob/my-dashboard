@@ -1,4 +1,5 @@
 import { PieChart } from "@mui/x-charts/PieChart";
+import useMediaQuery from "@mui/material/useMediaQuery";
 
 function parseAmount(value) {
   if (value === null || value === undefined) return 0;
@@ -17,6 +18,7 @@ function parseAmount(value) {
 }
 
 export default function ExpenseCategoryPie({ rows = [] }) {
+  const isMobile = useMediaQuery("(max-width: 720px)");
   const totals = rows.reduce((acc, e) => {
     const key = e.category || "Other";
     const amt = parseAmount(e.amount);
@@ -39,6 +41,10 @@ export default function ExpenseCategoryPie({ rows = [] }) {
     return <div style={{ opacity: 0.6, fontSize: 13 }}>No expenses logged</div>;
   }
 
+  const size = isMobile ? 240 : 300;
+  const innerRadius = isMobile ? 46 : 55;
+  const outerRadius = isMobile ? 78 : 90;
+
   return (
     <div style={{ display: "grid", justifyItems: "center", gap: 6 }}>
       <div style={{ fontSize: 14, fontWeight: 650, color: "#fff" }}>
@@ -52,8 +58,8 @@ export default function ExpenseCategoryPie({ rows = [] }) {
         series={[
           {
             data,
-            innerRadius: 55,
-            outerRadius: 90,
+            innerRadius,
+            outerRadius,
             paddingAngle: 3,
             cornerRadius: 6,
             valueFormatter: (v) => {
@@ -64,8 +70,8 @@ export default function ExpenseCategoryPie({ rows = [] }) {
             },
           },
         ]}
-        width={300}
-        height={310}
+        width={size}
+        height={size + 10}
         slotProps={{ legend: { hidden: true } }}
         sx={{
           "& .MuiPieArcLabel-root": {
