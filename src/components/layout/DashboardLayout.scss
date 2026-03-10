@@ -168,6 +168,7 @@
     align-items: center;
     gap: 8px;
     margin: 0 auto;
+    margin-right: 6px;
   }
 
   .month-picker {
@@ -182,7 +183,7 @@
     padding: 6px 8px;
     backdrop-filter: blur(10px);
     box-shadow: 0 8px 18px rgba(0,0,0,0.22);
-    width: min(200px, 92vw);
+    width: min(220px, 92vw);
   }
 
   .layout__main {

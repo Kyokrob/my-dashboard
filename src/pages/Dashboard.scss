@@ -126,6 +126,13 @@
   min-width: 0;
 }
 
+.workout-insights-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  min-width: 0;
+}
+
 .drink-card {
   border: 1px solid rgba(255,255,255,0.08);
   background: rgba(255,255,255,0.04);
@@ -156,6 +163,10 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
+}
+
+.drink-card__value.is-large {
+  font-size: 26px;
 }
 
 .drink-card__sub {
@@ -205,6 +216,12 @@
   min-width: 0;
 }
 
+.runrate-card > div:first-child {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
 .runrate-card__label {
   font-size: 12px;
   opacity: 0.7;
@@ -221,6 +238,12 @@
   gap: 8px;
 }
 
+.runrate-card__pace {
+  margin-top: 6px;
+  font-size: 12px;
+  opacity: 0.75;
+}
+
 .runrate-card__status--good {
   color: #9FC8B3;
 }
@@ -234,7 +257,7 @@
 }
 
 .runrate-card__sub {
-  margin-top: 6px;
+  margin-top: auto;
   font-size: 12px;
   opacity: 0.7;
 }
@@ -252,6 +275,10 @@
   justify-content: space-between;
   gap: 12px;
   min-width: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
 .runrate-card__metrics span:last-child {
@@ -412,6 +439,40 @@
   padding: 6px 0;
 }
 
+.chart-card__title {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.chart-toggle {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.chart-toggle__btn.MuiButton-root {
+  text-transform: none;
+  font-size: 12px;
+  padding: 4px 10px;
+  border-radius: 10px;
+  border-color: rgba(255, 255, 255, 0.16);
+  color: rgba(255, 255, 255, 0.85);
+  background: transparent;
+}
+
+.chart-toggle__btn.MuiButton-root:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.chart-toggle__btn.is-active.MuiButton-root {
+  background: rgba(255, 255, 255, 0.14);
+  border-color: rgba(255, 255, 255, 0.22);
+  color: #fff;
+}
+
 @media (max-width: 1100px) {
   .dashboard-grid {
     grid-template-columns: 1fr;
@@ -420,6 +481,10 @@
   .drink-insights-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     
+  }
+
+  .workout-insights-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .runrate-card {
@@ -441,6 +506,21 @@
     grid-column: span 1;
   }
 
+  .kpi--wide .kpi {
+    height: auto;
+    min-height: 0;
+  }
+
+  .kpi--wide .runrate-card {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .kpi--wide .runrate-card__metrics > div {
+    padding: 6px 8px;
+    font-size: 12px;
+  }
+
   .dashboard-grid {
     gap: 10px;
     display: flex;
@@ -456,6 +536,10 @@
   }
 
   .drink-insights-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .workout-insights-grid {
     grid-template-columns: 1fr;
   }
 

@@ -11,10 +11,11 @@ import TextField from "@mui/material/TextField";
 import { apiFetch } from "../api/apiFetch.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { budgetByCategory, categoryOrder } from "../config/budget.js";
+import { defaultWorkoutTypes } from "../config/workouts.js";
 import "./Settings.scss";
 
 export default function Settings() {
-  const { budgets, setBudgets } = useDashboard();
+  const { budgets, setBudgets, workoutTypes, setWorkoutTypes } = useDashboard();
   const [tab, setTab] = useState("security");
   const [currentPassword, setCurrentPassword] = useState("");
   const [password, setPassword] = useState("");
@@ -22,15 +23,23 @@ export default function Settings() {
   const [loading, setLoading] = useState(false);
   const [savingBudget, setSavingBudget] = useState(false);
   const [budgetForm, setBudgetForm] = useState(budgets || budgetByCategory);
+  const [workoutForm, setWorkoutForm] = useState(workoutTypes || defaultWorkoutTypes);
+  const [newWorkout, setNewWorkout] = useState("");
+  const [savingWorkouts, setSavingWorkouts] = useState(false);
   const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
 
   useEffect(() => {
     setBudgetForm(budgets || budgetByCategory);
   }, [budgets]);
 
+  useEffect(() => {
+    setWorkoutForm(workoutTypes || defaultWorkoutTypes);
+  }, [workoutTypes]);
+
   const breadcrumbLabel = useMemo(() => {
     if (tab === "security") return "Security";
     if (tab === "budget") return "Budget";
+    if (tab === "workouts") return "Workouts";
     return "Settings";
   }, [tab]);
 
@@ -93,6 +102,38 @@ export default function Settings() {
     }
   }
 
+  function addWorkoutType() {
+    const value = newWorkout.trim();
+    if (!value) return;
+    if (workoutForm.some((w) => w.toLowerCase() === value.toLowerCase())) {
+      setSnack({ open: true, message: "Workout already exists", severity: "error" });
+      return;
+    }
+    setWorkoutForm((prev) => [...prev, value]);
+    setNewWorkout("");
+  }
+
+  function removeWorkoutType(name) {
+    setWorkoutForm((prev) => prev.filter((w) => w !== name));
+  }
+
+  async function saveWorkoutTypes() {
+    try {
+      setSavingWorkouts(true);
+      const payload = { workoutTypes: workoutForm };
+      const res = await apiFetch("/api/workout-types", {
+        method: "PUT",
+        body: JSON.stringify(payload),
+      });
+      setWorkoutTypes(res?.workoutTypes || workoutForm);
+      setSnack({ open: true, message: "Workout types updated", severity: "success" });
+    } catch (err) {
+      setSnack({ open: true, message: err.message || "Failed to update workouts", severity: "error" });
+    } finally {
+      setSavingWorkouts(false);
+    }
+  }
+
   return (
     <DashboardLayout title="Settings">
       <div className="settings-head">
@@ -109,6 +150,7 @@ export default function Settings() {
         >
           <Tab value="security" label="Security" />
           <Tab value="budget" label="Budget" />
+          <Tab value="workouts" label="Workouts" />
         </Tabs>
       </div>
 
@@ -162,7 +204,7 @@ export default function Settings() {
               </div>
             </form>
           </SectionCard>
-        ) : (
+        ) : tab === "budget" ? (
           <SectionCard title="Budget">
             <div className="budget-table">
               <div className="budget-table__head">
@@ -202,6 +244,48 @@ export default function Settings() {
               <Button variant="contained" onClick={saveBudgets} disabled={savingBudget}>
                 {savingBudget ? "Saving..." : "Save Budgets"}
               </Button>
+            </div>
+          </SectionCard>
+        ) : (
+          <SectionCard title="Workout Types">
+            <div className="workout-types">
+              <div className="workout-types__add">
+                <TextField
+                  value={newWorkout}
+                  onChange={(e) => setNewWorkout(e.target.value)}
+                  size="small"
+                  placeholder="Add workout type"
+                  sx={{
+                    flex: 1,
+                    "& .MuiInputBase-root": {
+                      color: "#fff",
+                      background: "rgba(255,255,255,0.06)",
+                      borderRadius: "10px",
+                    },
+                    "& .MuiOutlinedInput-notchedOutline": {
+                      borderColor: "rgba(255,255,255,0.12)",
+                    },
+                  }}
+                />
+                <Button variant="contained" onClick={addWorkoutType}>
+                  Add
+                </Button>
+              </div>
+              <div className="workout-types__list">
+                {workoutForm.map((w) => (
+                  <div key={w} className="workout-types__item">
+                    <span>{w}</span>
+                    <Button size="small" color="error" onClick={() => removeWorkoutType(w)}>
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <div className="settings-form__actions">
+                <Button variant="contained" onClick={saveWorkoutTypes} disabled={savingWorkouts}>
+                  {savingWorkouts ? "Saving..." : "Save Workouts"}
+                </Button>
+              </div>
             </div>
           </SectionCard>
         )}

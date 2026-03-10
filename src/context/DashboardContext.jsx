@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../api/apiFetch.js";
 import { budgetByCategory as defaultBudgets } from "../config/budget.js";
+import { defaultWorkoutTypes } from "../config/workouts.js";
 
 const DashboardContext = createContext(null);
 
@@ -19,6 +20,7 @@ export function DashboardProvider({ children }) {
     return localStorage.getItem("ui.themeOn") === "true";
   });
   const [budgets, setBudgets] = useState(null);
+  const [workoutTypes, setWorkoutTypes] = useState(defaultWorkoutTypes);
   const bumpRefresh = () => setRefreshKey((k) => k + 1);
   const toggleTheme = () => setThemeOn((v) => !v);
 
@@ -39,6 +41,18 @@ export function DashboardProvider({ children }) {
     loadBudgets();
   }, []);
 
+  useEffect(() => {
+    const loadWorkoutTypes = async () => {
+      try {
+        const data = await apiFetch("/api/workout-types");
+        setWorkoutTypes(Array.isArray(data?.workoutTypes) ? data.workoutTypes : defaultWorkoutTypes);
+      } catch {
+        setWorkoutTypes(defaultWorkoutTypes);
+      }
+    };
+    loadWorkoutTypes();
+  }, []);
+
   const value = useMemo(
     () => ({
       monthKey,
@@ -54,8 +68,10 @@ export function DashboardProvider({ children }) {
       toggleTheme,
       budgets,
       setBudgets,
+      workoutTypes,
+      setWorkoutTypes,
     }),
-    [monthKey, tier, lastUpdate, refreshKey, themeOn, budgets]
+    [monthKey, tier, lastUpdate, refreshKey, themeOn, budgets, workoutTypes]
   );
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

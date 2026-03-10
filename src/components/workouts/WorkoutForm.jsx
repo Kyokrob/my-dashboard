@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useDashboard } from "../../context/DashboardContext.jsx";
+import { defaultWorkoutTypes } from "../../config/workouts.js";
 import "../../styles/forms.scss";
 
 function todayISO() {
@@ -14,11 +16,12 @@ const DEFAULT = {
   intensity: 3,
   weight: "",
   bodyFat: "",
-  feel: "",
+  feel: "Normal",
   note: "",
 };
 
 export default function WorkoutForm({ initial, onSubmit, onDelete }) {
+  const { workoutTypes } = useDashboard();
   const [form, setForm] = useState(DEFAULT);
   const [submitting, setSubmitting] = useState(false);
 
@@ -30,7 +33,7 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
         intensity: initial.intensity ?? 3,
         weight: initial.weight ?? "",
         bodyFat: initial.bodyFat ?? "",
-        feel: initial.feel || "",
+        feel: initial.feel || "Normal",
         note: initial.note || "",
       });
     } else {
@@ -88,9 +91,9 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
             value={form.workoutType}
             onChange={handleChange}
           >
-            {["Running", "Weight Training", "HIIT", "Swim", "Golf range", "Golf course", "Rest"].map((t) => (
-              <option key={t} value={t}>{t}</option>
-            ))}
+          {(workoutTypes?.length ? workoutTypes : defaultWorkoutTypes).map((t) => (
+            <option key={t} value={t}>{t}</option>
+          ))}
           </select>
         </div>
 
@@ -110,22 +113,6 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
         </div>
 
         <div className="form__row">
-          <label className="form__label" htmlFor="wo-weight">Weight (kg)</label>
-          <input
-            id="wo-weight"
-            className="form__input"
-            name="weight"
-            type="number"
-            inputMode="decimal"
-            pattern="[0-9.]*"
-            step="0.1"
-            placeholder="Optional"
-            value={form.weight}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="form__row">
           <label className="form__label" htmlFor="wo-bf">Body fat (%)</label>
           <input
             id="wo-bf"
@@ -142,13 +129,34 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
         </div>
 
         <div className="form__row">
-          <label className="form__label" htmlFor="wo-feel">Feel</label>
-          <input
+          <label className="form__label" htmlFor="wo-feel">Energy level</label>
+          <select
             id="wo-feel"
-            className="form__input"
+            className="form__select"
             name="feel"
-            placeholder="eg., Fresh / Tired"
             value={form.feel}
+            onChange={handleChange}
+          >
+            {["Low", "Normal", "High"].map((level) => (
+              <option key={level} value={level}>
+                {level}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div className="form__row">
+          <label className="form__label" htmlFor="wo-weight">Weight (kg)</label>
+          <input
+            id="wo-weight"
+            className="form__input"
+            name="weight"
+            type="number"
+            inputMode="decimal"
+            pattern="[0-9.]*"
+            step="0.1"
+            placeholder="Optional"
+            value={form.weight}
             onChange={handleChange}
           />
         </div>

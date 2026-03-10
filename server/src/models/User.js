@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 import bcrypt from "bcryptjs";
 import { budgetByCategory } from "../config/budget.js";
+import { defaultWorkoutTypes } from "../config/workouts.js";
 
 const UserSchema = new mongoose.Schema(
   {
@@ -10,6 +11,7 @@ const UserSchema = new mongoose.Schema(
     role: { type: String, enum: ["admin"], default: "admin" },
     isActive: { type: Boolean, default: true },
     budgets: { type: Object, default: budgetByCategory },
+    workoutTypes: { type: [String], default: defaultWorkoutTypes },
   },
   { timestamps: true }
 );

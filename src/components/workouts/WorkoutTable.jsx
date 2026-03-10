@@ -114,7 +114,7 @@ export default function WorkoutTable({
           <div className="center">Intensity</div>
           <div className="right">Weight</div>
           <div className="right">BF%</div>
-          <div className="center">Feel</div>
+          <div className="center">Energy level</div>
            <div>Note</div>
           <div className="right">Actions</div>
         </div>

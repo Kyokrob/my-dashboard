@@ -41,6 +41,10 @@ export default function AppShell({ children }) {
     setSnack({ open: true, message, severity });
   }
 
+  function handleNavClick() {
+    setOpen(false);
+  }
+
   async function verifySettingsAccess() {
     setSettingsError("");
     if (settingsPassword.length < 6) {
@@ -86,15 +90,15 @@ export default function AppShell({ children }) {
         </div>
 
         <nav className="shell__nav">
-          <NavLink to="/" end className="shell__link">
+          <NavLink to="/" end className="shell__link" onClick={handleNavClick}>
             <DashboardIcon fontSize="small" />
             {!collapsed && <span>Overview</span>}
           </NavLink>
-          <NavLink to="/trackers" className="shell__link">
+          <NavLink to="/trackers" className="shell__link" onClick={handleNavClick}>
             <TableChartIcon fontSize="small" />
             {!collapsed && <span>Trackers</span>}
           </NavLink>
-          <NavLink to="/report" className="shell__link">
+          <NavLink to="/report" className="shell__link" onClick={handleNavClick}>
             <InsightsIcon fontSize="small" />
             {!collapsed && <span>Insights</span>}
           </NavLink>

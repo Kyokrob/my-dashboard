@@ -78,6 +78,33 @@
   margin-top: 6px;
 }
 
+.workout-types {
+  display: grid;
+  gap: 12px;
+}
+
+.workout-types__add {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.workout-types__list {
+  display: grid;
+  gap: 8px;
+}
+
+.workout-types__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
 @media (max-width: 720px) {
   .settings-form {
     max-width: 100%;
@@ -91,5 +118,10 @@
   .budget-table__row {
     grid-template-columns: 1fr 1fr;
     row-gap: 6px;
+  }
+
+  .workout-types__add {
+    flex-direction: column;
+    align-items: stretch;
   }
 }

@@ -112,6 +112,7 @@ export default function Dashboard() {
   const [drinkDelete, setDrinkDelete] = useState({ open: false, id: null });
   const [editingExpense, setEditingExpense] = useState(null);
   const [editingWorkout, setEditingWorkout] = useState(null);
+  const [expenseChartView, setExpenseChartView] = useState("mix");
 
   /* ======================
    Load from API (STRICT)
@@ -531,6 +532,16 @@ export default function Dashboard() {
     return [d.getFullYear(), d.getMonth() + 1];
   })();
   const prevMonthKey = `${prevY}-${String(prevM).padStart(2, "0")}`;
+  const prevMonthWorkouts = workoutRows.filter((w) => inMonth(w.date, prevMonthKey));
+  const workoutDeltaPct = prevMonthWorkouts.length
+    ? ((workoutCount - prevMonthWorkouts.length) / prevMonthWorkouts.length) * 100
+    : null;
+  const workoutDeltaLabel =
+    workoutDeltaPct === null
+      ? "No prior data"
+      : `${workoutDeltaPct > 0 ? "+" : ""}${workoutDeltaPct.toFixed(0)}% vs last month`;
+  const workoutDeltaTone =
+    workoutDeltaPct === null ? "neutral" : workoutDeltaPct >= 0 ? "good" : "bad";
   const prevMonthExpenses = expenseRows.filter((e) => inMonth(e.date, prevMonthKey));
   const prevMonthMTD = prevMonthExpenses
     .filter((e) => Number(e.date.split("-")[2]) <= asOfDay)
@@ -678,14 +689,10 @@ const daysInMonth = new Date(
 
 const todayExpenses = expenseRows.filter((e) => e.date === todayKey);
 const todaySpend = todayExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
-const todayWorkouts = workoutRows.filter((w) => w.date === todayKey);
-const todayWorkoutLabel = todayWorkouts[0]?.workoutType || (todayWorkouts.length ? "Workout" : "None");
-const todayDrinks = drinkRows.filter((d) => d.date === todayKey && d.drank);
-const todayDrinkLabel = todayDrinks.length ? "Yes" : "None";
-
-/* ======================
-   Run-Rate Forecast
-====================== */
+  const todayWorkouts = workoutRows.filter((w) => w.date === todayKey);
+  const todayWorkoutLabel = todayWorkouts[0]?.workoutType || (todayWorkouts.length ? "Workout" : "None");
+  const todayDrinks = drinkRows.filter((d) => d.date === todayKey && d.drank);
+  const todayDrinkLabel = todayDrinks.length ? "Yes" : "None";
 
 const daysPassed = Math.max(1, asOfDay);
 const projectedSpend = (totalSpend / daysPassed) * daysInMonth;
@@ -696,6 +703,9 @@ const runRateStatus = !hasBudget
   ? "On track ✓"
   : "Over budget";
 const runRateTone = !hasBudget ? "neutral" : projectedSpend <= plannedTotal ? "good" : "bad";
+const avgDailySpend = totalSpend / daysPassed;
+const budgetDaily = hasBudget ? plannedTotal / daysInMonth : 0;
+const paceMultiplier = hasBudget && budgetDaily > 0 ? avgDailySpend / budgetDaily : null;
 const RunRateIcon = !hasBudget
   ? InfoOutlinedIcon
   : projectedSpend <= plannedTotal
@@ -741,6 +751,22 @@ const weeklySpend = (() => {
 })();
 
 const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
+
+const topWorkoutTypes = (() => {
+  const map = monthWorkouts.reduce((acc, w) => {
+    const key = w.workoutType || "Other";
+    acc[key] = (acc[key] || 0) + 1;
+    return acc;
+  }, {});
+  return Object.entries(map)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([type, count]) => ({ type, count }));
+})();
+
+/* ======================
+   Run-Rate Forecast
+====================== */
 
 
 
@@ -831,21 +857,40 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
 
         <div className="theme-exp kpi--wide">
           <KpiCard
-            title="Spending by Day (This Month)"
+            title="Run-Rate Forecast"
             value={
-              <div className="weekly-spend kpi-weekly">
-                {weeklySpend.map((d) => (
-                  <div key={d.label} className="weekly-spend__row">
-                    <div className="weekly-spend__label">{d.label}</div>
-                    <div className="weekly-spend__bar-wrap">
-                      <div
-                        className="weekly-spend__bar"
-                        style={{ width: `${(d.amount / maxWeeklySpend) * 100}%` }}
-                      />
-                    </div>
-                    <div className="weekly-spend__value">฿{d.amount.toLocaleString()}</div>
+              <div className="runrate-card">
+                <div>
+                  <div className="runrate-card__label">Status</div>
+                <div className={`runrate-card__status runrate-card__status--${runRateTone}`}>
+                  <RunRateIcon fontSize="small" />
+                  {runRateStatus}
+                </div>
+                <div className="runrate-card__pace">
+                  Pace {paceMultiplier ? `${paceMultiplier.toFixed(1)}×` : "—"}
+                </div>
+                <div className="runrate-card__sub">
+                  {hasBudget ? "Based on current monthly pace" : "Add a budget to see tracking"}
+                </div>
+              </div>
+              <div className="runrate-card__metrics">
+                <div>
+                  <span>Daily average</span>
+                  <span>฿{Math.round(avgDailySpend).toLocaleString()}</span>
+                </div>
+                <div>
+                  <span>Monthly spend</span>
+                  <span>฿{Math.round(totalSpend).toLocaleString()}</span>
+                </div>
+                  <div>
+                    <span>Projected end</span>
+                    <span>฿{Math.round(projectedSpend).toLocaleString()}</span>
                   </div>
-                ))}
+                  <div>
+                    <span>Budget</span>
+                    <span>{hasBudget ? `฿${Math.round(plannedTotal).toLocaleString()}` : "—"}</span>
+                  </div>
+                </div>
               </div>
             }
           />
@@ -860,62 +905,6 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
           <div className="theme-exp">
             <SectionCard title="Overview" right={<TierSelector value={tier} onChange={setTier} />}>
               <ProjectionTable tier={tier} actualByCat={actualByCat} budgets={budgetSource} />
-            </SectionCard>
-          </div>
-          <div className="theme-exp">
-            <SectionCard title="Run-Rate Forecast">
-              <div className="runrate-card">
-                <div>
-                  <div className="runrate-card__label">Status</div>
-                  <div className={`runrate-card__status runrate-card__status--${runRateTone}`}>
-                    <RunRateIcon fontSize="small" />
-                    {runRateStatus}
-                  </div>
-                  <div className="runrate-card__sub">
-                    {hasBudget ? "Based on current monthly pace" : "Add a budget to see tracking"}
-                  </div>
-                </div>
-                <div className="runrate-card__metrics">
-                  <div>
-                    <span>Monthly spend</span>
-                    <span>฿{Math.round(totalSpend).toLocaleString()}</span>
-                  </div>
-                  <div>
-                    <span>Projected end</span>
-                    <span>฿{Math.round(projectedSpend).toLocaleString()}</span>
-                  </div>
-                  <div>
-                    <span>Budget</span>
-                    <span>{hasBudget ? `฿${Math.round(plannedTotal).toLocaleString()}` : "—"}</span>
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
-          </div>
-
-          <div className="theme-drink">
-            <SectionCard title="Drinking Day Spend Multiplier">
-              <div className="multiplier-card">
-                <div>
-                  <div className="multiplier-card__label">On drinking days you spend</div>
-                  <div className="multiplier-card__value">
-                    {drinkSpendMultiplier ? `${drinkSpendMultiplier.toFixed(1)}× more` : "—"}
-                  </div>
-                  <div className="multiplier-card__sub">
-                    {drinkSpendMultiplier ? "Compared with non‑drinking days" : "Not enough data yet"}
-                  </div>
-                </div>
-                <div className="multiplier-card__metrics">
-                  <div>
-                    <span>Normal day avg</span>
-                    <span>{avgSpendNonDrinkDay ? `฿${Math.round(avgSpendNonDrinkDay).toLocaleString()}` : "—"}</span>
-                  </div>
-                  <div>
-                    <span>Drinking day avg</span>
-                    <span>{avgSpendDrinkDay ? `฿${Math.round(avgSpendDrinkDay).toLocaleString()}` : "—"}</span>
-                  </div>
-                </div>
-              </div>
             </SectionCard>
           </div>
 
@@ -955,7 +944,26 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
                 <div className="drink-card__sub">Includes all logged this month expenses</div>
               </div>
             </div>
-          </SectionCard>
+            </SectionCard>
+          </div>
+
+          <div className="theme-exp">
+            <SectionCard title="Spending by Day (This Month)">
+              <div className="weekly-spend">
+                {weeklySpend.map((d) => (
+                  <div key={d.label} className="weekly-spend__row">
+                    <div className="weekly-spend__label">{d.label}</div>
+                    <div className="weekly-spend__bar-wrap">
+                      <div
+                        className="weekly-spend__bar"
+                        style={{ width: `${(d.amount / maxWeeklySpend) * 100}%` }}
+                      />
+                    </div>
+                    <div className="weekly-spend__value">฿{d.amount.toLocaleString()}</div>
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
           </div>
           
           <div className="theme-drink">
@@ -984,6 +992,32 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
               </div>
             </SectionCard>
           </div>
+
+          <div className="theme-drink">
+            <SectionCard title="Drinking Day Spend Multiplier">
+              <div className="multiplier-card">
+                <div>
+                  <div className="multiplier-card__label">On drinking days you spend</div>
+                  <div className="multiplier-card__value">
+                    {drinkSpendMultiplier ? `${drinkSpendMultiplier.toFixed(1)}× more` : "—"}
+                  </div>
+                  <div className="multiplier-card__sub">
+                    {drinkSpendMultiplier ? "Compared with non‑drinking days" : "Not enough data yet"}
+                  </div>
+                </div>
+                <div className="multiplier-card__metrics">
+                  <div>
+                    <span>Normal day avg</span>
+                    <span>{avgSpendNonDrinkDay ? `฿${Math.round(avgSpendNonDrinkDay).toLocaleString()}` : "—"}</span>
+                  </div>
+                  <div>
+                    <span>Drinking day avg</span>
+                    <span>{avgSpendDrinkDay ? `฿${Math.round(avgSpendDrinkDay).toLocaleString()}` : "—"}</span>
+                  </div>
+                </div>
+              </div>
+            </SectionCard>
+          </div>
           <div className="theme-neutral">
             <SectionCard title="To-Do / Next Actions">
               <TodoList rows={todos} onAdd={addTodo} onUpdate={updateTodo} onDelete={deleteTodo} />
@@ -1001,6 +1035,57 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
                 workouts={monthWorkouts}
                 drinks={monthDrinksAll}
               />
+            </SectionCard>
+          </div>
+
+          <div className="theme-exp">
+            <SectionCard
+              title={
+                <div className="chart-card__title">
+                  <span>Expenses (This Month)</span>
+                  <div className="chart-toggle">
+                    <Button
+                      size="small"
+                      variant={expenseChartView === "mix" ? "contained" : "outlined"}
+                      onClick={() => setExpenseChartView("mix")}
+                      className={`chart-toggle__btn ${expenseChartView === "mix" ? "is-active" : ""}`}
+                    >
+                      Mix
+                    </Button>
+                    <Button
+                      size="small"
+                      variant={expenseChartView === "breakdown" ? "contained" : "outlined"}
+                      onClick={() => setExpenseChartView("breakdown")}
+                      className={`chart-toggle__btn ${expenseChartView === "breakdown" ? "is-active" : ""}`}
+                    >
+                      Breakdown
+                    </Button>
+                  </div>
+                </div>
+              }
+            >
+              <div
+                style={{
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  padding: "8px 0 4px",
+                  gap: 6,
+                  color: "white",
+                }}
+              >
+                {monthExpenses.length ? (
+                  <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
+                    {expenseChartView === "mix" ? (
+                      <ExpenseCategoryPie rows={monthExpenses} />
+                    ) : (
+                      <ExpenseCategoryBar rows={monthExpenses} />
+                    )}
+                  </Suspense>
+                ) : (
+                  <div className="chart-empty">No data yet. Log your first expense to see insights.</div>
+                )}
+              </div>
             </SectionCard>
           </div>
 
@@ -1033,55 +1118,40 @@ const maxWeeklySpend = Math.max(...weeklySpend.map((d) => d.amount), 1);
       </SectionCard>
       </div>
 
-          
+          <div className="theme-wo">
+            <SectionCard title="Workout Insights">
+              <div className="workout-insights-grid">
+                <div className="drink-card theme-wo">
+                  <div className="drink-card__title">Total Workouts</div>
+                  <div className="drink-card__value is-large">{workoutCount}</div>
+                  <div className={`drink-card__sub drink-card__value--${workoutDeltaTone}`}>
+                    {workoutDeltaLabel}
+                  </div>
+                </div>
+                <div className="drink-card theme-wo">
+                  <div className="drink-card__title">Top Workout Types</div>
+                  {topWorkoutTypes.length ? (
+                    <div className="kpi-momentum">
+                      {topWorkoutTypes.map((row) => (
+                        <div className="kpi-momentum__row" key={row.type}>
+                          <span className="kpi-momentum__label">{row.type}</span>
+                          <span className="kpi-momentum__value kpi-momentum__value--neutral">
+                            {row.count}
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="kpi-momentum__empty">No workout data yet</div>
+                  )}
+                </div>
+              </div>
+            </SectionCard>
+          </div>
 
           
 
-<div className="theme-exp">
-<SectionCard title="Expense Mix (This Month)">
-  <div style={{
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "8px 0 4px",
-    gap: 6,
-    color: "white",
-  }}>
-    {monthExpenses.length ? (
-      <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
-        <ExpenseCategoryPie rows={monthExpenses} />
-      </Suspense>
-    ) : (
-      <div className="chart-empty">No data yet. Log your first expense to see insights.</div>
-    )}
-  </div>
-</SectionCard>
-</div>
-
-<div className="theme-exp">
-<SectionCard title="Expense Breakdown (This Month)">
-  <div style={{
-    display: "flex",
-    flexDirection: "column",
-    alignItems: "center",
-    padding: "8px 0 4px",
-    gap: 6,
-    color: "white",
-  }}>
-    {monthExpenses.length ? (
-      <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
-        <ExpenseCategoryBar rows={monthExpenses} />
-      </Suspense>
-    ) : (
-      <div className="chart-empty">No data yet. Log your first expense to see insights.</div>
-    )}
-  </div>
-</SectionCard>
-</div>
-
-
           
- 
 
 
         </div>

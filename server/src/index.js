@@ -13,6 +13,7 @@ import workoutsRoutes from "./routes/workouts.routes.js";
 import todosRoutes from "./routes/todos.routes.js";
 import drinksRoutes from "./routes/drinks.routes.js";
 import budgetsRoutes from "./routes/budgets.routes.js";
+import workoutTypesRoutes from "./routes/workout-types.routes.js";
 import { errorHandler } from "./middleware/error.js";
 import { requireAuth, attachUser } from "./middleware/auth.js";
 
@@ -90,6 +91,7 @@ app.use("/api/workouts", requireAuth, workoutsRoutes);
 app.use("/api/todos", requireAuth, todosRoutes);
 app.use("/api/drinks", requireAuth, drinksRoutes);
 app.use("/api/budgets", requireAuth, budgetsRoutes);
+app.use("/api/workout-types", requireAuth, workoutTypesRoutes);
 
 /* ======================
    SERVE FRONTEND IN PROD
