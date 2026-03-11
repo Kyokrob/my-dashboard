@@ -94,6 +94,7 @@
   gap: 14px;
 }
 
+
 .report-stat {
   display: flex;
   flex-direction: column;
@@ -159,6 +160,19 @@
 
   .report-extra-grid {
     grid-template-columns: 1fr;
+  }
+
+  .report-chart {
+    gap: 4px;
+    padding: 4px 0 0;
+  }
+
+  .report-summary__value {
+    font-size: 20px;
+  }
+
+  .report-chart__sub {
+    font-size: 11px;
   }
 
 }

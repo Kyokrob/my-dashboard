@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useDashboard } from "../../context/DashboardContext.jsx";
 import "../../styles/forms.scss";
 
 function todayISO() {
@@ -9,36 +10,59 @@ function todayISO() {
 }
 
 export default function ExpenseForm({ initial, onSubmit, onDelete }) {
+  const { expenseCategories } = useDashboard();
+  const fallbackCategories = useMemo(() => {
+    const activeCategories = (expenseCategories || [])
+      .filter((c) => c.enabled !== false)
+      .map((c) => c.label)
+      .filter(Boolean);
+    return activeCategories.length
+      ? activeCategories
+      : ["Eat", "Drink", "Golf", "Transport", "Shopping", "Billing", "Others", "Etc"];
+  }, [expenseCategories]);
+  const fallbackKey = fallbackCategories.join("|");
   const [form, setForm] = useState({
     date: todayISO(),
     amount: "",
-    category: "Eat",
+    category: fallbackCategories[0] || "Eat",
     subCategory: "",
     type: "",
   });
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const isValid = Boolean(form.date && String(form.amount).trim() !== "");
 
   useEffect(() => {
     if (initial?.id) {
       setForm({
         date: initial.date || todayISO(),
         amount: initial.amount ?? "",
-        category: initial.category || "Eat",
+        category: initial.category || fallbackCategories[0] || "Eat",
         subCategory: initial.subCategory || "",
         type: initial.type || "",
       });
     } else {
-      setForm({ date: todayISO(), amount: "", category: "Eat", subCategory: "", type: "" });
+      setForm({
+        date: todayISO(),
+        amount: "",
+        category: fallbackCategories[0] || "Eat",
+        subCategory: "",
+        type: "",
+      });
     }
-  }, [initial]);
+  }, [initial, fallbackKey]);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
+    setError("");
   }
 
   async function handleSubmit(e) {
     e.preventDefault();
-    if (!form.date || !form.amount) return;
+    if (!isValid) {
+      setError("Please add a date and amount.");
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -47,7 +71,16 @@ export default function ExpenseForm({ initial, onSubmit, onDelete }) {
         ...form,
         amount: Number(form.amount),
       });
-      setForm({ date: todayISO(), amount: "", category: "Eat", subCategory: "", type: "" });
+      setForm({
+        date: todayISO(),
+        amount: "",
+        category: fallbackCategories[0] || "Eat",
+        subCategory: "",
+        type: "",
+      });
+      setError("");
+    } catch (err) {
+      setError(err?.message || "Failed to save. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -57,7 +90,7 @@ export default function ExpenseForm({ initial, onSubmit, onDelete }) {
     <form onSubmit={handleSubmit} className="form">
       <div className="form__grid">
         <div className="form__row">
-          <label className="form__label" htmlFor="expense-date">Date</label>
+          <label className="form__label" htmlFor="expense-date">Date *</label>
           <input
             id="expense-date"
             className="form__input"
@@ -69,7 +102,7 @@ export default function ExpenseForm({ initial, onSubmit, onDelete }) {
         </div>
 
         <div className="form__row">
-          <label className="form__label" htmlFor="expense-amount">Amount</label>
+          <label className="form__label" htmlFor="expense-amount">Amount *</label>
           <input
             id="expense-amount"
             className="form__input"
@@ -92,14 +125,11 @@ export default function ExpenseForm({ initial, onSubmit, onDelete }) {
             value={form.category}
             onChange={handleChange}
           >
-            <option>Eat</option>
-            <option>Drink</option>
-            <option>Golf</option>
-            <option>Transport</option>
-            <option>Shopping</option>
-            <option>Billing</option>
-            <option>Others</option>
-            <option>Etc</option>
+            {fallbackCategories.map((cat) => (
+              <option key={cat} value={cat}>
+                {cat}
+              </option>
+            ))}
           </select>
         </div>
 
@@ -132,12 +162,13 @@ export default function ExpenseForm({ initial, onSubmit, onDelete }) {
         <Button
           type="submit"
           fullWidth
-          disabled={submitting}
+          disabled={submitting || !isValid}
           startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
         >
           {submitting ? "Saving..." : initial?.id ? "Save Changes" : "Add Expense"}
         </Button>
       </div>
+      {error && <div className="form__error">{error}</div>}
 
       {onDelete && (
         <div className="form__actions">

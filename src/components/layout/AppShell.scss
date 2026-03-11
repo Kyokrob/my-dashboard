@@ -5,7 +5,7 @@
 
 .shell__sidebar {
   width: 220px;
-  background: rgba(18, 22, 31, 0.98);
+  background: #141821;
   border-right: 1px solid rgba(255,255,255,0.08);
   padding: 14px 12px;
   position: fixed;
@@ -130,15 +130,14 @@
 
   .shell__menu {
     display: inline-flex;
-    position: fixed;
-    top: 12px;
-    left: 12px;
-    z-index: 50;
+    position: static;
     border: 1px solid rgba(255,255,255,0.18);
-    background: rgba(20, 24, 33, 0.9);
+    background: #141821;
     color: rgba(255,255,255,0.9);
-    border-radius: 10px;
-    padding: 6px 10px;
+    border-radius: 12px;
+    padding: 10px 12px;
+    font-size: 16px;
+    line-height: 1;
     cursor: pointer;
   }
 

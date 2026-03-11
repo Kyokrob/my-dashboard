@@ -8,14 +8,17 @@ import path from "path";
 
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
+import adminRoutes from "./routes/admin.routes.js";
+import dataRoutes from "./routes/data.routes.js";
 import expensesRoutes from "./routes/expenses.routes.js";
 import workoutsRoutes from "./routes/workouts.routes.js";
 import todosRoutes from "./routes/todos.routes.js";
 import drinksRoutes from "./routes/drinks.routes.js";
 import budgetsRoutes from "./routes/budgets.routes.js";
 import workoutTypesRoutes from "./routes/workout-types.routes.js";
+import preferencesRoutes from "./routes/preferences.routes.js";
 import { errorHandler } from "./middleware/error.js";
-import { requireAuth, attachUser } from "./middleware/auth.js";
+import { requireAuth, attachUser, requireAdmin } from "./middleware/auth.js";
 
 dotenv.config();
 
@@ -86,12 +89,15 @@ app.get("/health", (req, res) => res.json({ ok: true }));
    API ROUTES
 ====================== */
 app.use("/api/auth", authRoutes);
+app.use("/api/admin", requireAuth, requireAdmin, adminRoutes);
+app.use("/api/data", requireAuth, dataRoutes);
 app.use("/api/expenses", requireAuth, expensesRoutes);
 app.use("/api/workouts", requireAuth, workoutsRoutes);
 app.use("/api/todos", requireAuth, todosRoutes);
 app.use("/api/drinks", requireAuth, drinksRoutes);
 app.use("/api/budgets", requireAuth, budgetsRoutes);
 app.use("/api/workout-types", requireAuth, workoutTypesRoutes);
+app.use("/api/preferences", requireAuth, preferencesRoutes);
 
 /* ======================
    SERVE FRONTEND IN PROD

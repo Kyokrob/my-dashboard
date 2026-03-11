@@ -1,24 +1,18 @@
 import { useState } from "react";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
+import { useDashboard } from "../../context/DashboardContext.jsx";
 import "./DrinkForm.scss";
 
-const REASONS = [
-  "Social/Friend",
-  "Celebration/Reward",
-  "Business",
-  "Stress",
-  "Habit",
-  "Boredom",
-  "Went along",
-  "Others",
-];
-
-const VENUES = ["Home", "Bar", "Restaurant", "Event", "Golf related"];
 const START_TIMES = ["Before 8pm", "After 8pm", "After 10pm"];
 const REGRET = ["None", "Mid", "High"];
 
 export default function DrinkForm({ initial, onSubmit, onDelete }) {
+  const { drinkReasons, drinkVenues } = useDashboard();
+  const reasonOptions = (drinkReasons || []).filter((r) => r.enabled !== false).map((r) => r.label);
+  const venueOptions = (drinkVenues || []).filter((v) => v.enabled !== false).map((v) => v.label);
+  const safeReasons = reasonOptions.length ? reasonOptions : ["Social/Friend", "Others"];
+  const safeVenues = venueOptions.length ? venueOptions : ["Home"];
   const [form, setForm] = useState({
     name: initial?.name || "",
     date: initial?.date || "",
@@ -35,6 +29,8 @@ export default function DrinkForm({ initial, onSubmit, onDelete }) {
   });
   const [submitting, setSubmitting] = useState(false);
   const [showMore, setShowMore] = useState(false);
+  const [error, setError] = useState("");
+  const isValid = Boolean(form.date);
 
   function toggleReason(r) {
     setForm((p) => ({
@@ -44,11 +40,15 @@ export default function DrinkForm({ initial, onSubmit, onDelete }) {
         : [...p.reasons, r],
       otherReason: r === "Others" && p.reasons.includes(r) ? "" : p.otherReason,
     }));
+    setError("");
   }
 
   async function submit(e) {
     e.preventDefault();
-    if (!form.date) return;
+    if (!isValid) {
+      setError("Please select a date.");
+      return;
+    }
 
     const payload = {
       ...form,
@@ -61,6 +61,9 @@ export default function DrinkForm({ initial, onSubmit, onDelete }) {
     try {
       setSubmitting(true);
       await onSubmit?.(payload);
+      setError("");
+    } catch (err) {
+      setError(err?.message || "Failed to save. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -76,17 +79,23 @@ export default function DrinkForm({ initial, onSubmit, onDelete }) {
             type="text"
             placeholder="What do we call this session?"
             value={form.name}
-            onChange={(e) => setForm((p) => ({ ...p, name: e.target.value }))}
+            onChange={(e) => {
+              setForm((p) => ({ ...p, name: e.target.value }));
+              setError("");
+            }}
           />
         </div>
 
         <div className="drink-form__row">
-          <label className="form__label">Date</label>
+          <label className="form__label">Date *</label>
           <input
             className="form__input"
             type="date"
             value={form.date}
-            onChange={(e) => setForm((p) => ({ ...p, date: e.target.value }))}
+            onChange={(e) => {
+              setForm((p) => ({ ...p, date: e.target.value }));
+              setError("");
+            }}
           />
         </div>
 
@@ -107,8 +116,8 @@ export default function DrinkForm({ initial, onSubmit, onDelete }) {
           </div>
         </div>
 
-        <div className="drink-form__row">
-          <label className="form__label">Duration (hours)</label>
+      <div className="drink-form__row">
+        <label className="form__label">Duration (hours)</label>
           <input
             className="form__input"
             type="number"
@@ -117,14 +126,17 @@ export default function DrinkForm({ initial, onSubmit, onDelete }) {
             step="0.5"
             placeholder="e.g., 2"
             value={form.durationHours}
-            onChange={(e) => setForm((p) => ({ ...p, durationHours: e.target.value }))}
+            onChange={(e) => {
+              setForm((p) => ({ ...p, durationHours: e.target.value }));
+              setError("");
+            }}
           />
         </div>
 
         <div className="drink-form__row drink-form__row--full">
           <label className="form__label">Reasons</label>
           <div className="drink-form__chips">
-            {REASONS.map((r) => (
+            {safeReasons.map((r) => (
               <button
                 key={r}
                 type="button"
@@ -145,7 +157,10 @@ export default function DrinkForm({ initial, onSubmit, onDelete }) {
               type="text"
               placeholder="Write your reason"
               value={form.otherReason}
-              onChange={(e) => setForm((p) => ({ ...p, otherReason: e.target.value }))}
+              onChange={(e) => {
+                setForm((p) => ({ ...p, otherReason: e.target.value }));
+                setError("");
+              }}
             />
           </div>
         )}
@@ -168,7 +183,7 @@ export default function DrinkForm({ initial, onSubmit, onDelete }) {
                 onChange={(e) => setForm((p) => ({ ...p, venue: e.target.value }))}
               >
                 <option value="">-</option>
-                {VENUES.map((v) => (
+                {safeVenues.map((v) => (
                   <option key={v} value={v}>
                     {v}
                   </option>
@@ -258,12 +273,13 @@ export default function DrinkForm({ initial, onSubmit, onDelete }) {
         <Button
           type="submit"
           fullWidth
-          disabled={submitting}
+          disabled={submitting || !isValid}
           startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
         >
           {submitting ? "Saving..." : "Log Drink"}
         </Button>
       </div>
+      {error && <div className="form__error">{error}</div>}
 
       {onDelete && (
         <div className="form__actions">

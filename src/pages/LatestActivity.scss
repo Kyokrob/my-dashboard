@@ -1,0 +1,78 @@
+.activity-page {
+  margin-top: 14px;
+  display: grid;
+  gap: 14px;
+}
+
+.report-metrics {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.report-metric {
+  padding: 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  text-align: center;
+}
+
+.report-metric__label {
+  font-size: 12px;
+  opacity: 0.7;
+}
+
+.report-metric__value {
+  margin-top: 6px;
+  font-size: 20px;
+  font-weight: 700;
+}
+
+.activity-log {
+  display: grid;
+  gap: 10px;
+}
+
+.activity-log__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.activity-log__title {
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.activity-log__meta {
+  font-size: 11px;
+  opacity: 0.6;
+  margin-top: 2px;
+}
+
+.activity-log__time {
+  font-size: 11px;
+  opacity: 0.6;
+  white-space: nowrap;
+}
+
+.activity-log__empty {
+  font-size: 12px;
+  opacity: 0.6;
+}
+
+@media (max-width: 720px) {
+  .report-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .activity-log__row {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

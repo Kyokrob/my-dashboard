@@ -17,7 +17,7 @@ function shiftMonth(monthKey, delta) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
 }
 
-export default function MonthPicker({ value, onChange }) {
+export default function MonthPicker({ value, onChange, tourId }) {
   const label = new Date(
     Number(value.split("-")[0]),
     Number(value.split("-")[1]) - 1
@@ -29,6 +29,7 @@ export default function MonthPicker({ value, onChange }) {
   return (
     <div
       className="month-picker"
+      data-tour={tourId}
       style={{
         display: "flex",
         alignItems: "center",

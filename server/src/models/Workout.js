@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const WorkoutSchema = new mongoose.Schema(
   {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     date: { type: String, required: true },
     workoutType: { type: String, required: true },
     intensity: { type: Number, default: 1 },
@@ -13,5 +14,7 @@ const WorkoutSchema = new mongoose.Schema(
   },
   { timestamps: true }
 );
+
+WorkoutSchema.index({ userId: 1, date: 1 });
 
 export default mongoose.model("Workout", WorkoutSchema);

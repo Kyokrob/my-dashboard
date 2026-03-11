@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Button from "@mui/material/Button";
 import CircularProgress from "@mui/material/CircularProgress";
 import { useDashboard } from "../../context/DashboardContext.jsx";
@@ -22,14 +22,24 @@ const DEFAULT = {
 
 export default function WorkoutForm({ initial, onSubmit, onDelete }) {
   const { workoutTypes } = useDashboard();
+  const fallbackTypes = useMemo(() => {
+    const activeTypes = (workoutTypes || [])
+      .filter((t) => (typeof t === "string" ? true : t.enabled !== false))
+      .map((t) => (typeof t === "string" ? t : t.label))
+      .filter(Boolean);
+    return activeTypes.length ? activeTypes : defaultWorkoutTypes;
+  }, [workoutTypes]);
+  const fallbackKey = fallbackTypes.join("|");
   const [form, setForm] = useState(DEFAULT);
   const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+  const isValid = Boolean(form.date && form.workoutType);
 
   useEffect(() => {
     if (initial?.id) {
       setForm({
         date: initial.date || todayISO(),
-        workoutType: initial.workoutType || "Running",
+        workoutType: initial.workoutType || fallbackTypes[0] || "Running",
         intensity: initial.intensity ?? 3,
         weight: initial.weight ?? "",
         bodyFat: initial.bodyFat ?? "",
@@ -37,18 +47,22 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
         note: initial.note || "",
       });
     } else {
-      setForm({ ...DEFAULT, date: todayISO() });
+      setForm({ ...DEFAULT, date: todayISO(), workoutType: fallbackTypes[0] || "Running" });
     }
-  }, [initial]);
+  }, [initial, fallbackKey]);
 
   function handleChange(e) {
     const { name, value, type, checked } = e.target;
     setForm((p) => ({ ...p, [name]: type === "checkbox" ? checked : value }));
+    setError("");
   }
 
   async function submit(e) {
     e.preventDefault();
-    if (!form.date || !form.workoutType) return;
+    if (!isValid) {
+      setError("Please add a date and workout type.");
+      return;
+    }
 
     try {
       setSubmitting(true);
@@ -62,6 +76,9 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
         feel: form.feel,
         note: form.note,
       });
+      setError("");
+    } catch (err) {
+      setError(err?.message || "Failed to save. Try again.");
     } finally {
       setSubmitting(false);
     }
@@ -71,7 +88,7 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
     <form onSubmit={submit} className="form">
       <div className="form__grid">
         <div className="form__row">
-          <label className="form__label" htmlFor="wo-date">Date</label>
+          <label className="form__label" htmlFor="wo-date">Date *</label>
           <input
             id="wo-date"
             className="form__input"
@@ -83,7 +100,7 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
         </div>
 
         <div className="form__row">
-          <label className="form__label" htmlFor="wo-type">Workout</label>
+          <label className="form__label" htmlFor="wo-type">Workout *</label>
           <select
             id="wo-type"
             className="form__select"
@@ -91,7 +108,7 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
             value={form.workoutType}
             onChange={handleChange}
           >
-          {(workoutTypes?.length ? workoutTypes : defaultWorkoutTypes).map((t) => (
+          {fallbackTypes.map((t) => (
             <option key={t} value={t}>{t}</option>
           ))}
           </select>
@@ -179,12 +196,13 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
         <Button
           type="submit"
           fullWidth
-          disabled={submitting}
+          disabled={submitting || !isValid}
           startIcon={submitting ? <CircularProgress size={16} color="inherit" /> : null}
         >
           {submitting ? "Saving..." : initial?.id ? "Save Changes" : "Add Workout"}
         </Button>
       </div>
+      {error && <div className="form__error">{error}</div>}
 
       {onDelete && (
         <div className="form__actions">

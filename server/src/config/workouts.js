@@ -7,3 +7,8 @@ export const defaultWorkoutTypes = [
   "Golf course",
   "Rest",
 ];
+
+export const defaultWorkoutTypePrefs = defaultWorkoutTypes.map((label) => ({
+  label,
+  enabled: true,
+}));

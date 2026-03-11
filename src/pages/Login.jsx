@@ -68,11 +68,16 @@ export default function Login() {
 
   return (
     <div className="login">
-      <div className="login__card">
-        <div className="login__title">Hello Kyokrob</div>
-        <div className="login__subtitle">Sign in to continue</div>
+      <div className="login__stack">
+        <div className="login__brand">
+          <img src="/lpd_logo.png" alt="LPD logo" className="login__brandLogo" />
+          <div className="login__eyebrow">Lifestyle Performance Dashboard</div>
+        </div>
+        <div className="login__card">
+          <div className="login__title">Welcome Back</div>
+          <div className="login__subtitle">Sign in to continue</div>
 
-        <form className="login__form" onSubmit={handleLogin}>
+          <form className="login__form" onSubmit={handleLogin}>
           <label className="login__label" htmlFor="login-email">Email</label>
           <input
             id="login-email"
@@ -118,7 +123,8 @@ export default function Login() {
           </Button>
 
           {/* Create Admin (first time) hidden for now */}
-        </form>
+          </form>
+        </div>
       </div>
 
       <Snackbar

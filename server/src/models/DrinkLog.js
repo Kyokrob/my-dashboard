@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 
 const DrinkLogSchema = new mongoose.Schema(
   {
+    userId: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     date: { type: String, required: true }, // YYYY-MM-DD
     drank: { type: Boolean, default: true },
     name: { type: String, default: "" },
@@ -19,6 +20,6 @@ const DrinkLogSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-DrinkLogSchema.index({ date: 1 }, { unique: true });
+DrinkLogSchema.index({ userId: 1, date: 1 }, { unique: true });
 
 export default mongoose.model("DrinkLog", DrinkLogSchema);

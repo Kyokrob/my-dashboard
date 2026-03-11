@@ -10,8 +10,8 @@ const router = express.Router();
  */
 router.post("/reset", async (req, res, next) => {
   try {
-    await Expense.deleteMany({});
-    await Workout.deleteMany({});
+    await Expense.deleteMany({ userId: req.session.userId });
+    await Workout.deleteMany({ userId: req.session.userId });
     res.json({ ok: true, message: "Cleared expenses & workouts" });
   } catch (e) {
     next(e);
@@ -26,8 +26,11 @@ router.post("/import", async (req, res, next) => {
   try {
     const { expenses = [], workouts = [] } = req.body;
 
-    const expInserted = expenses.length ? await Expense.insertMany(expenses) : [];
-    const woInserted = workouts.length ? await Workout.insertMany(workouts) : [];
+    const expPayload = expenses.map((e) => ({ ...e, userId: req.session.userId }));
+    const woPayload = workouts.map((w) => ({ ...w, userId: req.session.userId }));
+
+    const expInserted = expPayload.length ? await Expense.insertMany(expPayload) : [];
+    const woInserted = woPayload.length ? await Workout.insertMany(woPayload) : [];
 
     res.json({
       ok: true,

@@ -3,12 +3,13 @@ import { apiFetch } from "../api/apiFetch.js";
 import "./Dashboard.scss";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import Skeleton from "@mui/material/Skeleton";
+import LinearProgress from "@mui/material/LinearProgress";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
-import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import WarningAmberIcon from "@mui/icons-material/WarningAmber";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
@@ -38,20 +39,25 @@ import WorkoutDialog from "../components/workouts/WorkoutDialog.jsx";
 import DrinkDialog from "../components/drinks/DrinkDialog.jsx";
 import DrinkTable from "../components/drinks/DrinkTable.jsx";
 import DrinkLogsDialog from "../components/drinks/DrinkLogsDialog.jsx";
+import CoachTour from "../components/common/CoachTour.jsx";
 
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
 import { sumExpensesByCategory } from "../utils/rollups.js";
 import { inMonth } from "../utils/date.js";
+import { useNavigate } from "react-router-dom";
 
-import { budgetByCategory, categoryOrder } from "../config/budget.js";
+import { budgetByCategory } from "../config/budget.js";
 
 
 
 
 export default function Dashboard() {
-  const { monthKey, setMonthKey, tier, setTier, setLastUpdate, refreshKey, budgets } = useDashboard();
-  const { logout } = useAuth();
+  const { monthKey, setMonthKey, tier, setTier, setLastUpdate, refreshKey, budgets, expenseCategories } =
+    useDashboard();
+  const { logout, user } = useAuth();
+  const navigate = useNavigate();
+  const skeletonProps = { sx: { bgcolor: "rgba(255, 255, 255, 0.08)" } };
 
   /* ======================
      Snackbar
@@ -103,6 +109,7 @@ export default function Dashboard() {
   const [expenseRows, setExpenseRows] = useState([]);
   const [workoutRows, setWorkoutRows] = useState([]);
   const [drinkRows, setDrinkRows] = useState([]);
+  const [loadingData, setLoadingData] = useState(true);
 
   const [isExpenseDialogOpen, setIsExpenseDialogOpen] = useState(false);
   const [isWorkoutDialogOpen, setIsWorkoutDialogOpen] = useState(false);
@@ -119,6 +126,7 @@ export default function Dashboard() {
 ====================== */
   useEffect(() => {
     const load = async () => {
+      setLoadingData(true);
       let exp = [];
       let wo = [];
       let dr = [];
@@ -159,6 +167,7 @@ export default function Dashboard() {
       }
 
       computeLastUpdate(exp, wo, dr);
+      setLoadingData(false);
     };
 
     load();
@@ -175,6 +184,7 @@ export default function Dashboard() {
       // ignore storage errors
     }
   }, []);
+
 
 
   
@@ -656,8 +666,12 @@ export default function Dashboard() {
 
   // Planned total based on selected tier
 const budgetSource = budgets || budgetByCategory;
+const budgetCategories = Object.keys(budgetSource || {});
+const activeExpenseCategories =
+  expenseCategories?.filter((c) => c.enabled !== false).map((c) => c.label) || [];
+const plannedCategories = activeExpenseCategories.length ? activeExpenseCategories : budgetCategories;
 
-const plannedTotal = categoryOrder.reduce((sum, cat) => {
+const plannedTotal = plannedCategories.reduce((sum, cat) => {
   const tierBudget = budgetSource?.[cat]?.[tier] ?? 0;
   return sum + Number(tierBudget);
 }, 0);
@@ -692,7 +706,68 @@ const todaySpend = todayExpenses.reduce((sum, e) => sum + Number(e.amount || 0),
   const todayWorkouts = workoutRows.filter((w) => w.date === todayKey);
   const todayWorkoutLabel = todayWorkouts[0]?.workoutType || (todayWorkouts.length ? "Workout" : "None");
   const todayDrinks = drinkRows.filter((d) => d.date === todayKey && d.drank);
-  const todayDrinkLabel = todayDrinks.length ? "Yes" : "None";
+const todayDrinkLabel = todayDrinks.length ? "Yes" : "None";
+
+/* ======================
+   Onboarding
+====================== */
+
+const hasExpense = monthExpenses.length > 0;
+const hasWorkout = monthWorkouts.length > 0;
+const hasDrink = monthDrinksAll.length > 0;
+const settingsKey = `onboarding:settings:${user?.id || "anon"}`;
+const hasVisitedSettings =
+  typeof window !== "undefined" && localStorage.getItem(settingsKey) === "true";
+
+const msPerDay = 1000 * 60 * 60 * 24;
+const onboardingStart = user?.onboardingStartAt || user?.createdAt;
+const onboardingStartDate = onboardingStart ? new Date(onboardingStart) : null;
+const daysSinceSignup = onboardingStartDate
+  ? Math.floor((Date.now() - onboardingStartDate.getTime()) / msPerDay)
+  : null;
+const onboardingDaysLeft = daysSinceSignup === null ? null : Math.max(0, 3 - daysSinceSignup);
+const showOnboarding = onboardingDaysLeft === null ? true : onboardingDaysLeft > 0;
+const onboardingSteps = [
+  {
+    key: "expense",
+    title: "Log your first expense",
+    sub: "Track a purchase to unlock spending insights.",
+    done: hasExpense,
+    actionLabel: "Add",
+    onClick: () => setIsExpenseDialogOpen(true),
+  },
+  {
+    key: "workout",
+    title: "Log your first workout",
+    sub: "Add a workout to populate your activity stats.",
+    done: hasWorkout,
+    actionLabel: "Add",
+    onClick: () => setIsWorkoutDialogOpen(true),
+  },
+  {
+    key: "drink",
+    title: "Log your first drink",
+    sub: "Capture a drink day to start habit insights.",
+    done: hasDrink,
+    actionLabel: "Add",
+    onClick: () => setIsDrinkDialogOpen(true),
+  },
+  {
+    key: "insights",
+    title: "Set your categories",
+    sub: "Update expense, workout, and drink categories in Settings.",
+    done: hasVisitedSettings,
+    actionLabel: "Settings",
+    onClick: () => {
+      localStorage.setItem(settingsKey, "true");
+      navigate("/settings");
+    },
+  },
+];
+const onboardingDoneCount = onboardingSteps.filter((step) => step.done).length;
+const onboardingTotal = onboardingSteps.length;
+const onboardingProgress =
+  onboardingTotal === 0 ? 0 : Math.min(100, Math.round((onboardingDoneCount / onboardingTotal) * 100));
 
 const daysPassed = Math.max(1, asOfDay);
 const projectedSpend = (totalSpend / daysPassed) * daysInMonth;
@@ -774,24 +849,13 @@ const topWorkoutTypes = (() => {
 
   return (
     <DashboardLayout
-      title={
-        <div style={{ display: "flex", flexDirection: "column" }}>
-          <span>Welcome Back Kyokrob</span>
-          <span style={{ fontSize: 18, opacity: 0.65, marginTop: 14, display: "flex", alignItems: "center", gap: 6 }}>
-           <CalendarMonthIcon/> {new Date().toLocaleDateString("en-US", {
-              weekday: "long",
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </span>
-        </div>
-      }
-      right={<MonthPicker value={monthKey} onChange={setMonthKey} />}
+      title={`Welcome Back ${user?.name || "there"}`}
+      right={<MonthPicker value={monthKey} onChange={setMonthKey} tourId="month-picker" />}
+      titleInline
     >
       {/* KPI STRIP */}
-      <div className="kpi-grid">
-        <div className="kpi-today kpi--tall kpi--bottom theme-mix">
+      <div className="kpi-grid" data-tour="kpi">
+        <div className="kpi-today kpi--tall kpi--bottom theme-mix" data-tour="today-snapshot">
           <KpiCard
             title="Today Snapshot"
             value={
@@ -902,94 +966,199 @@ const topWorkoutTypes = (() => {
       <div className="dashboard-grid">
         {/* LEFT */}
         <div className="dashboard-col">
-          <div className="theme-exp">
-            <SectionCard title="Overview" right={<TierSelector value={tier} onChange={setTier} />}>
-              <ProjectionTable tier={tier} actualByCat={actualByCat} budgets={budgetSource} />
-            </SectionCard>
-          </div>
-
-          <div className="theme-exp">
-            <SectionCard title="Monthly Insights">
-              <div className="drink-insights-grid">
-                <div className="drink-card theme-exp">
-                  <div className="drink-card__title">Spend vs last month</div>
-                  <div className={`drink-card__value drink-card__value--${spendChangeTone}`}>
-                    {spendChangeLabel}
+          {showOnboarding && (
+            <div className="theme-neutral">
+              <SectionCard
+                title="Getting Started"
+                right={
+                <div className="onboard-progress">
+                  Step {onboardingDoneCount}/{onboardingTotal}
                 </div>
-                <div className="drink-card__sub">
-                  {prevMonthSpendTotal
-                    ? `Last month ฿${Math.round(prevMonthSpendTotal).toLocaleString()}`
-                    : "No prior data"}
-                </div>
+              }
+            >
+              <div className="onboard-subhead">
+                Your lifestyle performance dashboard brings spending, workouts, and drinking habits into
+                one place.
               </div>
-              <div className="drink-card theme-exp">
-                <div className="drink-card__title">Biggest Increase (Category)</div>
-                <div className={`drink-card__value drink-card__value--${biggestIncreaseTone}`}>
-                  {biggestCategoryIncrease.label}
-                </div>
-                <div className="drink-card__sub">{biggestCategoryIncrease.sub}</div>
-              </div>
-              <div className="drink-card theme-exp">
-                <div className="drink-card__title">Spend vs Plan</div>
-                <div className="drink-card__value">
-                  <span style={{ color: spendVarianceIsBad ? "#E3A6A1" : "#9FC8B3" }}>
-                    {spendVarianceLabel}
-                  </span>
-                </div>
-                <div className="drink-card__sub">{spendVarianceSub}</div>
-              </div>
-              <div className="drink-card theme-exp">
-                <div className="drink-card__title">Total Spend</div>
-                <div className="drink-card__value">฿{totalSpend.toLocaleString()}</div>
-                <div className="drink-card__sub">Includes all logged this month expenses</div>
-              </div>
-            </div>
-            </SectionCard>
-          </div>
-
-          <div className="theme-exp">
-            <SectionCard title="Spending by Day (This Month)">
-              <div className="weekly-spend">
-                {weeklySpend.map((d) => (
-                  <div key={d.label} className="weekly-spend__row">
-                    <div className="weekly-spend__label">{d.label}</div>
-                    <div className="weekly-spend__bar-wrap">
-                      <div
-                        className="weekly-spend__bar"
-                        style={{ width: `${(d.amount / maxWeeklySpend) * 100}%` }}
-                      />
+              <LinearProgress
+                variant="determinate"
+                value={onboardingProgress}
+                sx={{
+                  height: 6,
+                  borderRadius: 999,
+                  backgroundColor: "rgba(255,255,255,0.08)",
+                  margin: "6px 0 12px",
+                  "& .MuiLinearProgress-bar": {
+                    borderRadius: 999,
+                    background:
+                      "linear-gradient(90deg, rgba(159, 200, 179, 0.95), rgba(116, 199, 191, 0.9))",
+                    boxShadow: "0 0 8px rgba(159, 200, 179, 0.35)",
+                  },
+                }}
+              />
+              <div className="onboard-list">
+                {onboardingSteps.map((step, index) => (
+                  <div className={`onboard-item ${step.done ? "is-done" : ""}`} key={step.key}>
+                    <div className="onboard-item__text">
+                      <span className="onboard-step">Step {index + 1}</span>
+                      <div className="onboard-title">{step.title}</div>
+                      <div className="onboard-sub">{step.sub}</div>
                     </div>
-                    <div className="weekly-spend__value">฿{d.amount.toLocaleString()}</div>
+                    {step.done ? (
+                      <span className="onboard-status">
+                        <CheckCircleOutlineIcon fontSize="small" />
+                        Done
+                      </span>
+                    ) : (
+                      <Button size="small" variant="contained" onClick={step.onClick}>
+                        {step.actionLabel}
+                      </Button>
+                    )}
                   </div>
                 ))}
+                <div className="onboard-footnote">
+                  {onboardingDaysLeft !== null
+                    ? `This guide will hide in ${onboardingDaysLeft} ${
+                        onboardingDaysLeft === 1 ? "day" : "days"
+                      }.${onboardingDaysLeft === 1 && onboardingDoneCount < onboardingTotal
+                        ? " Make sure to complete all the steps."
+                        : ""}`
+                    : "This guide will hide 3 days after signup."}
+                </div>
               </div>
+              </SectionCard>
+          </div>
+          )}
+
+          <div className="theme-exp">
+            <SectionCard title="Overview" right={<TierSelector value={tier} onChange={setTier} />}>
+              <ProjectionTable
+                tier={tier}
+                actualByCat={actualByCat}
+                budgets={budgetSource}
+                categories={plannedCategories}
+              />
+            </SectionCard>
+          </div>
+
+          <div className="theme-exp" data-tour="monthly-insights">
+            <SectionCard title="Monthly Insights">
+              {loadingData ? (
+                <div className="drink-insights-grid">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div className="drink-card theme-exp" key={`monthly-skel-${index}`}>
+                      <Skeleton variant="text" width="60%" height={16} {...skeletonProps} />
+                      <Skeleton variant="text" width="50%" height={28} {...skeletonProps} />
+                      <Skeleton variant="text" width="80%" height={14} {...skeletonProps} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="drink-insights-grid">
+                  <div className="drink-card theme-exp">
+                    <div className="drink-card__title">Spend vs last month</div>
+                    <div className={`drink-card__value drink-card__value--${spendChangeTone}`}>
+                      {spendChangeLabel}
+                    </div>
+                    <div className="drink-card__sub">
+                      {prevMonthSpendTotal
+                        ? `Last month ฿${Math.round(prevMonthSpendTotal).toLocaleString()}`
+                        : "No prior data"}
+                    </div>
+                  </div>
+                  <div className="drink-card theme-exp">
+                    <div className="drink-card__title">Biggest Increase (Category)</div>
+                    <div className={`drink-card__value drink-card__value--${biggestIncreaseTone}`}>
+                      {biggestCategoryIncrease.label}
+                    </div>
+                    <div className="drink-card__sub">{biggestCategoryIncrease.sub}</div>
+                  </div>
+                  <div className="drink-card theme-exp">
+                    <div className="drink-card__title">Spend vs Plan</div>
+                    <div className="drink-card__value">
+                      <span style={{ color: spendVarianceIsBad ? "#E3A6A1" : "#9FC8B3" }}>
+                        {spendVarianceLabel}
+                      </span>
+                    </div>
+                    <div className="drink-card__sub">{spendVarianceSub}</div>
+                  </div>
+                  <div className="drink-card theme-exp">
+                    <div className="drink-card__title">Total Spend</div>
+                    <div className="drink-card__value">฿{totalSpend.toLocaleString()}</div>
+                    <div className="drink-card__sub">Includes all logged this month expenses</div>
+                  </div>
+                </div>
+              )}
+            </SectionCard>
+          </div>
+
+          <div className="theme-exp" data-tour="spending-by-day">
+            <SectionCard title="Spending by Day (This Month)">
+              {loadingData ? (
+                <div className="weekly-spend">
+                  {Array.from({ length: 7 }).map((_, index) => (
+                    <div key={`spend-skel-${index}`} className="weekly-spend__row">
+                      <Skeleton variant="text" width={24} height={14} {...skeletonProps} />
+                      <Skeleton variant="rectangular" height={10} {...skeletonProps} sx={{ borderRadius: 999 }} />
+                      <Skeleton variant="text" width={60} height={14} {...skeletonProps} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="weekly-spend">
+                  {weeklySpend.map((d) => (
+                    <div key={d.label} className="weekly-spend__row">
+                      <div className="weekly-spend__label">{d.label}</div>
+                      <div className="weekly-spend__bar-wrap">
+                        <div
+                          className="weekly-spend__bar"
+                          style={{ width: `${(d.amount / maxWeeklySpend) * 100}%` }}
+                        />
+                      </div>
+                      <div className="weekly-spend__value">฿{d.amount.toLocaleString()}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </SectionCard>
           </div>
           
           <div className="theme-drink">
             <SectionCard title="Drink Insights">
-              <div className="drink-insights-grid">
-                <div className="drink-card theme-drink">
-                  <div className="drink-card__title">Drinking Days</div>
-                  <div className="drink-card__value">{drinkingDays} / {totalDays}</div>
-                  <div className="drink-card__sub">As of today</div>
+              {loadingData ? (
+                <div className="drink-insights-grid">
+                  {Array.from({ length: 4 }).map((_, index) => (
+                    <div className="drink-card theme-drink" key={`drink-skel-${index}`}>
+                      <Skeleton variant="text" width="60%" height={16} {...skeletonProps} />
+                      <Skeleton variant="text" width="50%" height={28} {...skeletonProps} />
+                      <Skeleton variant="text" width="80%" height={14} {...skeletonProps} />
+                    </div>
+                  ))}
                 </div>
-                <div className="drink-card theme-drink">
-                  <div className="drink-card__title">Most Common Reason</div>
-                  <div className="drink-card__value">{topReasons}</div>
-                  <div className="drink-card__sub">This month</div>
+              ) : (
+                <div className="drink-insights-grid">
+                  <div className="drink-card theme-drink">
+                    <div className="drink-card__title">Drinking Days</div>
+                    <div className="drink-card__value">{drinkingDays} / {totalDays}</div>
+                    <div className="drink-card__sub">As of today</div>
+                  </div>
+                  <div className="drink-card theme-drink">
+                    <div className="drink-card__title">Most Common Reason</div>
+                    <div className="drink-card__value">{topReasons}</div>
+                    <div className="drink-card__sub">This month</div>
+                  </div>
+                  <div className="drink-card theme-drink">
+                    <div className="drink-card__title">Avg Spend on Drinking Days</div>
+                    <div className="drink-card__value">฿{Math.round(avgDrinkDaySpend).toLocaleString()}</div>
+                    <div className="drink-card__sub">This month</div>
+                  </div>
+                  <div className="drink-card theme-drink">
+                    <div className="drink-card__title">Avg Drink Level</div>
+                    <div className="drink-card__value">{avgDrinkLevel ? avgDrinkLevel.toFixed(1) : "—"}</div>
+                    <div className="drink-card__sub">This month</div>
+                  </div>
                 </div>
-                <div className="drink-card theme-drink">
-                  <div className="drink-card__title">Avg Spend on Drinking Days</div>
-                  <div className="drink-card__value">฿{Math.round(avgDrinkDaySpend).toLocaleString()}</div>
-                  <div className="drink-card__sub">This month</div>
-                </div>
-                <div className="drink-card theme-drink">
-                  <div className="drink-card__title">Avg Drink Level</div>
-                  <div className="drink-card__value">{avgDrinkLevel ? avgDrinkLevel.toFixed(1) : "—"}</div>
-                  <div className="drink-card__sub">This month</div>
-                </div>
-              </div>
+              )}
             </SectionCard>
           </div>
 
@@ -1027,7 +1196,7 @@ const topWorkoutTypes = (() => {
 
         {/* RIGHT */}
         <div className="dashboard-col">
-          <div className="theme-neutral">
+          <div className="theme-neutral" data-tour="calendar">
             <SectionCard title="Calendar">
               <MonthCalendar
                 monthKey={monthKey}
@@ -1038,7 +1207,7 @@ const topWorkoutTypes = (() => {
             </SectionCard>
           </div>
 
-          <div className="theme-exp">
+          <div className="theme-exp" data-tour="expense-chart">
             <SectionCard
               title={
                 <div className="chart-card__title">
@@ -1074,7 +1243,9 @@ const topWorkoutTypes = (() => {
                   color: "white",
                 }}
               >
-                {monthExpenses.length ? (
+                {loadingData ? (
+                  <Skeleton variant="rectangular" width="100%" height={180} {...skeletonProps} />
+                ) : monthExpenses.length ? (
                   <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
                     {expenseChartView === "mix" ? (
                       <ExpenseCategoryPie rows={monthExpenses} />
@@ -1105,8 +1276,10 @@ const topWorkoutTypes = (() => {
         >
           <div style={{ fontSize: 14, fontWeight: 600 }}>Distribution by workout type</div>
           <div style={{ fontSize: 12, opacity: 0.65 }}>Based on logged workouts this month</div>
-          <div style={{ marginTop: 8 }}>
-            {monthWorkouts.length ? (
+          <div style={{ marginTop: 8, width: "100%", display: "flex", justifyContent: "center" }}>
+            {loadingData ? (
+              <Skeleton variant="rectangular" width="100%" height={180} {...skeletonProps} />
+            ) : monthWorkouts.length ? (
               <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
                 <WorkoutTypePie rows={monthWorkouts} />
               </Suspense>
@@ -1120,32 +1293,44 @@ const topWorkoutTypes = (() => {
 
           <div className="theme-wo">
             <SectionCard title="Workout Insights">
-              <div className="workout-insights-grid">
-                <div className="drink-card theme-wo">
-                  <div className="drink-card__title">Total Workouts</div>
-                  <div className="drink-card__value is-large">{workoutCount}</div>
-                  <div className={`drink-card__sub drink-card__value--${workoutDeltaTone}`}>
-                    {workoutDeltaLabel}
+              {loadingData ? (
+                <div className="workout-insights-grid">
+                  {Array.from({ length: 2 }).map((_, index) => (
+                    <div className="drink-card theme-wo" key={`workout-skel-${index}`}>
+                      <Skeleton variant="text" width="60%" height={16} {...skeletonProps} />
+                      <Skeleton variant="text" width="40%" height={30} {...skeletonProps} />
+                      <Skeleton variant="text" width="70%" height={14} {...skeletonProps} />
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="workout-insights-grid">
+                  <div className="drink-card theme-wo">
+                    <div className="drink-card__title">Total Workouts</div>
+                    <div className="drink-card__value is-large">{workoutCount}</div>
+                    <div className={`drink-card__sub drink-card__value--${workoutDeltaTone}`}>
+                      {workoutDeltaLabel}
+                    </div>
+                  </div>
+                  <div className="drink-card theme-wo">
+                    <div className="drink-card__title">Top Workout Types</div>
+                    {topWorkoutTypes.length ? (
+                      <div className="kpi-momentum">
+                        {topWorkoutTypes.map((row) => (
+                          <div className="kpi-momentum__row" key={row.type}>
+                            <span className="kpi-momentum__label">{row.type}</span>
+                            <span className="kpi-momentum__value kpi-momentum__value--neutral">
+                              {row.count}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="kpi-momentum__empty">No workout data yet</div>
+                    )}
                   </div>
                 </div>
-                <div className="drink-card theme-wo">
-                  <div className="drink-card__title">Top Workout Types</div>
-                  {topWorkoutTypes.length ? (
-                    <div className="kpi-momentum">
-                      {topWorkoutTypes.map((row) => (
-                        <div className="kpi-momentum__row" key={row.type}>
-                          <span className="kpi-momentum__label">{row.type}</span>
-                          <span className="kpi-momentum__value kpi-momentum__value--neutral">
-                            {row.count}
-                          </span>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="kpi-momentum__empty">No workout data yet</div>
-                  )}
-                </div>
-              </div>
+              )}
             </SectionCard>
           </div>
 
@@ -1156,6 +1341,102 @@ const topWorkoutTypes = (() => {
 
         </div>
       </div>
+
+      <ExpenseDialog
+        open={isExpenseDialogOpen}
+        onClose={() => {
+          setIsExpenseDialogOpen(false);
+          setEditingExpense(null);
+        }}
+        initial={editingExpense}
+        onSubmit={async (row) => {
+          if (editingExpense?.id) {
+            await updateExpense(row);
+          } else {
+            await addExpense(row);
+          }
+        }}
+        onDelete={
+          editingExpense?.id
+            ? () => {
+                requestDeleteExpense(editingExpense.id);
+                setIsExpenseDialogOpen(false);
+                setEditingExpense(null);
+              }
+            : undefined
+        }
+      />
+
+      <WorkoutDialog
+        open={isWorkoutDialogOpen}
+        onClose={() => {
+          setIsWorkoutDialogOpen(false);
+          setEditingWorkout(null);
+        }}
+        initial={editingWorkout}
+        onSubmit={async (row) => {
+          if (editingWorkout?.id) {
+            await updateWorkout(row);
+          } else {
+            await addWorkout(row);
+          }
+        }}
+        onDelete={
+          editingWorkout?.id
+            ? () => {
+                requestDeleteWorkout(editingWorkout.id);
+                setIsWorkoutDialogOpen(false);
+                setEditingWorkout(null);
+              }
+            : undefined
+        }
+      />
+
+      <DrinkDialog
+        open={isDrinkDialogOpen}
+        onClose={() => {
+          setIsDrinkDialogOpen(false);
+          setEditingDrink(null);
+        }}
+        initial={editingDrink}
+        onSubmit={async (row) => {
+          if (editingDrink?.id) {
+            await updateDrink({ ...editingDrink, ...row, id: editingDrink.id });
+          } else {
+            await addDrink(row);
+          }
+        }}
+        onDelete={
+          editingDrink?.id
+            ? () => {
+                setDrinkDelete({ open: true, id: editingDrink.id });
+                setIsDrinkDialogOpen(false);
+                setEditingDrink(null);
+              }
+            : undefined
+        }
+      />
+
+      <ConfirmDialog
+        open={confirm.open}
+        title={confirm.kind === "workout" ? "Delete workout?" : "Delete expense?"}
+        description="This will permanently remove this entry."
+        confirmText="Delete"
+        onConfirm={confirmDelete}
+        onClose={() => setConfirm({ open: false, id: null, kind: "expense" })}
+      />
+
+      <ConfirmDialog
+        open={drinkDelete.open}
+        title="Delete drink log?"
+        description="This will permanently remove this drink log."
+        confirmText="Delete"
+        onConfirm={async () => {
+          await deleteDrink(drinkDelete.id);
+          setDrinkDelete({ open: false, id: null });
+        }}
+        onClose={() => setDrinkDelete({ open: false, id: null })}
+      />
 
       {/* Snackbar */}
       <Snackbar
@@ -1177,6 +1458,32 @@ const topWorkoutTypes = (() => {
           {snack.message}
         </Alert>
       </Snackbar>
+
+      <CoachTour
+        storageKey={`tour:dashboard:${user?.id || "anon"}`}
+        steps={[
+          {
+            selector: "[data-tour='quick-add']",
+            title: "Quick Add",
+            body: "Tap here to log an expense, workout, or drink in seconds.",
+          },
+          {
+            selector: "[data-tour='today-snapshot']",
+            title: "Daily Highlights",
+            body: "Your spend, workout, and drink status at a glance.",
+          },
+          {
+            selector: "[data-tour='calendar']",
+            title: "Calendar View",
+            body: "Scan your month quickly and spot patterns at a glance.",
+          },
+          {
+            selector: "[data-tour='month-picker']",
+            title: "Month Picker",
+            body: "Jump between months to review history or compare trends.",
+          },
+        ]}
+      />
     </DashboardLayout>
   );
 }

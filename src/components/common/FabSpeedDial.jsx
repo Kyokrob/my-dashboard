@@ -5,7 +5,7 @@ import ReceiptLongIcon from "@mui/icons-material/ReceiptLong";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import LocalBarIcon from "@mui/icons-material/LocalBar";
 
-const KIcon = () => (
+const KIcon = ({ initial = "K" }) => (
   <div
     style={{
       width: 40,
@@ -20,14 +20,15 @@ const KIcon = () => (
       background: "rgba(20, 24, 33, 0.95)",
     }}
   >
-    K
+    {initial}
   </div>
 );
 
-export default function FabSpeedDial({ onAddExpense, onAddWorkout, onAddDrink }) {
+export default function FabSpeedDial({ onAddExpense, onAddWorkout, onAddDrink, initial = "K" }) {
   return (
     <SpeedDial
       ariaLabel="Quick actions"
+      className="fab-speed"
       sx={{
         position: "fixed",
         bottom: 24,
@@ -40,7 +41,7 @@ export default function FabSpeedDial({ onAddExpense, onAddWorkout, onAddDrink })
           background: "rgba(20, 24, 33, 0.95)",
         },
       }}
-      icon={<KIcon />}
+      icon={<KIcon initial={initial} />}
       openIcon={<RemoveIcon />}
     >
       <SpeedDialAction

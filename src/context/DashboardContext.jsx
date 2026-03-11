@@ -1,7 +1,13 @@
 import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "../api/apiFetch.js";
 import { budgetByCategory as defaultBudgets } from "../config/budget.js";
-import { defaultWorkoutTypes } from "../config/workouts.js";
+import { defaultWorkoutTypePrefs } from "../config/workouts.js";
+import {
+  defaultExpenseCategories,
+  defaultDrinkReasons,
+  defaultDrinkVenues,
+} from "../config/preferences.js";
+import { useAuth } from "./AuthContext.jsx";
 
 const DashboardContext = createContext(null);
 
@@ -11,6 +17,7 @@ function getCurrentMonthKey() {
 }
 
 export function DashboardProvider({ children }) {
+  const { user } = useAuth();
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey()); // ✅ current month
   const [tier, setTier] = useState("low"); // low | mid | high
   const [lastUpdate, setLastUpdate] = useState(null);
@@ -20,7 +27,16 @@ export function DashboardProvider({ children }) {
     return localStorage.getItem("ui.themeOn") === "true";
   });
   const [budgets, setBudgets] = useState(null);
-  const [workoutTypes, setWorkoutTypes] = useState(defaultWorkoutTypes);
+  const [workoutTypes, setWorkoutTypes] = useState(defaultWorkoutTypePrefs);
+  const [expenseCategories, setExpenseCategories] = useState(
+    defaultExpenseCategories.map((label) => ({ label, enabled: true }))
+  );
+  const [drinkReasons, setDrinkReasons] = useState(
+    defaultDrinkReasons.map((label) => ({ label, enabled: true }))
+  );
+  const [drinkVenues, setDrinkVenues] = useState(
+    defaultDrinkVenues.map((label) => ({ label, enabled: true }))
+  );
   const bumpRefresh = () => setRefreshKey((k) => k + 1);
   const toggleTheme = () => setThemeOn((v) => !v);
 
@@ -38,20 +54,67 @@ export function DashboardProvider({ children }) {
         setBudgets(defaultBudgets);
       }
     };
-    loadBudgets();
-  }, []);
+    if (user?.id) loadBudgets();
+    else setBudgets(defaultBudgets);
+  }, [user?.id]);
 
   useEffect(() => {
+    const normalizeWorkoutTypes = (list) => {
+      const raw = Array.isArray(list) ? list : defaultWorkoutTypePrefs;
+      const cleaned = raw
+        .map((item) => {
+          if (typeof item === "string") return { label: item, enabled: true };
+          const label = String(item?.label || "").trim();
+          if (!label) return null;
+          return { label, enabled: item?.enabled !== false };
+        })
+        .filter(Boolean);
+      return cleaned.length ? cleaned : defaultWorkoutTypePrefs;
+    };
     const loadWorkoutTypes = async () => {
       try {
         const data = await apiFetch("/api/workout-types");
-        setWorkoutTypes(Array.isArray(data?.workoutTypes) ? data.workoutTypes : defaultWorkoutTypes);
+        setWorkoutTypes(normalizeWorkoutTypes(data?.workoutTypes));
       } catch {
-        setWorkoutTypes(defaultWorkoutTypes);
+        setWorkoutTypes(defaultWorkoutTypePrefs);
       }
     };
-    loadWorkoutTypes();
-  }, []);
+    if (user?.id) loadWorkoutTypes();
+    else setWorkoutTypes(defaultWorkoutTypePrefs);
+  }, [user?.id]);
+
+  useEffect(() => {
+    const loadPreferences = async () => {
+      try {
+        const data = await apiFetch("/api/preferences");
+        setExpenseCategories(
+          Array.isArray(data?.expenseCategories)
+            ? data.expenseCategories
+            : defaultExpenseCategories.map((label) => ({ label, enabled: true }))
+        );
+        setDrinkReasons(
+          Array.isArray(data?.drinkReasons)
+            ? data.drinkReasons
+            : defaultDrinkReasons.map((label) => ({ label, enabled: true }))
+        );
+        setDrinkVenues(
+          Array.isArray(data?.drinkVenues)
+            ? data.drinkVenues
+            : defaultDrinkVenues.map((label) => ({ label, enabled: true }))
+        );
+      } catch {
+        setExpenseCategories(defaultExpenseCategories.map((label) => ({ label, enabled: true })));
+        setDrinkReasons(defaultDrinkReasons.map((label) => ({ label, enabled: true })));
+        setDrinkVenues(defaultDrinkVenues.map((label) => ({ label, enabled: true })));
+      }
+    };
+    if (user?.id) loadPreferences();
+    else {
+      setExpenseCategories(defaultExpenseCategories.map((label) => ({ label, enabled: true })));
+      setDrinkReasons(defaultDrinkReasons.map((label) => ({ label, enabled: true })));
+      setDrinkVenues(defaultDrinkVenues.map((label) => ({ label, enabled: true })));
+    }
+  }, [user?.id]);
 
   const value = useMemo(
     () => ({
@@ -70,8 +133,25 @@ export function DashboardProvider({ children }) {
       setBudgets,
       workoutTypes,
       setWorkoutTypes,
+      expenseCategories,
+      setExpenseCategories,
+      drinkReasons,
+      setDrinkReasons,
+      drinkVenues,
+      setDrinkVenues,
     }),
-    [monthKey, tier, lastUpdate, refreshKey, themeOn, budgets, workoutTypes]
+    [
+      monthKey,
+      tier,
+      lastUpdate,
+      refreshKey,
+      themeOn,
+      budgets,
+      workoutTypes,
+      expenseCategories,
+      drinkReasons,
+      drinkVenues,
+    ]
   );
 
   return <DashboardContext.Provider value={value}>{children}</DashboardContext.Provider>;

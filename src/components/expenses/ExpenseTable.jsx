@@ -9,8 +9,7 @@ import EditIcon from "@mui/icons-material/Edit";
 
 import { formatTHB } from "../../utils/money.js";
 import "./ExpenseTable.scss";
-
-const CATEGORIES = ["All", "Eat", "Drink", "Golf", "Transport", "Shopping", "Billing", "Others", "Etc"];
+import { useDashboard } from "../../context/DashboardContext.jsx";
 
 export default function ExpenseTable({
   rows,
@@ -18,6 +17,12 @@ export default function ExpenseTable({
   pageSize = 10,
   loading = false,
 }) {
+  const { expenseCategories } = useDashboard();
+  const categoryOptions = ["All"].concat(
+    (expenseCategories || [])
+      .filter((c) => c.enabled !== false)
+      .map((c) => c.label)
+  );
   // filters + paging
   const [category, setCategory] = useState("All");
   const [search, setSearch] = useState("");
@@ -91,7 +96,7 @@ export default function ExpenseTable({
     },
   }}
 >
-  {CATEGORIES.map((c) => (
+  {categoryOptions.map((c) => (
     <MenuItem key={c} value={c}>
       {c}
     </MenuItem>

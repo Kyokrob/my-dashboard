@@ -5,6 +5,12 @@
   padding: 24px;
 }
 
+.login__stack {
+  display: grid;
+  gap: 0;
+  justify-items: stretch;
+}
+
 .login__card {
   width: 100%;
   max-width: 420px;
@@ -12,6 +18,27 @@
   border: 1px solid rgba(255,255,255,0.10);
   background: rgba(255,255,255,0.04);
   padding: 22px;
+}
+
+.login__brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.login__brandLogo {
+  width: 60px;
+  height: 60px;
+  border-radius: 10px;
+  object-fit: cover;
+}
+
+.login__eyebrow {
+  font-size: 14px;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  opacity: 0.7;
 }
 
 .login__title {

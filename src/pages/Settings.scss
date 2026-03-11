@@ -22,6 +22,19 @@
   padding: 4px 8px;
 }
 
+.settings-subhead {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 12px;
+  opacity: 0.7;
+  margin-bottom: 10px;
+}
+
+.settings-subhead__muted {
+  opacity: 0.6;
+}
+
 .budget-table {
   display: grid;
   gap: 8px;
@@ -60,12 +73,38 @@
 }
 
 .settings-form__input {
+  width: 100%;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 10px;
   padding: 10px 12px;
   color: #fff;
   font-size: 14px;
+}
+
+.settings-form__password {
+  position: relative;
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.settings-form__password .settings-form__input {
+  padding-right: 44px;
+}
+
+.settings-form__eye {
+  position: absolute;
+  right: 6px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.7);
+  background: transparent;
+  z-index: 2;
+}
+
+.settings-form__eye svg {
+  font-size: 18px;
 }
 
 .settings-form__input:focus {
@@ -76,6 +115,52 @@
 
 .settings-form__actions {
   margin-top: 6px;
+}
+
+.settings-form__row-inline {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.settings-form__helper {
+  font-size: 12px;
+  opacity: 0.7;
+  flex: 1;
+}
+
+.settings-stack {
+  display: grid;
+  gap: 14px;
+}
+
+.settings-export__toggle {
+  display: inline-flex;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  padding: 4px;
+  border-radius: 999px;
+}
+
+.settings-export__btn {
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  background: transparent;
+  color: white;
+  font-size: 12px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s ease, color 0.2s ease, border 0.2s ease;
+}
+
+.settings-export__btn:hover {
+  border-color: rgba(255, 255, 255, 0.4);
+}
+
+.settings-export__btn.is-active {
+  background: rgba(255, 255, 255, 0.18);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .workout-types {
@@ -105,6 +190,126 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+.workout-types__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prefs-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.prefs-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.prefs-row__actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-tools {
+  display: grid;
+  gap: 16px;
+}
+
+.admin-tools__section {
+  display: grid;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-tools__title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.admin-tools__row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.admin-tools__note {
+  font-size: 12px;
+  color: rgba(255, 255, 255, 0.65);
+}
+
+.admin-tools__note--row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-tools__file {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.06);
+  cursor: pointer;
+}
+
+.admin-tools__file input {
+  display: none;
+}
+
+.users-table {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+}
+
+.users-table__head,
+.users-table__row {
+  display: grid;
+  grid-template-columns: 1.2fr 1.6fr 0.7fr 0.7fr 0.9fr 1.4fr;
+  gap: 8px;
+  align-items: center;
+}
+
+.users-table__head {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: rgba(255, 255, 255, 0.6);
+}
+
+.users-table__row {
+  padding: 6px 0;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.users-table__actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.users-table__empty {
+  padding: 10px 0;
+  color: rgba(255, 255, 255, 0.6);
+}
+
 @media (max-width: 720px) {
   .settings-form {
     max-width: 100%;
@@ -114,14 +319,74 @@
     font-size: 16px;
   }
 
+  .settings-subhead {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .settings-breadcrumbs {
+    font-size: 11px;
+    white-space: normal;
+    line-height: 1.3;
+  }
+
+  .budget-table {
+    overflow-x: auto;
+  }
+
   .budget-table__head,
   .budget-table__row {
-    grid-template-columns: 1fr 1fr;
-    row-gap: 6px;
+    min-width: 420px;
+    grid-template-columns: 0.5fr 0.7fr 0.7fr 0.7fr;
+  }
+
+  .budget-table .MuiInputBase-root {
+    height: 34px;
+    font-size: 12px;
   }
 
   .workout-types__add {
     flex-direction: column;
     align-items: stretch;
   }
+
+  .settings-form__row-inline {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-tools__row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .users-table__head,
+  .users-table__row {
+    grid-template-columns: 1fr;
+    row-gap: 4px;
+  }
 }
+  .settings-tabs {
+    overflow-x: scroll;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .settings-tabs::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .settings-tabs::-webkit-scrollbar-thumb {
+    background: rgba(255,255,255,0.2);
+    border-radius: 999px;
+  }
+
+  .settings-tabs .MuiTabs-flexContainer {
+    flex-wrap: nowrap;
+  }
+
+  .settings-tabs .MuiTab-root {
+    min-height: 36px;
+    padding: 6px 12px;
+  }

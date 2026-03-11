@@ -1,6 +1,7 @@
 import { useEffect, useState, Suspense, lazy } from "react";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
+import Skeleton from "@mui/material/Skeleton";
 
 import "./Trackers.scss";
 import DashboardLayout from "../components/layout/DashboardLayout.jsx";
@@ -313,7 +314,9 @@ export default function Trackers() {
         <div className="theme-exp">
           <SectionCard title="Spending Mix">
             <div className="trackers-chart">
-              {monthExpenses.length ? (
+              {loadingExp ? (
+                <Skeleton variant="rectangular" width="100%" height={180} />
+              ) : monthExpenses.length ? (
                 <Suspense fallback={<div className="trackers-chart__empty">Loading chart…</div>}>
                   <ExpenseCategoryBar rows={monthExpenses} />
                 </Suspense>
@@ -329,7 +332,9 @@ export default function Trackers() {
         <div className="theme-wo">
           <SectionCard title="Training Mix">
             <div className="trackers-chart">
-              {monthWorkouts.length ? (
+              {loadingWo ? (
+                <Skeleton variant="rectangular" width="100%" height={180} />
+              ) : monthWorkouts.length ? (
                 <Suspense fallback={<div className="trackers-chart__empty">Loading chart…</div>}>
                   <WorkoutTypePie rows={monthWorkouts} />
                 </Suspense>
@@ -345,7 +350,9 @@ export default function Trackers() {
         <div className="theme-drink">
           <SectionCard title="Drink Levels">
             <div className="trackers-chart">
-              {monthDrinks.length ? (
+              {loadingDr ? (
+                <Skeleton variant="rectangular" width="100%" height={180} />
+              ) : monthDrinks.length ? (
                 <DrinkLevelBars rows={monthDrinks} />
               ) : (
                 <div className="trackers-chart__empty">

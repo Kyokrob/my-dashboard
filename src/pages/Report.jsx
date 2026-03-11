@@ -183,6 +183,8 @@ export default function Report() {
     [workoutCountByMonth]
   );
 
+  const monthWorkouts = workouts.filter((w) => inMonth(w.date, monthKey));
+  const monthDrinkLogs = drinks.filter((d) => inMonth(d.date, monthKey) && d.drank);
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -441,6 +443,9 @@ export default function Report() {
           </SectionCard>
         </div>
       </div>
+
+
+
     </DashboardLayout>
   );
 }

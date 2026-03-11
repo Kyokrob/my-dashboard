@@ -6,6 +6,7 @@ import Button from "@mui/material/Button";
 import DashboardIcon from "@mui/icons-material/Dashboard";
 import TableChartIcon from "@mui/icons-material/TableChart";
 import InsightsIcon from "@mui/icons-material/Insights";
+import HistoryIcon from "@mui/icons-material/History";
 import SettingsIcon from "@mui/icons-material/Settings";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { useAuth } from "../../context/AuthContext.jsx";
@@ -20,20 +21,17 @@ import ExpenseDialog from "../expenses/ExpenseDialog.jsx";
 import WorkoutDialog from "../workouts/WorkoutDialog.jsx";
 import DrinkDialog from "../drinks/DrinkDialog.jsx";
 import { apiFetch } from "../../api/apiFetch.js";
+import { ShellProvider } from "./ShellContext.jsx";
 
 export default function AppShell({ children }) {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
-  const [settingsGateOpen, setSettingsGateOpen] = useState(false);
-  const [settingsPassword, setSettingsPassword] = useState("");
-  const [settingsError, setSettingsError] = useState("");
-  const [settingsLoading, setSettingsLoading] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [addWorkoutOpen, setAddWorkoutOpen] = useState(false);
   const [addDrinkOpen, setAddDrinkOpen] = useState(false);
   const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
   const { lastUpdate, setLastUpdate, bumpRefresh } = useDashboard();
   const navigate = useNavigate();
 
@@ -45,32 +43,6 @@ export default function AppShell({ children }) {
     setOpen(false);
   }
 
-  async function verifySettingsAccess() {
-    setSettingsError("");
-    if (settingsPassword.length < 6) {
-      setSettingsError("Password must be at least 6 characters");
-      return;
-    }
-    try {
-      setSettingsLoading(true);
-      const res = await fetch("/api/auth/verify-password", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: settingsPassword }),
-      });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data?.error || "Verification failed");
-      setSettingsGateOpen(false);
-      setSettingsPassword("");
-      navigate("/settings");
-      setOpen(false);
-    } catch (err) {
-      setSettingsError(err.message || "Verification failed");
-    } finally {
-      setSettingsLoading(false);
-    }
-  }
 
   return (
     <div className={`shell ${collapsed ? "is-collapsed" : ""}`}>
@@ -81,9 +53,9 @@ export default function AppShell({ children }) {
             className="shell__logo shell__logo--button"
             onClick={() => setCollapsed((s) => !s)}
           >
-            K
+            {(user?.name || user?.email || "K").trim().charAt(0).toUpperCase()}
           </button>
-          {!collapsed && <div className="shell__title">Kyokrob</div>}
+          {!collapsed && <div className="shell__title">{user?.name || "Dashboard"}</div>}
           <button className="shell__close-btn" onClick={() => setOpen(false)}>
             ✕
           </button>
@@ -102,13 +74,20 @@ export default function AppShell({ children }) {
             <InsightsIcon fontSize="small" />
             {!collapsed && <span>Insights</span>}
           </NavLink>
+          <NavLink to="/activity" className="shell__link" onClick={handleNavClick}>
+            <HistoryIcon fontSize="small" />
+            {!collapsed && <span>Latest Activity</span>}
+          </NavLink>
         </nav>
 
         <div className="shell__footer">
           <button
             type="button"
             className="shell__link shell__link--button"
-            onClick={() => setSettingsGateOpen(true)}
+            onClick={() => {
+              navigate("/settings");
+              setOpen(false);
+            }}
           >
             <SettingsIcon fontSize="small" />
             {!collapsed && <span>Settings</span>}
@@ -124,7 +103,7 @@ export default function AppShell({ children }) {
             <div className="shell__update">
               <div className="shell__updateLabel">Powered by Coremind lab</div>
               <div className="shell__updateValue shell__updateValue--label">
-                Last log updated{" "}
+                Last updated{" "}
                 {lastUpdate
                   ? new Date(lastUpdate).toLocaleString("en-US", {
                       month: "short",
@@ -140,18 +119,19 @@ export default function AppShell({ children }) {
         </div>
       </aside>
 
-      <button className="shell__menu" onClick={() => setOpen(true)}>
-        ☰
-      </button>
       {open && <div className="shell__backdrop" onClick={() => setOpen(false)} />}
 
-      <div className="shell__content">{children}</div>
+      <ShellProvider value={{ openMenu: () => setOpen(true) }}>
+        <div className="shell__content">{children}</div>
+      </ShellProvider>
 
       <FabSpeedDial
+        initial={(user?.name || user?.email || "K").trim().charAt(0).toUpperCase()}
         onAddExpense={() => setAddExpenseOpen(true)}
         onAddWorkout={() => setAddWorkoutOpen(true)}
         onAddDrink={() => setAddDrinkOpen(true)}
       />
+      <span className="tour-anchor tour-anchor--fab" data-tour="quick-add" />
 
       <ExpenseDialog
         open={addExpenseOpen}
@@ -218,53 +198,6 @@ export default function AppShell({ children }) {
           }
         }}
       />
-
-      <Dialog
-        open={settingsGateOpen}
-        onClose={() => {
-          setSettingsGateOpen(false);
-          setSettingsPassword("");
-          setSettingsError("");
-        }}
-        PaperProps={{ style: { background: "#161A23", borderRadius: 14, padding: 4 } }}
-      >
-        <DialogTitle>Enter password</DialogTitle>
-        <DialogContent>
-          <div style={{ display: "grid", gap: 8, minWidth: 280 }}>
-            <input
-              type="password"
-              value={settingsPassword}
-              onChange={(e) => setSettingsPassword(e.target.value)}
-              placeholder="••••••••"
-              style={{
-                background: "rgba(255,255,255,0.06)",
-                border: "1px solid rgba(255,255,255,0.12)",
-                borderRadius: 10,
-                padding: "10px 12px",
-                color: "#fff",
-                fontSize: 14,
-              }}
-            />
-            {settingsError ? (
-              <div style={{ fontSize: 12, color: "#E3A6A1" }}>{settingsError}</div>
-            ) : null}
-          </div>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setSettingsGateOpen(false);
-              setSettingsPassword("");
-              setSettingsError("");
-            }}
-          >
-            Cancel
-          </Button>
-          <Button variant="contained" onClick={verifySettingsAccess} disabled={settingsLoading}>
-            {settingsLoading ? "Checking..." : "Continue"}
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <Snackbar
         open={confirmLogout}
