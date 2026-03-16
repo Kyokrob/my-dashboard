@@ -25,6 +25,10 @@ import { inMonth } from "../utils/date.js";
 const WorkoutTypePie = lazy(() => import("../components/workouts/WorkoutTypePie.jsx"));
 const ExpenseCategoryBar = lazy(() => import("../components/expenses/ExpenseCategoryBar.jsx"));
 
+const TrackerSectionCard = (props) => (
+  <SectionCard collapsible collapsibleOnMobile {...props} />
+);
+
 function DrinkLevelBars({ rows }) {
   const counts = [1, 2, 3, 4, 5].map((lvl) => ({
     level: lvl,
@@ -312,7 +316,7 @@ export default function Trackers() {
     >
       <div className="trackers-charts">
         <div className="theme-exp">
-          <SectionCard title="Spending Mix">
+          <TrackerSectionCard title="Spending Mix" persistKey="trackers-spending-mix">
             <div className="trackers-chart">
               {loadingExp ? (
                 <Skeleton variant="rectangular" width="100%" height={180} />
@@ -326,11 +330,11 @@ export default function Trackers() {
                 </div>
               )}
             </div>
-          </SectionCard>
+          </TrackerSectionCard>
         </div>
 
         <div className="theme-wo">
-          <SectionCard title="Training Mix">
+          <TrackerSectionCard title="Training Mix" persistKey="trackers-training-mix">
             <div className="trackers-chart">
               {loadingWo ? (
                 <Skeleton variant="rectangular" width="100%" height={180} />
@@ -344,11 +348,11 @@ export default function Trackers() {
                 </div>
               )}
             </div>
-          </SectionCard>
+          </TrackerSectionCard>
         </div>
 
         <div className="theme-drink">
-          <SectionCard title="Drink Levels">
+          <TrackerSectionCard title="Drink Levels" persistKey="trackers-drink-levels">
             <div className="trackers-chart">
               {loadingDr ? (
                 <Skeleton variant="rectangular" width="100%" height={180} />
@@ -360,7 +364,7 @@ export default function Trackers() {
                 </div>
               )}
             </div>
-          </SectionCard>
+          </TrackerSectionCard>
         </div>
       </div>
 
@@ -511,8 +515,8 @@ export default function Trackers() {
       <Snackbar
         open={snack.open}
         autoHideDuration={2200}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        sx={{ top: "50%", transform: "translateY(-50%)" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{ bottom: 24 }}
         onClose={(e, reason) => {
           if (reason === "clickaway") return;
           setSnack((s) => ({ ...s, open: false }));

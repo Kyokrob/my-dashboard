@@ -4,6 +4,10 @@ import { Box } from "@mui/material";
 export default function MonthlyLineChart({
   labels = [],
   values = [],
+  series,
+  xAxisData,
+  xAxisScaleType = "band",
+  xAxisValueFormatter,
   height = 260,
   color = "#7c83fd",
   seriesLabel = "Total",
@@ -11,10 +15,25 @@ export default function MonthlyLineChart({
   emptyLabel = "No data yet.",
   dashed = false,
   showMarks = false,
+  curve = "linear",
+  yAxisMin,
+  yAxisMax,
 }) {
-  const hasData = values.some((v) => Number(v || 0) > 0);
+  const seriesList = Array.isArray(series) && series.length
+    ? series
+    : [
+        {
+          data: values,
+          label: seriesLabel,
+          color,
+          valueFormatter,
+        },
+      ];
 
-  if (!labels.length || !hasData) {
+  const hasData = seriesList.some((s) => (s.data || []).some((v) => Number(v || 0) > 0));
+  const hasXAxis = (Array.isArray(xAxisData) && xAxisData.length) || labels.length;
+
+  if (!hasXAxis || !hasData) {
     return (
       <Box sx={{ opacity: 0.6, fontSize: 13 }}>
         {emptyLabel}
@@ -27,8 +46,9 @@ export default function MonthlyLineChart({
       <LineChart
         xAxis={[
           {
-            data: labels,
-            scaleType: "band",
+            data: xAxisData || labels,
+            scaleType: xAxisData ? xAxisScaleType : "band",
+            valueFormatter: xAxisValueFormatter,
             tickLabelStyle: {
               fill: "#ffffff",
               fontSize: 12,
@@ -40,6 +60,8 @@ export default function MonthlyLineChart({
         ]}
         yAxis={[
           {
+            min: typeof yAxisMin === "number" ? yAxisMin : undefined,
+            max: typeof yAxisMax === "number" ? yAxisMax : undefined,
             tickLabelStyle: {
               fill: "#ffffff",
               fontSize: 12,
@@ -51,21 +73,19 @@ export default function MonthlyLineChart({
             valueFormatter,
           },
         ]}
-        series={[
-          {
-            data: values,
-            label: seriesLabel,
-            color,
-            valueFormatter,
-            curve: "linear",
-            showMark: showMarks,
-          },
-        ]}
+        series={seriesList.map((s) => ({
+          data: s.data,
+          label: s.label,
+          color: s.color,
+          valueFormatter: s.valueFormatter || valueFormatter,
+          curve,
+          showMark: showMarks,
+        }))}
         height={height}
         margin={{ top: 20, bottom: 20, left: 20, right: 20 }}
         sx={{
           "& .MuiChartsLegend-root": {
-            display: "none",
+            display: seriesList.length > 1 ? "block" : "none",
           },
           "& .MuiLineElement-root": dashed
             ? {

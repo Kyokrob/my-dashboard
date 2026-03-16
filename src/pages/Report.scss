@@ -60,6 +60,37 @@
   color: white;
 }
 
+.report-chart__with-legend {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  width: 100%;
+}
+
+.report-chart__canvas {
+  min-width: 0;
+}
+
+.report-chart__legend {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+.report-chart__legend-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.report-chart__legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+}
+
 .report-chart--pie {
   padding: 2px 0 0;
 }
@@ -165,6 +196,14 @@
   .report-chart {
     gap: 4px;
     padding: 4px 0 0;
+  }
+
+  .report-chart__with-legend {
+    grid-template-columns: 1fr;
+  }
+
+  .report-chart__legend {
+    justify-content: center;
   }
 
   .report-summary__value {

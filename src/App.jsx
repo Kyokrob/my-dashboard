@@ -6,6 +6,7 @@ import Report from "./pages/Report.jsx";
 import Trackers from "./pages/Trackers.jsx";
 import Settings from "./pages/Settings.jsx";
 import LatestActivity from "./pages/LatestActivity.jsx";
+import NotFound from "./pages/NotFound.jsx";
 import { DashboardProvider } from "./context/DashboardContext.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import Login from "./pages/Login.jsx";
@@ -96,7 +97,16 @@ export default function App() {
               </RequireAuth>
             }
           />
-          <Route path="*" element={<Navigate to="/" replace />} />
+          <Route
+            path="*"
+            element={
+              <RequireAuth>
+                <AppShell>
+                  <NotFound />
+                </AppShell>
+              </RequireAuth>
+            }
+          />
         </Routes>
       </DashboardProvider>
     </AuthProvider>

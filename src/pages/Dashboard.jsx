@@ -40,6 +40,7 @@ import DrinkDialog from "../components/drinks/DrinkDialog.jsx";
 import DrinkTable from "../components/drinks/DrinkTable.jsx";
 import DrinkLogsDialog from "../components/drinks/DrinkLogsDialog.jsx";
 import CoachTour from "../components/common/CoachTour.jsx";
+import MonthlyLineChart from "../components/insights/MonthlyLineChart.jsx";
 
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -49,8 +50,9 @@ import { useNavigate } from "react-router-dom";
 
 import { budgetByCategory } from "../config/budget.js";
 
-
-
+const MobileSectionCard = ({ collapsible = true, ...props }) => (
+  <SectionCard collapsible={collapsible} collapsibleOnMobile {...props} />
+);
 
 export default function Dashboard() {
   const { monthKey, setMonthKey, tier, setTier, setLastUpdate, refreshKey, budgets, expenseCategories } =
@@ -120,6 +122,7 @@ export default function Dashboard() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [editingWorkout, setEditingWorkout] = useState(null);
   const [expenseChartView, setExpenseChartView] = useState("mix");
+  const [bodyChartView, setBodyChartView] = useState("weight");
 
   /* ======================
    Load from API (STRICT)
@@ -477,9 +480,9 @@ export default function Dashboard() {
   /* ======================
      Derived Data
   ====================== */
-  const monthExpenses = expenseRows.filter((e) => inMonth(e.date, monthKey));
-  const monthWorkouts = workoutRows.filter((w) => inMonth(w.date, monthKey));
-  const monthDrinksAll = drinkRows.filter((d) => inMonth(d.date, monthKey));
+  const monthExpenses = expenseRows.filter((e) => inMonth(e.date || e.createdAt || e.updatedAt, monthKey));
+  const monthWorkouts = workoutRows.filter((w) => inMonth(w.date || w.createdAt || w.updatedAt, monthKey));
+  const monthDrinksAll = drinkRows.filter((d) => inMonth(d.date || d.createdAt || d.updatedAt, monthKey));
   const now = new Date();
   const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(
     now.getDate()
@@ -542,7 +545,7 @@ export default function Dashboard() {
     return [d.getFullYear(), d.getMonth() + 1];
   })();
   const prevMonthKey = `${prevY}-${String(prevM).padStart(2, "0")}`;
-  const prevMonthWorkouts = workoutRows.filter((w) => inMonth(w.date, prevMonthKey));
+  const prevMonthWorkouts = workoutRows.filter((w) => inMonth(w.date || w.createdAt || w.updatedAt, prevMonthKey));
   const workoutDeltaPct = prevMonthWorkouts.length
     ? ((workoutCount - prevMonthWorkouts.length) / prevMonthWorkouts.length) * 100
     : null;
@@ -552,7 +555,7 @@ export default function Dashboard() {
       : `${workoutDeltaPct > 0 ? "+" : ""}${workoutDeltaPct.toFixed(0)}% vs last month`;
   const workoutDeltaTone =
     workoutDeltaPct === null ? "neutral" : workoutDeltaPct >= 0 ? "good" : "bad";
-  const prevMonthExpenses = expenseRows.filter((e) => inMonth(e.date, prevMonthKey));
+  const prevMonthExpenses = expenseRows.filter((e) => inMonth(e.date || e.createdAt || e.updatedAt, prevMonthKey));
   const prevMonthMTD = prevMonthExpenses
     .filter((e) => Number(e.date.split("-")[2]) <= asOfDay)
     .reduce((sum, e) => sum + Number(e.amount || 0), 0);
@@ -595,36 +598,6 @@ export default function Dashboard() {
     return { label: `${bestCat} +฿${Math.round(bestDiff).toLocaleString()}`, sub: "Vs last month" };
   })();
   const biggestIncreaseTone = biggestCategoryIncrease.label === "No increase" ? "neutral" : "bad";
-
-  const categoryMomentum = (() => {
-    const sumByCat = (rows) =>
-      rows.reduce((acc, e) => {
-        const k = e.category || "Other";
-        acc[k] = (acc[k] || 0) + Number(e.amount || 0);
-        return acc;
-      }, {});
-    const cur = sumByCat(monthExpenses);
-    const prev = sumByCat(prevMonthExpenses);
-    const topCats = Object.entries(cur)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([cat]) => cat);
-    return topCats.map((cat) => {
-      const curVal = cur[cat] || 0;
-      const prevVal = prev[cat] || 0;
-      if (prevVal <= 0 && curVal > 0) {
-        return { cat, label: "New", tone: "neutral", arrow: "→" };
-      }
-      if (prevVal <= 0) {
-        return { cat, label: "—", tone: "neutral", arrow: "→" };
-      }
-      const pct = ((curVal - prevVal) / prevVal) * 100;
-      const arrow = pct > 0.5 ? "↑" : pct < -0.5 ? "↓" : "→";
-      const tone = pct > 0.5 ? "bad" : pct < -0.5 ? "good" : "neutral";
-      const label = `${pct > 0 ? "+" : ""}${pct.toFixed(0)}%`;
-      return { cat, label, tone, arrow };
-    });
-  })();
 
   const drinkingDates = new Set(monthDrinksAll.filter((d) => d.drank).map((d) => d.date));
   const drinkDaySpend = monthExpenses.filter((e) => drinkingDates.has(e.date));
@@ -675,6 +648,30 @@ const plannedTotal = plannedCategories.reduce((sum, cat) => {
   const tierBudget = budgetSource?.[cat]?.[tier] ?? 0;
   return sum + Number(tierBudget);
 }, 0);
+
+const categoryMomentum = (() => {
+  const topCats = plannedCategories
+    .map((cat) => [cat, Number(actualByCat?.[cat] || 0)])
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([cat]) => cat);
+
+  return topCats.map((cat) => {
+    const actual = Number(actualByCat?.[cat] || 0);
+    const budget = Number(budgetSource?.[cat]?.[tier] ?? 0);
+    if (!budget) {
+      return { cat, label: "No budget", tone: "neutral", arrow: "→" };
+    }
+    if (!actual) {
+      return { cat, label: "—", tone: "neutral", arrow: "→" };
+    }
+    const pct = ((actual - budget) / budget) * 100;
+    const arrow = pct > 1 ? "↑" : pct < -1 ? "↓" : "→";
+    const tone = pct > 1 ? "bad" : pct < -1 ? "good" : "neutral";
+    const label = `${pct > 0 ? "+" : ""}${pct.toFixed(0)}%`;
+    return { cat, label, tone, arrow };
+  });
+})();
 
 // Variance: + = over budget, - = under budget
 const spendVariance = plannedTotal - totalSpend;
@@ -839,6 +836,35 @@ const topWorkoutTypes = (() => {
     .map(([type, count]) => ({ type, count }));
 })();
 
+const toNumber = (value) => {
+  if (value === null || value === undefined) return 0;
+  const n = Number.parseFloat(String(value).replace(/[^\d.-]/g, ""));
+  return Number.isFinite(n) ? n : 0;
+};
+
+const bodyLogsThisMonth = monthWorkouts
+  .filter((w) => {
+    const weight = toNumber(w.weight ?? w.weightKg ?? w.bodyWeight);
+    const fat = toNumber(w.bodyFat ?? w.body_fat ?? w.bodyfat);
+    return weight > 0 || fat > 0;
+  })
+  .map((w) => ({
+    ...w,
+    _date: w.date || w.createdAt || w.updatedAt,
+  }))
+  .filter((w) => w._date)
+  .sort((a, b) => new Date(a._date).getTime() - new Date(b._date).getTime());
+
+const bodyDatesThisMonth = bodyLogsThisMonth.map((w) => new Date(w._date));
+const bodyWeightSeriesThisMonth = bodyLogsThisMonth.map((w) => {
+  const val = toNumber(w.weight ?? w.weightKg ?? w.bodyWeight);
+  return val > 0 ? val : null;
+});
+const bodyFatSeriesThisMonth = bodyLogsThisMonth.map((w) => {
+  const val = toNumber(w.bodyFat ?? w.body_fat ?? w.bodyfat);
+  return val > 0 ? val : null;
+});
+
 /* ======================
    Run-Rate Forecast
 ====================== */
@@ -968,8 +994,9 @@ const topWorkoutTypes = (() => {
         <div className="dashboard-col">
           {showOnboarding && (
             <div className="theme-neutral">
-              <SectionCard
+              <MobileSectionCard
                 title="Getting Started"
+                persistKey="dash-getting-started"
                 right={
                 <div className="onboard-progress">
                   Step {onboardingDoneCount}/{onboardingTotal}
@@ -1026,23 +1053,30 @@ const topWorkoutTypes = (() => {
                     : "This guide will hide 3 days after signup."}
                 </div>
               </div>
-              </SectionCard>
+              </MobileSectionCard>
           </div>
           )}
 
           <div className="theme-exp">
-            <SectionCard title="Overview" right={<TierSelector value={tier} onChange={setTier} />}>
+            <MobileSectionCard
+              title="Overview"
+              right={<TierSelector value={tier} onChange={setTier} />}
+              stackRightOnMobile={false}
+              noWrapOnMobile
+              togglePosition="right"
+              persistKey="dash-overview"
+            >
               <ProjectionTable
                 tier={tier}
                 actualByCat={actualByCat}
                 budgets={budgetSource}
                 categories={plannedCategories}
               />
-            </SectionCard>
+            </MobileSectionCard>
           </div>
 
           <div className="theme-exp" data-tour="monthly-insights">
-            <SectionCard title="Monthly Insights">
+            <MobileSectionCard title="Monthly Summary" persistKey="dash-monthly-summary">
               {loadingData ? (
                 <div className="drink-insights-grid">
                   {Array.from({ length: 4 }).map((_, index) => (
@@ -1056,22 +1090,9 @@ const topWorkoutTypes = (() => {
               ) : (
                 <div className="drink-insights-grid">
                   <div className="drink-card theme-exp">
-                    <div className="drink-card__title">Spend vs last month</div>
-                    <div className={`drink-card__value drink-card__value--${spendChangeTone}`}>
-                      {spendChangeLabel}
-                    </div>
-                    <div className="drink-card__sub">
-                      {prevMonthSpendTotal
-                        ? `Last month ฿${Math.round(prevMonthSpendTotal).toLocaleString()}`
-                        : "No prior data"}
-                    </div>
-                  </div>
-                  <div className="drink-card theme-exp">
-                    <div className="drink-card__title">Biggest Increase (Category)</div>
-                    <div className={`drink-card__value drink-card__value--${biggestIncreaseTone}`}>
-                      {biggestCategoryIncrease.label}
-                    </div>
-                    <div className="drink-card__sub">{biggestCategoryIncrease.sub}</div>
+                    <div className="drink-card__title">Total Spend</div>
+                    <div className="drink-card__value">฿{totalSpend.toLocaleString()}</div>
+                    <div className="drink-card__sub">Includes all logged this month expenses</div>
                   </div>
                   <div className="drink-card theme-exp">
                     <div className="drink-card__title">Spend vs Plan</div>
@@ -1083,17 +1104,30 @@ const topWorkoutTypes = (() => {
                     <div className="drink-card__sub">{spendVarianceSub}</div>
                   </div>
                   <div className="drink-card theme-exp">
-                    <div className="drink-card__title">Total Spend</div>
-                    <div className="drink-card__value">฿{totalSpend.toLocaleString()}</div>
-                    <div className="drink-card__sub">Includes all logged this month expenses</div>
+                    <div className="drink-card__title">Biggest Increase (Category)</div>
+                    <div className={`drink-card__value drink-card__value--${biggestIncreaseTone}`}>
+                      {biggestCategoryIncrease.label}
+                    </div>
+                    <div className="drink-card__sub">{biggestCategoryIncrease.sub}</div>
+                  </div>
+                  <div className="drink-card theme-exp">
+                    <div className="drink-card__title">Spend vs last month</div>
+                    <div className={`drink-card__value drink-card__value--${spendChangeTone}`}>
+                      {spendChangeLabel}
+                    </div>
+                    <div className="drink-card__sub">
+                      {prevMonthSpendTotal
+                        ? `Last month ฿${Math.round(prevMonthSpendTotal).toLocaleString()}`
+                        : "No prior data"}
+                    </div>
                   </div>
                 </div>
               )}
-            </SectionCard>
+            </MobileSectionCard>
           </div>
 
           <div className="theme-exp" data-tour="spending-by-day">
-            <SectionCard title="Spending by Day (This Month)">
+            <MobileSectionCard title="Spending by Day (This Month)" persistKey="dash-spending-by-day">
               {loadingData ? (
                 <div className="weekly-spend">
                   {Array.from({ length: 7 }).map((_, index) => (
@@ -1120,11 +1154,11 @@ const topWorkoutTypes = (() => {
                   ))}
                 </div>
               )}
-            </SectionCard>
+            </MobileSectionCard>
           </div>
           
           <div className="theme-drink">
-            <SectionCard title="Drink Insights">
+            <MobileSectionCard title="Drink Insights" persistKey="dash-drink-insights">
               {loadingData ? (
                 <div className="drink-insights-grid">
                   {Array.from({ length: 4 }).map((_, index) => (
@@ -1159,11 +1193,11 @@ const topWorkoutTypes = (() => {
                   </div>
                 </div>
               )}
-            </SectionCard>
+            </MobileSectionCard>
           </div>
 
           <div className="theme-drink">
-            <SectionCard title="Drinking Day Spend Multiplier">
+            <MobileSectionCard title="Drinking Day Spend Multiplier" persistKey="dash-drink-multiplier">
               <div className="multiplier-card">
                 <div>
                   <div className="multiplier-card__label">On drinking days you spend</div>
@@ -1185,30 +1219,30 @@ const topWorkoutTypes = (() => {
                   </div>
                 </div>
               </div>
-            </SectionCard>
+            </MobileSectionCard>
           </div>
           <div className="theme-neutral">
-            <SectionCard title="To-Do / Next Actions">
+            <MobileSectionCard title="To-Do / Next Actions" persistKey="dash-todo">
               <TodoList rows={todos} onAdd={addTodo} onUpdate={updateTodo} onDelete={deleteTodo} />
-            </SectionCard>
+            </MobileSectionCard>
           </div>
         </div>
 
         {/* RIGHT */}
         <div className="dashboard-col">
           <div className="theme-neutral" data-tour="calendar">
-            <SectionCard title="Calendar">
+            <MobileSectionCard title="Calendar" collapsible={false} persistKey="dash-calendar">
               <MonthCalendar
                 monthKey={monthKey}
                 expenses={monthExpenses}
                 workouts={monthWorkouts}
                 drinks={monthDrinksAll}
               />
-            </SectionCard>
+            </MobileSectionCard>
           </div>
 
           <div className="theme-exp" data-tour="expense-chart">
-            <SectionCard
+            <MobileSectionCard
               title={
                 <div className="chart-card__title">
                   <span>Expenses (This Month)</span>
@@ -1232,6 +1266,7 @@ const topWorkoutTypes = (() => {
                   </div>
                 </div>
               }
+              persistKey="dash-expenses-chart"
             >
               <div
                 style={{
@@ -1257,13 +1292,13 @@ const topWorkoutTypes = (() => {
                   <div className="chart-empty">No data yet. Log your first expense to see insights.</div>
                 )}
               </div>
-            </SectionCard>
+            </MobileSectionCard>
           </div>
 
           
 
       <div className="theme-wo">
-      <SectionCard title="Workout Mix">
+      <MobileSectionCard title="Workout Mix" persistKey="dash-workout-mix">
         <div
           style={{
             display: "flex",
@@ -1288,11 +1323,11 @@ const topWorkoutTypes = (() => {
             )}
           </div>
         </div>
-      </SectionCard>
+      </MobileSectionCard>
       </div>
 
           <div className="theme-wo">
-            <SectionCard title="Workout Insights">
+            <MobileSectionCard title="Workout Insights" persistKey="dash-workout-insights">
               {loadingData ? (
                 <div className="workout-insights-grid">
                   {Array.from({ length: 2 }).map((_, index) => (
@@ -1331,7 +1366,74 @@ const topWorkoutTypes = (() => {
                   </div>
                 </div>
               )}
-            </SectionCard>
+            </MobileSectionCard>
+          </div>
+
+          <div className="theme-wo">
+            <MobileSectionCard
+              title="Monthly Tracker"
+              right={
+                <div className="chart-toggle">
+                  <Button
+                    size="small"
+                    variant={bodyChartView === "weight" ? "contained" : "outlined"}
+                    onClick={() => setBodyChartView("weight")}
+                    className={`chart-toggle__btn ${bodyChartView === "weight" ? "is-active" : ""}`}
+                  >
+                    Weight
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={bodyChartView === "fat" ? "contained" : "outlined"}
+                    onClick={() => setBodyChartView("fat")}
+                    className={`chart-toggle__btn ${bodyChartView === "fat" ? "is-active" : ""}`}
+                  >
+                    Body Fat
+                  </Button>
+                </div>
+              }
+              stackRightOnMobile={false}
+              noWrapOnMobile
+              togglePosition="right"
+              persistKey="dash-monthly-tracker"
+            >
+              <div className="report-chart">
+                <div className="report-chart__sub">Every log this month</div>
+                {loadingData ? (
+                  <Skeleton variant="rectangular" width="100%" height={220} {...skeletonProps} />
+                ) : bodyLogsThisMonth.length ? (
+                  <MonthlyLineChart
+                    xAxisData={bodyDatesThisMonth}
+                    xAxisScaleType="time"
+                    xAxisValueFormatter={(value) =>
+                      new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                    }
+                    curve="monotoneX"
+                    yAxisMin={bodyChartView === "weight" ? 50 : 15}
+                    yAxisMax={bodyChartView === "weight" ? 90 : 30}
+                    series={[
+                      bodyChartView === "weight"
+                        ? {
+                            data: bodyWeightSeriesThisMonth,
+                            label: "Weight (kg)",
+                            color: "#9FC8B3",
+                            valueFormatter: (v) => `${Number(v || 0).toFixed(1)} kg`,
+                          }
+                        : {
+                            data: bodyFatSeriesThisMonth,
+                            label: "Body Fat (%)",
+                            color: "#F4C76E",
+                            valueFormatter: (v) => `${Number(v || 0).toFixed(1)}%`,
+                          },
+                    ]}
+                    emptyLabel="No body stats logged this month."
+                    showMarks
+                  />
+                ) : (
+                  <div className="chart-empty">No body stats logged this month.</div>
+                )}
+              </div>
+            </MobileSectionCard>
           </div>
 
           
@@ -1442,8 +1544,8 @@ const topWorkoutTypes = (() => {
       <Snackbar
         open={snack.open}
         autoHideDuration={2200}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        sx={{ top: "50%", transform: "translateY(-50%)" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{ bottom: 24 }}
         onClose={(e, reason) => {
           if (reason === "clickaway") return;
           setSnack((s) => ({ ...s, open: false }));
@@ -1472,16 +1574,26 @@ const topWorkoutTypes = (() => {
             title: "Daily Highlights",
             body: "Your spend, workout, and drink status at a glance.",
           },
-          {
-            selector: "[data-tour='calendar']",
-            title: "Calendar View",
-            body: "Scan your month quickly and spot patterns at a glance.",
-          },
-          {
-            selector: "[data-tour='month-picker']",
-            title: "Month Picker",
-            body: "Jump between months to review history or compare trends.",
-          },
+          ...(window.innerWidth <= 720
+            ? [
+                {
+                  selector: "[data-tour='month-picker']",
+                  title: "Month Picker",
+                  body: "Jump between months to review history or compare trends.",
+                },
+              ]
+            : [
+                {
+                  selector: "[data-tour='calendar']",
+                  title: "Calendar View",
+                  body: "Scan your month quickly and spot patterns at a glance.",
+                },
+                {
+                  selector: "[data-tour='month-picker']",
+                  title: "Month Picker",
+                  body: "Jump between months to review history or compare trends.",
+                },
+              ]),
         ]}
       />
     </DashboardLayout>

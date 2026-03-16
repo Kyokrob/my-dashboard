@@ -417,10 +417,26 @@ export default function Settings() {
       ...prev,
       [cat]: {
         ...prev[cat],
-        [tier]: Number(value),
+        [tier]: Number(value || 0),
       },
     }));
   }
+
+  const activeBudgetCategories = useMemo(
+    () => (prefCategories || []).filter((c) => c.enabled !== false),
+    [prefCategories]
+  );
+
+  const budgetTotals = useMemo(() => {
+    const totals = { low: 0, mid: 0, high: 0 };
+    activeBudgetCategories.forEach((c) => {
+      const row = budgetForm?.[c.label] || {};
+      totals.low += Number(row.low || 0);
+      totals.mid += Number(row.mid || 0);
+      totals.high += Number(row.high || 0);
+    });
+    return totals;
+  }, [budgetForm, activeBudgetCategories]);
 
   function addBudgetCategory() {
     const label = newBudgetCategory.trim();
@@ -1184,7 +1200,7 @@ export default function Settings() {
                   <div className="right">Mid</div>
                   <div className="right">High</div>
                 </div>
-                {(prefCategories || []).map((c) => (
+                {activeBudgetCategories.map((c) => (
                   <div className="budget-table__row" key={c.label}>
                     <div>{c.label}</div>
                     {["low", "mid", "high"].map((tierKey) => (
@@ -1210,6 +1226,12 @@ export default function Settings() {
                     ))}
                   </div>
                 ))}
+                <div className="budget-table__row budget-table__row--total">
+                  <div>Total</div>
+                  <div className="right">฿{Math.round(budgetTotals.low).toLocaleString()}</div>
+                  <div className="right">฿{Math.round(budgetTotals.mid).toLocaleString()}</div>
+                  <div className="right">฿{Math.round(budgetTotals.high).toLocaleString()}</div>
+                </div>
               </div>
               <div className="settings-form__actions">
                 <Button variant="contained" onClick={saveBudgets} disabled={savingBudget}>
@@ -1479,8 +1501,8 @@ export default function Settings() {
       <Snackbar
         open={snack.open}
         autoHideDuration={2200}
-        anchorOrigin={{ vertical: "top", horizontal: "center" }}
-        sx={{ top: "50%", transform: "translateY(-50%)" }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+        sx={{ bottom: 24 }}
         onClose={(e, reason) => {
           if (reason === "clickaway") return;
           setSnack((s) => ({ ...s, open: false }));

@@ -67,7 +67,7 @@ export default function CoachTour({ steps = [], storageKey }) {
     setMissingTarget(false);
     if (!fixed) {
       const shouldScroll =
-        step?.selector !== "[data-tour='month-picker']" &&
+        (step?.selector !== "[data-tour='month-picker']" || window.innerWidth > 720) &&
         !(window.innerWidth <= 720 && step?.selector === "[data-tour='calendar']");
       if (shouldScroll) {
         try {

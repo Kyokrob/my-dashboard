@@ -10,11 +10,22 @@ import { useDashboard } from "../context/DashboardContext.jsx";
 import { inMonth } from "../utils/date.js";
 import "./Report.scss";
 
+const MobileSectionCard = ({ collapsible = true, ...props }) => (
+  <SectionCard collapsible={collapsible} collapsibleOnMobile {...props} />
+);
+
+
 function parseAmount(value) {
   if (value === null || value === undefined) return 0;
   if (typeof value === "number") return Number.isFinite(value) ? value : 0;
   const cleaned = String(value).replace(/฿/g, "").replace(/,/g, "").trim();
   const n = Number(cleaned);
+  return Number.isFinite(n) ? n : 0;
+}
+
+function toNumber(value) {
+  if (value === null || value === undefined) return 0;
+  const n = Number.parseFloat(String(value).replace(/[^\d.-]/g, ""));
   return Number.isFinite(n) ? n : 0;
 }
 
@@ -32,6 +43,7 @@ export default function Report() {
     if (typeof window === "undefined") return "days";
     return localStorage.getItem("insights.drinkMetric") || "days";
   });
+  const [bodyChartView, setBodyChartView] = useState("weight");
   const [expenses, setExpenses] = useState([]);
   const [drinks, setDrinks] = useState([]);
   const [workouts, setWorkouts] = useState([]);
@@ -183,6 +195,44 @@ export default function Report() {
     [workoutCountByMonth]
   );
 
+  const bodyLogs3mo = useMemo(
+    () =>
+      workouts
+        .filter((w) => {
+          const dateValue = w.date || w.createdAt || w.updatedAt;
+          const inRange = monthKeys.some((key) => inMonth(dateValue, key));
+          if (!inRange) return false;
+          const weight = toNumber(w.weight ?? w.weightKg ?? w.bodyWeight);
+          const fat = toNumber(w.bodyFat ?? w.body_fat ?? w.bodyfat);
+          return weight > 0 || fat > 0;
+        })
+        .map((w) => ({
+          ...w,
+          _date: w.date || w.createdAt || w.updatedAt,
+        }))
+        .filter((w) => w._date)
+        .sort((a, b) => new Date(a._date).getTime() - new Date(b._date).getTime()),
+    [workouts, monthKeys]
+  );
+
+  const bodyDates3mo = useMemo(() => bodyLogs3mo.map((w) => new Date(w._date)), [bodyLogs3mo]);
+  const bodyWeightSeries3mo = useMemo(
+    () =>
+      bodyLogs3mo.map((w) => {
+        const val = toNumber(w.weight ?? w.weightKg ?? w.bodyWeight);
+        return val > 0 ? val : null;
+      }),
+    [bodyLogs3mo]
+  );
+  const bodyFatSeries3mo = useMemo(
+    () =>
+      bodyLogs3mo.map((w) => {
+        const val = toNumber(w.bodyFat ?? w.body_fat ?? w.bodyfat);
+        return val > 0 ? val : null;
+      }),
+    [bodyLogs3mo]
+  );
+
   const monthWorkouts = workouts.filter((w) => inMonth(w.date, monthKey));
   const monthDrinkLogs = drinks.filter((d) => inMonth(d.date, monthKey) && d.drank);
 
@@ -207,7 +257,7 @@ export default function Report() {
     <DashboardLayout title="Insights" right={<MonthPicker value={monthKey} onChange={setMonthKey} />}>
       <div className="report-charts">
         <div className="theme-exp">
-          <SectionCard
+          <MobileSectionCard
             title="Monthly Expense Summary"
             right={
               <div className="report-toggle report-toggle--compact" role="group" aria-label="Expense chart type">
@@ -227,6 +277,7 @@ export default function Report() {
                 </button>
               </div>
             }
+            persistKey="insights-expense-summary"
           >
             <div className="report-chart">
               <div className="report-summary">
@@ -260,11 +311,11 @@ export default function Report() {
                 />
               )}
             </div>
-          </SectionCard>
+          </MobileSectionCard>
         </div>
 
         <div className="theme-drink">
-          <SectionCard
+          <MobileSectionCard
             title="Monthly Drinking Summary"
             right={
               <div className="report-header-controls">
@@ -302,6 +353,7 @@ export default function Report() {
                 </div>
               </div>
             }
+            persistKey="insights-drink-summary"
           >
             <div className="report-chart">
               <div className="report-summary">
@@ -345,13 +397,13 @@ export default function Report() {
                 />
               )}
             </div>
-          </SectionCard>
+          </MobileSectionCard>
         </div>
       </div>
 
       <div className="report-extra-grid">
         <div className="theme-exp">
-          <SectionCard title="Cumulative Spend (3 Months)">
+          <MobileSectionCard title="Cumulative Spend (3 Months)" persistKey="insights-cumulative-spend">
             <div className="report-chart">
               <div className="report-chart__sub">Running total across the window</div>
               {isLoading ? (
@@ -368,11 +420,11 @@ export default function Report() {
                 />
               )}
             </div>
-          </SectionCard>
+          </MobileSectionCard>
         </div>
 
         <div className="theme-exp">
-          <SectionCard title="Avg Spend per Day (3 Months)">
+          <MobileSectionCard title="Avg Spend per Day (3 Months)" persistKey="insights-avg-spend-day">
             <div className="report-chart">
               <div className="report-chart__sub">Monthly total divided by days in month</div>
               {isLoading ? (
@@ -389,11 +441,11 @@ export default function Report() {
                 />
               )}
             </div>
-          </SectionCard>
+          </MobileSectionCard>
         </div>
 
         <div className="theme-wo">
-          <SectionCard title="Avg Workout Intensity (3 Months)">
+          <MobileSectionCard title="Avg Workout Intensity (3 Months)" persistKey="insights-avg-intensity">
             <div className="report-chart">
               <div className="report-chart__sub">Average intensity per month</div>
               {isLoading ? (
@@ -410,11 +462,11 @@ export default function Report() {
                 />
               )}
             </div>
-          </SectionCard>
+          </MobileSectionCard>
         </div>
 
         <div className="theme-wo">
-          <SectionCard title="Workout Volume (3 Months)">
+          <MobileSectionCard title="Workout Volume (3 Months)" persistKey="insights-workout-volume">
             <div className="report-chart">
               <div className="report-summary">
                 <div className="report-summary__label">Total workouts (3 months)</div>
@@ -440,8 +492,69 @@ export default function Report() {
                 />
               )}
             </div>
-          </SectionCard>
+          </MobileSectionCard>
         </div>
+
+        <div className="theme-wo">
+          <MobileSectionCard
+            title="Body Tracker (3 Months)"
+            right={
+              <div className="report-toggle report-toggle--compact" role="group" aria-label="Body tracker metric">
+                <button
+                  type="button"
+                  className={`report-toggle__btn ${bodyChartView === "weight" ? "is-active" : ""}`}
+                  onClick={() => setBodyChartView("weight")}
+                >
+                  Weight
+                </button>
+                <button
+                  type="button"
+                  className={`report-toggle__btn ${bodyChartView === "fat" ? "is-active" : ""}`}
+                  onClick={() => setBodyChartView("fat")}
+                >
+                  Body Fat
+                </button>
+              </div>
+            }
+            persistKey="insights-body-tracker"
+          >
+            <div className="report-chart">
+              <div className="report-chart__sub">Every log across the last 3 months</div>
+              {isLoading ? (
+                <Skeleton variant="rectangular" width="100%" height={220} />
+              ) : (
+                <MonthlyLineChart
+                  xAxisData={bodyDates3mo}
+                  xAxisScaleType="time"
+                  xAxisValueFormatter={(value) =>
+                    new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" })
+                  }
+                  curve="monotoneX"
+                  yAxisMin={bodyChartView === "weight" ? 50 : 15}
+                  yAxisMax={bodyChartView === "weight" ? 90 : 30}
+                  series={[
+                    bodyChartView === "weight"
+                      ? {
+                          data: bodyWeightSeries3mo,
+                          label: "Weight (kg)",
+                          color: "#9FC8B3",
+                          valueFormatter: (v) => `${Number(v || 0).toFixed(1)} kg`,
+                        }
+                      : {
+                          data: bodyFatSeries3mo,
+                          label: "Body Fat (%)",
+                          color: "#F4C76E",
+                          valueFormatter: (v) => `${Number(v || 0).toFixed(1)}%`,
+                        },
+                  ]}
+                  emptyLabel="No body stats logged in these months."
+                  showMarks
+                />
+              )}
+            </div>
+          </MobileSectionCard>
+        </div>
+
       </div>
 
 

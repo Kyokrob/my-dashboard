@@ -1,0 +1,31 @@
+.notfound {
+  min-height: 60vh;
+  display: grid;
+  place-items: center;
+}
+
+.notfound__card {
+  width: min(520px, 92vw);
+  text-align: center;
+  padding: 28px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.04);
+  display: grid;
+  gap: 10px;
+}
+
+.notfound__code {
+  font-size: 48px;
+  font-weight: 700;
+}
+
+.notfound__title {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.notfound__sub {
+  font-size: 13px;
+  opacity: 0.7;
+}
