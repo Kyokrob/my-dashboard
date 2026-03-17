@@ -84,6 +84,9 @@ app.get("/", (req, res) => res.json({ ok: true, message: "API is running" }));
 
 // ✅ Health (public)
 app.get("/health", (req, res) => res.json({ ok: true }));
+app.get("/api/health", (req, res) =>
+  res.json({ ok: true, uptime: process.uptime(), timestamp: new Date().toISOString() })
+);
 
 /* ======================
    API ROUTES
