@@ -5,6 +5,11 @@
   padding: 24px;
 }
 
+.login--loading {
+  display: grid;
+  place-items: center;
+}
+
 .login__stack {
   display: grid;
   gap: 0;

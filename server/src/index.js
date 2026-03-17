@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 import session from "express-session";
 import MongoStore from "connect-mongo";
 import path from "path";
+import mongoose from "mongoose";
 
 import { connectDB } from "./config/db.js";
 import authRoutes from "./routes/auth.routes.js";
@@ -84,9 +85,15 @@ app.get("/", (req, res) => res.json({ ok: true, message: "API is running" }));
 
 // ✅ Health (public)
 app.get("/health", (req, res) => res.json({ ok: true }));
-app.get("/api/health", (req, res) =>
-  res.json({ ok: true, uptime: process.uptime(), timestamp: new Date().toISOString() })
-);
+app.get("/api/health", (req, res) => {
+  const dbState = mongoose.connection.readyState; // 0=disconnected,1=connected,2=connecting,3=disconnecting
+  res.json({
+    ok: true,
+    uptime: process.uptime(),
+    timestamp: new Date().toISOString(),
+    dbState,
+  });
+});
 
 /* ======================
    API ROUTES
@@ -145,7 +152,7 @@ const port = Number(process.env.PORT || 5050);
 
 async function startServer() {
   try {
-    await connectDB(process.env.MONGODB_URI);
+    await connectDB(process.env.MONGODB_URI, { isProd });
     app.listen(port, () => {
       console.log(`🚀 API running on port ${port}`);
     });

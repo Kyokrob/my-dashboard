@@ -8,7 +8,7 @@ import Alert from "@mui/material/Alert";
 import "./login.scss";
 
 export default function Login() {
-  const { login, bootstrap, user } = useAuth();
+  const { login, bootstrap, user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +21,14 @@ export default function Login() {
   useEffect(() => {
     if (user) navigate("/", { replace: true });
   }, [user, navigate]);
+
+  if (authLoading) {
+    return (
+      <div className="login login--loading">
+        <CircularProgress />
+      </div>
+    );
+  }
 
   useEffect(() => {
     try {
