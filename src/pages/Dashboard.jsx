@@ -40,7 +40,9 @@ import DrinkDialog from "../components/drinks/DrinkDialog.jsx";
 import DrinkTable from "../components/drinks/DrinkTable.jsx";
 import DrinkLogsDialog from "../components/drinks/DrinkLogsDialog.jsx";
 import CoachTour from "../components/common/CoachTour.jsx";
-import MonthlyLineChart from "../components/insights/MonthlyLineChart.jsx";
+import { SparkLineChart } from "@mui/x-charts/SparkLineChart";
+import { areaElementClasses, lineElementClasses } from "@mui/x-charts/LineChart";
+import { chartsAxisHighlightClasses } from "@mui/x-charts/ChartsAxisHighlight";
 
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { useAuth } from "../context/AuthContext.jsx";
@@ -123,7 +125,6 @@ export default function Dashboard() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [editingWorkout, setEditingWorkout] = useState(null);
   const [expenseChartView, setExpenseChartView] = useState("mix");
-  const [bodyChartView, setBodyChartView] = useState("weight");
 
   /* ======================
    Load from API (STRICT)
@@ -608,6 +609,27 @@ export default function Dashboard() {
     ? totalSpend / drinkingDays
     : 0;
 
+  const prevMonthDrinkRows = drinkRows.filter((d) => inMonth(d.date || d.createdAt || d.updatedAt, prevMonthKey));
+  const prevDrinkingDates = new Set(prevMonthDrinkRows.filter((d) => d.drank).map((d) => d.date));
+  const prevMonthDrinkDaySpend = prevMonthExpenses.filter((e) => prevDrinkingDates.has(e.date));
+  const prevAvgSpendDrinkDay = prevMonthDrinkDaySpend.length
+    ? prevMonthDrinkDaySpend.reduce((s, e) => s + Number(e.amount || 0), 0) /
+      new Set(prevMonthDrinkDaySpend.map((e) => e.date)).size
+    : 0;
+  const prevMonthNonDrinkExpenses = prevMonthExpenses.filter((e) => !prevDrinkingDates.has(e.date));
+  const prevAvgSpendNonDrinkDay = prevMonthNonDrinkExpenses.length
+    ? prevMonthNonDrinkExpenses.reduce((s, e) => s + Number(e.amount || 0), 0) /
+      new Set(prevMonthNonDrinkExpenses.map((e) => e.date)).size
+    : 0;
+
+  const formatDelta = (delta, pct) => {
+    if (pct === null) return "No prior data";
+    const sign = delta > 0 ? "+" : delta < 0 ? "-" : "";
+    const value = Math.abs(Math.round(delta)).toLocaleString();
+    const pctLabel = `${pct > 0 ? "+" : ""}${pct.toFixed(0)}%`;
+    return `${sign}฿${value} (${pctLabel})`;
+  };
+
   const biggestCategoryIncrease = (() => {
     const sumByCat = (rows) =>
       rows.reduce((acc, e) => {
@@ -677,10 +699,69 @@ const activeExpenseCategories =
   expenseCategories?.filter((c) => c.enabled !== false).map((c) => c.label) || [];
 const plannedCategories = activeExpenseCategories.length ? activeExpenseCategories : budgetCategories;
 
+const daysInMonth = new Date(
+  Number(monthKey.split("-")[0]),
+  Number(monthKey.split("-")[1]),
+  0
+).getDate();
+
 const plannedTotal = plannedCategories.reduce((sum, cat) => {
   const tierBudget = budgetSource?.[cat]?.[tier] ?? 0;
   return sum + Number(tierBudget);
 }, 0);
+
+const paceTrendData = (() => {
+  if (!monthExpenses.length || !plannedTotal) return { values: [], dates: [] };
+  const daily = {};
+  monthExpenses.forEach((e) => {
+    const day = Number((e.date || "").split("-")[2] || 0);
+    if (!day) return;
+    daily[day] = (daily[day] || 0) + Number(e.amount || 0);
+  });
+  let cum = 0;
+  const values = [];
+  const dates = [];
+  const [year, month] = monthKey.split("-").map(Number);
+  for (let d = 1; d <= asOfDay; d += 1) {
+    cum += daily[d] || 0;
+    const projected = (cum / d) * daysInMonth;
+    values.push(Number((projected / plannedTotal).toFixed(2)));
+    dates.push(new Date(year, month - 1, d));
+  }
+  return { values, dates };
+})();
+const paceTrendMax = paceTrendData.values.length ? Math.max(...paceTrendData.values, 1) : 1;
+const hasBudget = plannedTotal > 0;
+const paceSparkline = hasBudget && paceTrendData.values.length ? (
+  <SparkLineChart
+    data={paceTrendData.values}
+    xAxis={{
+      data: paceTrendData.dates,
+      valueFormatter: (value) =>
+        new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
+    }}
+    showTooltip
+    height={34}
+    color="rgb(73, 90, 251)"
+    valueFormatter={(v) => Number(v || 0).toFixed(2)}
+    area
+    max={paceTrendMax}
+    axisHighlight={{ x: "line" }}
+    sx={{
+      [`& .${areaElementClasses.root}`]: { opacity: 0.2 },
+      [`& .${lineElementClasses.root}`]: { strokeWidth: 3 },
+      [`& .${chartsAxisHighlightClasses.root}`]: {
+        stroke: "rgb(137, 86, 255)",
+        strokeDasharray: "none",
+        strokeWidth: 2,
+      },
+    }}
+  />
+) : (
+  <span className="runrate-card__sparkline-empty">
+    {hasBudget ? "No data yet" : "Add a budget to see tracking"}
+  </span>
+);
 
 const categoryMomentum = (() => {
   const topCats = plannedCategories
@@ -716,16 +797,6 @@ const spendVarianceLabel =
 
 const spendVarianceSub = spendVariance >= 0 ? "Remaining" : "Over budget";
 const spendVarianceIsBad = spendVariance < 0;
-
-  /* ======================
-   KPI – Active Days
-====================== */
-
-const daysInMonth = new Date(
-  Number(monthKey.split("-")[0]),
-  Number(monthKey.split("-")[1]),
-  0
-).getDate();
 
 /* ======================
    Today Snapshot
@@ -801,7 +872,6 @@ const onboardingProgress =
 
 const daysPassed = Math.max(1, asOfDay);
 const projectedSpend = (totalSpend / daysPassed) * daysInMonth;
-const hasBudget = plannedTotal > 0;
 const runRateStatus = !hasBudget
   ? "No budget"
   : projectedSpend <= plannedTotal
@@ -832,6 +902,15 @@ const avgSpendDrinkDay = drinkDayCount ? drinkDayTotal / drinkDayCount : 0;
 const avgSpendNonDrinkDay = nonDrinkDayCount ? nonDrinkDayTotal / nonDrinkDayCount : 0;
 const drinkSpendMultiplier =
   avgSpendNonDrinkDay > 0 ? avgSpendDrinkDay / avgSpendNonDrinkDay : null;
+
+  const normalDayDelta = avgSpendNonDrinkDay - prevAvgSpendNonDrinkDay;
+  const normalDayDeltaPct = prevAvgSpendNonDrinkDay
+    ? (normalDayDelta / prevAvgSpendNonDrinkDay) * 100
+    : null;
+  const normalDayTone = normalDayDeltaPct === null ? "neutral" : normalDayDeltaPct > 0 ? "bad" : "good";
+  const drinkDayDelta = avgSpendDrinkDay - prevAvgSpendDrinkDay;
+  const drinkDayDeltaPct = prevAvgSpendDrinkDay ? (drinkDayDelta / prevAvgSpendDrinkDay) * 100 : null;
+  const drinkDayTone = drinkDayDeltaPct === null ? "neutral" : drinkDayDeltaPct > 0 ? "bad" : "good";
 
 
 /* ======================
@@ -868,35 +947,6 @@ const topWorkoutTypes = (() => {
     .slice(0, 3)
     .map(([type, count]) => ({ type, count }));
 })();
-
-const toNumber = (value) => {
-  if (value === null || value === undefined) return 0;
-  const n = Number.parseFloat(String(value).replace(/[^\d.-]/g, ""));
-  return Number.isFinite(n) ? n : 0;
-};
-
-const bodyLogsThisMonth = monthWorkouts
-  .filter((w) => {
-    const weight = toNumber(w.weight ?? w.weightKg ?? w.bodyWeight);
-    const fat = toNumber(w.bodyFat ?? w.body_fat ?? w.bodyfat);
-    return weight > 0 || fat > 0;
-  })
-  .map((w) => ({
-    ...w,
-    _date: w.date || w.createdAt || w.updatedAt,
-  }))
-  .filter((w) => w._date)
-  .sort((a, b) => new Date(a._date).getTime() - new Date(b._date).getTime());
-
-const bodyDatesThisMonth = bodyLogsThisMonth.map((w) => new Date(w._date));
-const bodyWeightSeriesThisMonth = bodyLogsThisMonth.map((w) => {
-  const val = toNumber(w.weight ?? w.weightKg ?? w.bodyWeight);
-  return val > 0 ? val : null;
-});
-const bodyFatSeriesThisMonth = bodyLogsThisMonth.map((w) => {
-  const val = toNumber(w.bodyFat ?? w.body_fat ?? w.bodyfat);
-  return val > 0 ? val : null;
-});
 
 /* ======================
    Run-Rate Forecast
@@ -983,19 +1033,24 @@ const bodyFatSeriesThisMonth = bodyLogsThisMonth.map((w) => {
             title="Run-Rate Forecast"
             value={
               <div className="runrate-card">
-                <div>
-                  <div className="runrate-card__label">Status</div>
-                <div className={`runrate-card__status runrate-card__status--${runRateTone}`}>
-                  <RunRateIcon fontSize="small" />
-                  {runRateStatus}
+                <div className="runrate-card__summary">
+                  <div className="runrate-card__summary-text">
+                    <div className="runrate-card__label">Status</div>
+                    <div className={`runrate-card__status runrate-card__status--${runRateTone}`}>
+                      <RunRateIcon fontSize="small" />
+                      {runRateStatus}
+                    </div>
+                    <div className="runrate-card__pace">
+                      Pace {paceMultiplier ? `${paceMultiplier.toFixed(1)}×` : "—"}
+                    </div>
+                  </div>
+                  <div className="runrate-card__sparkline runrate-card__sparkline--mobile">
+                    {paceSparkline}
+                  </div>
+                  <div className="runrate-card__sparkline runrate-card__sparkline--desktop">
+                    {paceSparkline}
+                  </div>
                 </div>
-                <div className="runrate-card__pace">
-                  Pace {paceMultiplier ? `${paceMultiplier.toFixed(1)}×` : "—"}
-                </div>
-                <div className="runrate-card__sub">
-                  {hasBudget ? "Based on current monthly pace" : "Add a budget to see tracking"}
-                </div>
-              </div>
               <div className="runrate-card__metrics">
                 <div>
                   <span>Daily average</span>
@@ -1009,7 +1064,7 @@ const bodyFatSeriesThisMonth = bodyLogsThisMonth.map((w) => {
                     <span>Projected end</span>
                     <span>฿{Math.round(projectedSpend).toLocaleString()}</span>
                   </div>
-                  <div>
+                  <div className="runrate-card__metric">
                     <span>Budget</span>
                     <span>{hasBudget ? `฿${Math.round(plannedTotal).toLocaleString()}` : "—"}</span>
                   </div>
@@ -1092,7 +1147,7 @@ const bodyFatSeriesThisMonth = bodyLogsThisMonth.map((w) => {
 
           <div className="theme-exp">
             <MobileSectionCard
-              title="Overview"
+              title="Budget overview"
               right={<TierSelector value={tier} onChange={setTier} />}
               stackRightOnMobile={false}
               noWrapOnMobile
@@ -1109,7 +1164,7 @@ const bodyFatSeriesThisMonth = bodyLogsThisMonth.map((w) => {
           </div>
 
           <div className="theme-exp" data-tour="monthly-insights">
-            <MobileSectionCard title="Monthly Summary" persistKey="dash-monthly-summary">
+            <MobileSectionCard title="Spending summary (Monthly)" persistKey="dash-monthly-summary">
               {loadingData ? (
                 <div className="drink-insights-grid">
                   {Array.from({ length: 4 }).map((_, index) => (
@@ -1230,7 +1285,7 @@ const bodyFatSeriesThisMonth = bodyLogsThisMonth.map((w) => {
           </div>
 
           <div className="theme-drink">
-            <MobileSectionCard title="Drinking Day Spend Multiplier" persistKey="dash-drink-multiplier">
+            <MobileSectionCard title="Drinking day spending" persistKey="dash-drink-multiplier">
               <div className="multiplier-card">
                 <div>
                   <div className="multiplier-card__label">On drinking days you spend</div>
@@ -1244,11 +1299,19 @@ const bodyFatSeriesThisMonth = bodyLogsThisMonth.map((w) => {
                 <div className="multiplier-card__metrics">
                   <div>
                     <span>Normal day avg</span>
-                    <span>{avgSpendNonDrinkDay ? `฿${Math.round(avgSpendNonDrinkDay).toLocaleString()}` : "—"}</span>
+                    <span>
+                      {avgSpendNonDrinkDay ? `฿${Math.round(avgSpendNonDrinkDay).toLocaleString()}` : "—"}
+                    </span>
+                    <span className={`multiplier-card__delta multiplier-card__delta--${normalDayTone}`}>
+                      {formatDelta(normalDayDelta, normalDayDeltaPct)}
+                    </span>
                   </div>
                   <div>
                     <span>Drinking day avg</span>
                     <span>{avgSpendDrinkDay ? `฿${Math.round(avgSpendDrinkDay).toLocaleString()}` : "—"}</span>
+                    <span className={`multiplier-card__delta multiplier-card__delta--${drinkDayTone}`}>
+                      {formatDelta(drinkDayDelta, drinkDayDeltaPct)}
+                    </span>
                   </div>
                 </div>
               </div>
@@ -1399,73 +1462,6 @@ const bodyFatSeriesThisMonth = bodyLogsThisMonth.map((w) => {
                   </div>
                 </div>
               )}
-            </MobileSectionCard>
-          </div>
-
-          <div className="theme-wo">
-            <MobileSectionCard
-              title="Monthly Tracker"
-              right={
-                <div className="chart-toggle">
-                  <Button
-                    size="small"
-                    variant={bodyChartView === "weight" ? "contained" : "outlined"}
-                    onClick={() => setBodyChartView("weight")}
-                    className={`chart-toggle__btn ${bodyChartView === "weight" ? "is-active" : ""}`}
-                  >
-                    Weight
-                  </Button>
-                  <Button
-                    size="small"
-                    variant={bodyChartView === "fat" ? "contained" : "outlined"}
-                    onClick={() => setBodyChartView("fat")}
-                    className={`chart-toggle__btn ${bodyChartView === "fat" ? "is-active" : ""}`}
-                  >
-                    Body Fat
-                  </Button>
-                </div>
-              }
-              stackRightOnMobile={false}
-              noWrapOnMobile
-              togglePosition="right"
-              persistKey="dash-monthly-tracker"
-            >
-              <div className="report-chart">
-                <div className="report-chart__sub">Every log this month</div>
-                {loadingData ? (
-                  <Skeleton variant="rectangular" width="100%" height={220} {...skeletonProps} />
-                ) : bodyLogsThisMonth.length ? (
-                  <MonthlyLineChart
-                    xAxisData={bodyDatesThisMonth}
-                    xAxisScaleType="time"
-                    xAxisValueFormatter={(value) =>
-                      new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" })
-                    }
-                    curve="monotoneX"
-                    yAxisMin={bodyChartView === "weight" ? 50 : 15}
-                    yAxisMax={bodyChartView === "weight" ? 90 : 30}
-                    series={[
-                      bodyChartView === "weight"
-                        ? {
-                            data: bodyWeightSeriesThisMonth,
-                            label: "Weight (kg)",
-                            color: "#9FC8B3",
-                            valueFormatter: (v) => `${Number(v || 0).toFixed(1)} kg`,
-                          }
-                        : {
-                            data: bodyFatSeriesThisMonth,
-                            label: "Body Fat (%)",
-                            color: "#F4C76E",
-                            valueFormatter: (v) => `${Number(v || 0).toFixed(1)}%`,
-                          },
-                    ]}
-                    emptyLabel="No body stats logged this month."
-                    showMarks
-                  />
-                ) : (
-                  <div className="chart-empty">No body stats logged this month.</div>
-                )}
-              </div>
             </MobileSectionCard>
           </div>
 

@@ -312,7 +312,7 @@
 }
 
 .runrate-card__status {
-  font-size: 24px;
+  font-size: 28px;
   font-weight: 700;
   margin-top: 6px;
   display: inline-flex;
@@ -367,6 +367,40 @@
   font-weight: 600;
 }
 
+.runrate-card__summary {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.runrate-card__summary-text {
+  display: grid;
+  gap: 14px;
+}
+
+.runrate-card__sparkline {
+  margin-top: 8px;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+}
+
+.runrate-card__sparkline--desktop {
+  margin-top: auto;
+  justify-content: flex-start;
+}
+
+.runrate-card__sparkline--mobile {
+  display: none;
+}
+
+.runrate-card__sparkline-empty {
+  font-size: 11px;
+  opacity: 0.6;
+  text-align: right;
+  max-width: 120px;
+}
+
 .multiplier-card {
   display: grid;
   grid-template-columns: 1.05fr 1fr;
@@ -403,14 +437,35 @@
 }
 
 .multiplier-card__metrics > div {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 6px 12px;
   min-width: 0;
 }
 
 .multiplier-card__metrics span:last-child {
-  font-weight: 600;
+  font-size: 10px;
+  font-weight: 400;
+  font-style: italic;
+}
+
+.multiplier-card__delta {
+  grid-column: 1 / -1;
+  font-size: 11px;
+  opacity: 0.7;
+  text-align: right;
+}
+
+.multiplier-card__delta--good {
+  color: #9FC8B3;
+}
+
+.multiplier-card__delta--bad {
+  color: #E3A6A1;
+}
+
+.multiplier-card__delta--neutral {
+  color: rgba(255, 255, 255, 0.65);
 }
 
  .momentum-list {
@@ -603,6 +658,28 @@
     font-size: 12px;
   }
 
+  .runrate-card__summary {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 10px;
+  }
+
+  .runrate-card__sparkline {
+    margin-top: 0;
+    min-width: 100px;
+    justify-content: flex-end;
+  }
+
+  .runrate-card__sparkline--desktop {
+    display: none;
+  }
+
+  .runrate-card__sparkline--mobile {
+    display: flex;
+    width: 100%;
+  }
+
   .dashboard-grid {
     gap: 10px;
     display: flex;
@@ -618,7 +695,13 @@
   }
 
   .drink-insights-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .drink-card {
+    padding: 10px;
+    min-height: 120px;
   }
 
   .workout-insights-grid {
