@@ -104,9 +104,9 @@ export default function CoachTour({ steps = [], storageKey }) {
     if (!rect && !missingTarget) return;
     const tooltip = tooltipRef.current;
     const pad = 14;
-    const width = 320;
-    let left = rect ? rect.left : (window.innerWidth - width) / 2;
-    left = Math.min(left, window.innerWidth - width - pad);
+    const tooltipWidth = tooltip.offsetWidth || 320;
+    let left = rect ? rect.left : (window.innerWidth - tooltipWidth) / 2;
+    left = Math.min(left, window.innerWidth - tooltipWidth - pad);
     left = Math.max(pad, left);
     let top = rect ? rect.top + rect.height + 14 : window.innerHeight / 2 - 80;
     const tooltipHeight = tooltip.offsetHeight || 140;
@@ -128,19 +128,24 @@ export default function CoachTour({ steps = [], storageKey }) {
       tooltip.style.transform = "none";
     }
     if (step?.selector === "[data-tour='quick-add']") {
-      const bottom = 24 + 56 + 6;
-      tooltip.style.right = "28px";
-      tooltip.style.left = "auto";
-      tooltip.style.top = "auto";
-      tooltip.style.bottom = `${bottom}px`;
+      if (window.innerWidth <= 720) {
+        const bottom = 24 + 56 + 6;
+        tooltip.style.left = "auto";
+        tooltip.style.right = "calc(16px + env(safe-area-inset-right))";
+        tooltip.style.transform = "none";
+        tooltip.style.top = "auto";
+        tooltip.style.bottom = `calc(${bottom}px + env(safe-area-inset-bottom))`;
+      } else {
+        const bottom = 24 + 56 + 6;
+        tooltip.style.right = "28px";
+        tooltip.style.left = "auto";
+        tooltip.style.top = "auto";
+        tooltip.style.bottom = `${bottom}px`;
+      }
       return;
     }
     const baseTop = rect ? top : top;
-    if (
-      (step?.selector === "[data-tour='month-picker']" ||
-        step?.selector === "[data-tour='calendar']") &&
-      window.innerWidth <= 720
-    ) {
+    if (window.innerWidth <= 720) {
       tooltip.style.left = "50%";
       tooltip.style.right = "auto";
       tooltip.style.transform = "translateX(-50%)";

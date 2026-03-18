@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import Snackbar from "@mui/material/Snackbar";
 import Alert from "@mui/material/Alert";
@@ -26,6 +26,7 @@ import { ShellProvider } from "./ShellContext.jsx";
 export default function AppShell({ children }) {
   const [open, setOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
   const [confirmLogout, setConfirmLogout] = useState(false);
   const [addExpenseOpen, setAddExpenseOpen] = useState(false);
   const [addWorkoutOpen, setAddWorkoutOpen] = useState(false);
@@ -43,6 +44,18 @@ export default function AppShell({ children }) {
     setOpen(false);
   }
 
+  useEffect(() => {
+    const query = window.matchMedia("(max-width: 720px)");
+    const update = () => setIsMobile(query.matches);
+    update();
+    if (query.addEventListener) {
+      query.addEventListener("change", update);
+      return () => query.removeEventListener("change", update);
+    }
+    query.addListener(update);
+    return () => query.removeListener(update);
+  }, []);
+
 
   return (
     <div className={`shell ${collapsed ? "is-collapsed" : ""}`}>
@@ -51,14 +64,18 @@ export default function AppShell({ children }) {
           <button
             type="button"
             className="shell__logo shell__logo--button"
-            onClick={() => setCollapsed((s) => !s)}
+            onClick={() => {
+              if (!isMobile) setCollapsed((s) => !s);
+            }}
           >
             {(user?.name || user?.email || "K").trim().charAt(0).toUpperCase()}
           </button>
           {!collapsed && <div className="shell__title">{user?.name || "Dashboard"}</div>}
-          <button className="shell__close-btn" onClick={() => setOpen(false)}>
-            ✕
-          </button>
+          {!isMobile && (
+            <button className="shell__close-btn" onClick={() => setOpen(false)}>
+              ✕
+            </button>
+          )}
         </div>
 
         <nav className="shell__nav">

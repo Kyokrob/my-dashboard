@@ -116,6 +116,11 @@
 }
 
 @media (max-width: 900px) {
+  .shell {
+    display: block;
+    width: 100%;
+  }
+
   .shell__sidebar {
     transform: translateX(-100%);
   }
@@ -126,6 +131,7 @@
 
   .shell__content {
     margin-left: 0;
+    width: 100%;
   }
 
   .shell__menu {
