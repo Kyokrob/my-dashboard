@@ -47,6 +47,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { sumExpensesByCategory } from "../utils/rollups.js";
 import { inMonth } from "../utils/date.js";
 import { useNavigate } from "react-router-dom";
+import { readCache, writeCache } from "../utils/cache.js";
 
 import { budgetByCategory } from "../config/budget.js";
 
@@ -128,45 +129,77 @@ export default function Dashboard() {
    Load from API (STRICT)
 ====================== */
   useEffect(() => {
+    const userKey = user?.id || "guest";
+    const expKey = `cache:${userKey}:expenses`;
+    const woKey = `cache:${userKey}:workouts`;
+    const drKey = `cache:${userKey}:drinks`;
+    const tdKey = `cache:${userKey}:todos`;
+    const expCache = readCache(expKey);
+    const woCache = readCache(woKey);
+    const drCache = readCache(drKey);
+    const tdCache = readCache(tdKey);
+    const hasCache = Boolean(expCache || woCache || drCache || tdCache);
+
+    if (expCache) setExpenseRows(expCache);
+    if (woCache) setWorkoutRows(woCache);
+    if (drCache) setDrinkRows(drCache);
+    if (tdCache) setTodos(tdCache);
+    if (hasCache) {
+      computeLastUpdate(expCache || [], woCache || [], drCache || []);
+      setLoadingData(false);
+    }
+
     const load = async () => {
-      setLoadingData(true);
+      setLoadingData(!hasCache);
       let exp = [];
       let wo = [];
       let dr = [];
       try {
         exp = await fetchExpenses();
         setExpenseRows(exp);
-    } catch (err) {
-      console.error("Failed to load expenses:", err);
-      setExpenseRows([]);
-      showSnack("Failed to load expenses", "error");
-    }
+        writeCache(expKey, exp);
+      } catch (err) {
+        console.error("Failed to load expenses:", err);
+        if (!expCache) {
+          setExpenseRows([]);
+          showSnack("Failed to load expenses", "error");
+        }
+      }
 
       try {
         wo = await fetchWorkouts();
         setWorkoutRows(wo);
+        writeCache(woKey, wo);
       } catch (err) {
         console.error("Failed to load workouts:", err);
-        setWorkoutRows([]);
-        showSnack("Failed to load workouts", "error");
+        if (!woCache) {
+          setWorkoutRows([]);
+          showSnack("Failed to load workouts", "error");
+        }
       }
 
       try {
         const td = await fetchTodos();
         setTodos(td);
+        writeCache(tdKey, td);
       } catch (err) {
         console.error("Failed to load todos:", err);
-        setTodos([]);
-        showSnack("Failed to load tasks", "error");
+        if (!tdCache) {
+          setTodos([]);
+          showSnack("Failed to load tasks", "error");
+        }
       }
 
       try {
         dr = await fetchDrinks();
         setDrinkRows(dr);
+        writeCache(drKey, dr);
       } catch (err) {
         console.error("Failed to load drinks:", err);
-        setDrinkRows([]);
-        showSnack("Failed to load drinks", "error");
+        if (!drCache) {
+          setDrinkRows([]);
+          showSnack("Failed to load drinks", "error");
+        }
       }
 
       computeLastUpdate(exp, wo, dr);
@@ -174,7 +207,7 @@ export default function Dashboard() {
     };
 
     load();
-  }, [refreshKey]);
+  }, [refreshKey, user?.id]);
 
   useEffect(() => {
     try {

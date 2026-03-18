@@ -21,6 +21,7 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { apiFetch } from "../api/apiFetch.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
 import { inMonth } from "../utils/date.js";
+import { readCache, writeCache } from "../utils/cache.js";
 
 const WorkoutTypePie = lazy(() => import("../components/workouts/WorkoutTypePie.jsx"));
 const ExpenseCategoryBar = lazy(() => import("../components/expenses/ExpenseCategoryBar.jsx"));
@@ -53,7 +54,7 @@ function DrinkLevelBars({ rows }) {
 
 export default function Trackers() {
   const { monthKey, setMonthKey, setLastUpdate, refreshKey } = useDashboard();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
 
   const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
   function showSnack(message, severity = "success") {
@@ -112,6 +113,29 @@ export default function Trackers() {
   }
 
   useEffect(() => {
+    const userKey = user?.id || "guest";
+    const expKey = `cache:${userKey}:expenses`;
+    const woKey = `cache:${userKey}:workouts`;
+    const drKey = `cache:${userKey}:drinks`;
+    const expCache = readCache(expKey);
+    const woCache = readCache(woKey);
+    const drCache = readCache(drKey);
+    const hasCache = Boolean(expCache || woCache || drCache);
+
+    if (expCache) {
+      setExpenseRows(expCache);
+      setLoadingExp(false);
+    }
+    if (woCache) {
+      setWorkoutRows(woCache);
+      setLoadingWo(false);
+    }
+    if (drCache) {
+      setDrinkRows(drCache);
+      setLoadingDr(false);
+    }
+    if (hasCache) computeLastUpdate(expCache || [], woCache || [], drCache || []);
+
     const load = async () => {
       let exp = [];
       let wo = [];
@@ -120,34 +144,37 @@ export default function Trackers() {
       try {
         exp = await fetchExpenses();
         setExpenseRows(exp);
-        setLoadingExp(false);
+        writeCache(expKey, exp);
       } catch {
-        showSnack("Failed to load expenses", "error");
+        if (!expCache) showSnack("Failed to load expenses", "error");
+      } finally {
         setLoadingExp(false);
       }
 
       try {
         wo = await fetchWorkouts();
         setWorkoutRows(wo);
-        setLoadingWo(false);
+        writeCache(woKey, wo);
       } catch {
-        showSnack("Failed to load workouts", "error");
+        if (!woCache) showSnack("Failed to load workouts", "error");
+      } finally {
         setLoadingWo(false);
       }
 
       try {
         dr = await fetchDrinks();
         setDrinkRows(dr);
-        setLoadingDr(false);
+        writeCache(drKey, dr);
       } catch {
-        showSnack("Failed to load drinks", "error");
+        if (!drCache) showSnack("Failed to load drinks", "error");
+      } finally {
         setLoadingDr(false);
       }
 
       computeLastUpdate(exp, wo, dr);
     };
     load();
-  }, [refreshKey]);
+  }, [refreshKey, user?.id]);
 
 
   async function addExpense(row) {

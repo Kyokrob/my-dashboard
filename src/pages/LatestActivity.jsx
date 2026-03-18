@@ -5,7 +5,9 @@ import MonthPicker from "../components/layout/MonthPicker.jsx";
 import SectionCard from "../components/common/SectionCard.jsx";
 import { apiFetch } from "../api/apiFetch.js";
 import { useDashboard } from "../context/DashboardContext.jsx";
+import { useAuth } from "../context/AuthContext.jsx";
 import { inMonth } from "../utils/date.js";
+import { readCache, writeCache } from "../utils/cache.js";
 import "./LatestActivity.scss";
 
 function parseAmount(value) {
@@ -18,6 +20,7 @@ function parseAmount(value) {
 
 export default function LatestActivity() {
   const { monthKey, setMonthKey } = useDashboard();
+  const { user } = useAuth();
   const [expenses, setExpenses] = useState([]);
   const [workouts, setWorkouts] = useState([]);
   const [drinks, setDrinks] = useState([]);
@@ -26,37 +29,61 @@ export default function LatestActivity() {
   const [loadingDr, setLoadingDr] = useState(true);
 
   useEffect(() => {
+    const userKey = user?.id || "guest";
+    const expKey = `cache:${userKey}:expenses`;
+    const woKey = `cache:${userKey}:workouts`;
+    const drKey = `cache:${userKey}:drinks`;
+    const expCache = readCache(expKey);
+    const woCache = readCache(woKey);
+    const drCache = readCache(drKey);
+
+    if (expCache) {
+      setExpenses(Array.isArray(expCache) ? expCache : []);
+      setLoadingExp(false);
+    }
+    if (woCache) {
+      setWorkouts(Array.isArray(woCache) ? woCache : []);
+      setLoadingWo(false);
+    }
+    if (drCache) {
+      setDrinks(Array.isArray(drCache) ? drCache : []);
+      setLoadingDr(false);
+    }
+
     const load = async () => {
-      setLoadingExp(true);
-      setLoadingWo(true);
-      setLoadingDr(true);
+      setLoadingExp(!expCache);
+      setLoadingWo(!woCache);
+      setLoadingDr(!drCache);
       try {
         const exp = await apiFetch("/api/expenses");
         setExpenses(Array.isArray(exp) ? exp : []);
+        writeCache(expKey, Array.isArray(exp) ? exp : []);
       } catch {
-        setExpenses([]);
+        if (!expCache) setExpenses([]);
       } finally {
         setLoadingExp(false);
       }
       try {
         const wo = await apiFetch("/api/workouts");
         setWorkouts(Array.isArray(wo) ? wo : []);
+        writeCache(woKey, Array.isArray(wo) ? wo : []);
       } catch {
-        setWorkouts([]);
+        if (!woCache) setWorkouts([]);
       } finally {
         setLoadingWo(false);
       }
       try {
         const dr = await apiFetch("/api/drinks");
         setDrinks(Array.isArray(dr) ? dr : []);
+        writeCache(drKey, Array.isArray(dr) ? dr : []);
       } catch {
-        setDrinks([]);
+        if (!drCache) setDrinks([]);
       } finally {
         setLoadingDr(false);
       }
     };
     load();
-  }, []);
+  }, [user?.id]);
 
   const isLoading = loadingExp || loadingWo || loadingDr;
 

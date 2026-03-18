@@ -11,6 +11,7 @@ import { DashboardProvider } from "./context/DashboardContext.jsx";
 import { AuthProvider, useAuth } from "./context/AuthContext.jsx";
 import Login from "./pages/Login.jsx";
 import AppShell from "./components/layout/AppShell.jsx";
+import ErrorBoundary from "./components/common/ErrorBoundary.jsx";
 
 function RequireAuth({ children }) {
   const { user, loading, status } = useAuth();
@@ -53,69 +54,71 @@ export default function App() {
     <AuthProvider>
       <DashboardProvider>
         <ScrollToTop />
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <RequireAuth>
-                <AppShell>
-                  <Dashboard />
-                </AppShell>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/trackers"
-            element={
-              <RequireAuth>
-                <AppShell>
-                  <Trackers />
-                </AppShell>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/report"
-            element={
-              <RequireAuth>
-                <AppShell>
-                  <Report />
-                </AppShell>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/activity"
-            element={
-              <RequireAuth>
-                <AppShell>
-                  <LatestActivity />
-                </AppShell>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/settings"
-            element={
-              <RequireAuth>
-                <AppShell>
-                  <Settings />
-                </AppShell>
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="*"
-            element={
-              <RequireAuth>
-                <AppShell>
-                  <NotFound />
-                </AppShell>
-              </RequireAuth>
-            }
-          />
-        </Routes>
+        <ErrorBoundary>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route
+              path="/"
+              element={
+                <RequireAuth>
+                  <AppShell>
+                    <Dashboard />
+                  </AppShell>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/trackers"
+              element={
+                <RequireAuth>
+                  <AppShell>
+                    <Trackers />
+                  </AppShell>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/report"
+              element={
+                <RequireAuth>
+                  <AppShell>
+                    <Report />
+                  </AppShell>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/activity"
+              element={
+                <RequireAuth>
+                  <AppShell>
+                    <LatestActivity />
+                  </AppShell>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <RequireAuth>
+                  <AppShell>
+                    <Settings />
+                  </AppShell>
+                </RequireAuth>
+              }
+            />
+            <Route
+              path="*"
+              element={
+                <RequireAuth>
+                  <AppShell>
+                    <NotFound />
+                  </AppShell>
+                </RequireAuth>
+              }
+            />
+          </Routes>
+        </ErrorBoundary>
       </DashboardProvider>
     </AuthProvider>
   );

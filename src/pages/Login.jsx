@@ -22,19 +22,6 @@ export default function Login() {
     if (user) navigate("/", { replace: true });
   }, [user, navigate]);
 
-  if (authLoading) {
-    return (
-      <div className="login login--loading">
-        <div className="login__loading">
-          <CircularProgress />
-          <div className="login__loadingText">
-            {status === "retrying" ? "Reconnecting to server..." : "Checking your session..."}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
   useEffect(() => {
     try {
       const flash = sessionStorage.getItem("flash");
@@ -81,6 +68,16 @@ export default function Login() {
 
   return (
     <div className="login">
+      {authLoading && (
+        <div className="login__blocking">
+          <div className="login__loading">
+            <CircularProgress />
+            <div className="login__loadingText">
+              {status === "retrying" ? "Reconnecting to server..." : "Checking your session..."}
+            </div>
+          </div>
+        </div>
+      )}
       <div className="login__stack">
         <div className="login__brand">
           <img src="/lpd_logo.png" alt="LPD logo" className="login__brandLogo" />

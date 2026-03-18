@@ -5,11 +5,6 @@
   padding: 24px;
 }
 
-.login--loading {
-  display: grid;
-  place-items: center;
-}
-
 .login__loading {
   display: grid;
   place-items: center;
@@ -20,6 +15,15 @@
 
 .login__loadingText {
   text-align: center;
+}
+
+.login__blocking {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 18, 28, 0.86);
+  display: grid;
+  place-items: center;
+  z-index: 20;
 }
 
 .login__stack {
