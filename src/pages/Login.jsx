@@ -8,7 +8,7 @@ import Alert from "@mui/material/Alert";
 import "./login.scss";
 
 export default function Login() {
-  const { login, bootstrap, user, loading: authLoading } = useAuth();
+  const { login, bootstrap, user, loading: authLoading, status } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -25,7 +25,12 @@ export default function Login() {
   if (authLoading) {
     return (
       <div className="login login--loading">
-        <CircularProgress />
+        <div className="login__loading">
+          <CircularProgress />
+          <div className="login__loadingText">
+            {status === "retrying" ? "Reconnecting to server..." : "Checking your session..."}
+          </div>
+        </div>
       </div>
     );
   }

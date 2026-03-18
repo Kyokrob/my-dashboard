@@ -13,7 +13,7 @@ import Login from "./pages/Login.jsx";
 import AppShell from "./components/layout/AppShell.jsx";
 
 function RequireAuth({ children }) {
-  const { user, loading } = useAuth();
+  const { user, loading, status } = useAuth();
   if (loading) {
     return (
       <div
@@ -22,9 +22,17 @@ function RequireAuth({ children }) {
           display: "grid",
           placeItems: "center",
           background: "#141821",
+          color: "rgba(255,255,255,0.75)",
+          fontSize: 13,
+          gap: 10,
         }}
       >
-        <CircularProgress />
+        <div style={{ display: "grid", placeItems: "center", gap: 8 }}>
+          <CircularProgress size={28} />
+          <div>
+            {status === "retrying" ? "Reconnecting to server..." : "Checking your session..."}
+          </div>
+        </div>
       </div>
     );
   }

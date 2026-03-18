@@ -10,6 +10,18 @@
   place-items: center;
 }
 
+.login__loading {
+  display: grid;
+  place-items: center;
+  gap: 8px;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 13px;
+}
+
+.login__loadingText {
+  text-align: center;
+}
+
 .login__stack {
   display: grid;
   gap: 0;
