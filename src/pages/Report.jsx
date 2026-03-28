@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import DashboardLayout from "../components/layout/DashboardLayout.jsx";
 import MonthPicker from "../components/layout/MonthPicker.jsx";
 import SectionCard from "../components/common/SectionCard.jsx";
+import Tooltip from "@mui/material/Tooltip";
+import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
 import MonthlyBarChart from "../components/insights/MonthlyBarChart.jsx";
 import MonthlyLineChart from "../components/insights/MonthlyLineChart.jsx";
 import Skeleton from "@mui/material/Skeleton";
@@ -14,6 +16,17 @@ import "./Report.scss";
 
 const MobileSectionCard = ({ collapsible = true, ...props }) => (
   <SectionCard collapsible={collapsible} collapsibleOnMobile {...props} />
+);
+
+const titleWithInfo = (text, info) => (
+  <span className="card__title-with-info">
+    <span>{text}</span>
+    <Tooltip title={info} arrow>
+      <span className="card__info-icon" aria-label={info}>
+        <InfoOutlineIcon fontSize="inherit" />
+      </span>
+    </Tooltip>
+  </span>
 );
 
 
@@ -285,7 +298,10 @@ export default function Report() {
       <div className="report-charts">
         <div className="theme-exp">
           <MobileSectionCard
-            title="Monthly Expense Summary"
+            title={titleWithInfo(
+              "Monthly Expense Summary",
+              "3-month spend totals and trends for expenses."
+            )}
             right={
               <div className="report-toggle report-toggle--compact" role="group" aria-label="Expense chart type">
                 <button
@@ -343,7 +359,10 @@ export default function Report() {
 
         <div className="theme-drink">
           <MobileSectionCard
-            title="Monthly Drinking Summary"
+            title={titleWithInfo(
+              "Monthly Drinking Summary",
+              "3-month drink days or average level trends."
+            )}
             right={
               <div className="report-header-controls">
                 <div className="report-toggle report-toggle--compact" role="group" aria-label="Drink chart type">
@@ -430,7 +449,13 @@ export default function Report() {
 
       <div className="report-extra-grid">
         <div className="theme-exp">
-          <MobileSectionCard title="Cumulative Spend (3 Months)" persistKey="insights-cumulative-spend">
+          <MobileSectionCard
+            title={titleWithInfo(
+              "Cumulative Spend (3 Months)",
+              "Running total of spending across the 3-month window."
+            )}
+            persistKey="insights-cumulative-spend"
+          >
             <div className="report-chart">
               <div className="report-chart__sub">Running total across the window</div>
               {isLoading ? (
@@ -451,7 +476,13 @@ export default function Report() {
         </div>
 
         <div className="theme-exp">
-          <MobileSectionCard title="Avg Spend per Day (3 Months)" persistKey="insights-avg-spend-day">
+          <MobileSectionCard
+            title={titleWithInfo(
+              "Avg Spend per Day (3 Months)",
+              "Average daily spend by month across the 3-month window."
+            )}
+            persistKey="insights-avg-spend-day"
+          >
             <div className="report-chart">
               <div className="report-chart__sub">Monthly total divided by days in month</div>
               {isLoading ? (
@@ -472,7 +503,13 @@ export default function Report() {
         </div>
 
         <div className="theme-wo">
-          <MobileSectionCard title="Avg Workout Intensity (3 Months)" persistKey="insights-avg-intensity">
+          <MobileSectionCard
+            title={titleWithInfo(
+              "Avg Workout Intensity (3 Months)",
+              "Average workout intensity by month."
+            )}
+            persistKey="insights-avg-intensity"
+          >
             <div className="report-chart">
               <div className="report-chart__sub">Average intensity per month</div>
               {isLoading ? (
@@ -493,7 +530,13 @@ export default function Report() {
         </div>
 
         <div className="theme-wo">
-          <MobileSectionCard title="Workout Volume (3 Months)" persistKey="insights-workout-volume">
+          <MobileSectionCard
+            title={titleWithInfo(
+              "Workout Volume (3 Months)",
+              "Total workouts per month across the 3-month window."
+            )}
+            persistKey="insights-workout-volume"
+          >
             <div className="report-chart">
               <div className="report-summary">
                 <div className="report-summary__label">Total workouts (3 months)</div>
@@ -524,7 +567,10 @@ export default function Report() {
 
         <div className="theme-wo">
           <MobileSectionCard
-            title="Body Tracker (3 Months)"
+            title={titleWithInfo(
+              "Body Tracker (3 Months)",
+              "Weight or body fat trends across the last 3 months."
+            )}
             right={
               <div className="report-toggle report-toggle--compact" role="group" aria-label="Body tracker metric">
                 <button

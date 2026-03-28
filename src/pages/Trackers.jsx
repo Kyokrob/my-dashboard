@@ -7,6 +7,8 @@ import "./Trackers.scss";
 import DashboardLayout from "../components/layout/DashboardLayout.jsx";
 import MonthPicker from "../components/layout/MonthPicker.jsx";
 import SectionCard from "../components/common/SectionCard.jsx";
+import Tooltip from "@mui/material/Tooltip";
+import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
 
 import ExpenseTable from "../components/expenses/ExpenseTable.jsx";
 import ExpenseDialog from "../components/expenses/ExpenseDialog.jsx";
@@ -28,6 +30,17 @@ const ExpenseCategoryBar = lazy(() => import("../components/expenses/ExpenseCate
 
 const TrackerSectionCard = (props) => (
   <SectionCard collapsible collapsibleOnMobile {...props} />
+);
+
+const titleWithInfo = (text, info) => (
+  <span className="card__title-with-info">
+    <span>{text}</span>
+    <Tooltip title={info} arrow>
+      <span className="card__info-icon" aria-label={info}>
+        <InfoOutlineIcon fontSize="inherit" />
+      </span>
+    </Tooltip>
+  </span>
 );
 
 function DrinkLevelBars({ rows }) {
@@ -343,7 +356,10 @@ export default function Trackers() {
     >
       <div className="trackers-charts">
         <div className="theme-exp">
-          <TrackerSectionCard title="Spending Mix" persistKey="trackers-spending-mix">
+          <TrackerSectionCard
+            title={titleWithInfo("Spending Mix", "Category split of expenses for the selected month.")}
+            persistKey="trackers-spending-mix"
+          >
             <div className="trackers-chart">
               {loadingExp ? (
                 <Skeleton variant="rectangular" width="100%" height={180} />
@@ -361,7 +377,10 @@ export default function Trackers() {
         </div>
 
         <div className="theme-wo">
-          <TrackerSectionCard title="Training Mix" persistKey="trackers-training-mix">
+          <TrackerSectionCard
+            title={titleWithInfo("Training Mix", "Workout type breakdown for the selected month.")}
+            persistKey="trackers-training-mix"
+          >
             <div className="trackers-chart">
               {loadingWo ? (
                 <Skeleton variant="rectangular" width="100%" height={180} />
@@ -379,7 +398,10 @@ export default function Trackers() {
         </div>
 
         <div className="theme-drink">
-          <TrackerSectionCard title="Drink Levels" persistKey="trackers-drink-levels">
+          <TrackerSectionCard
+            title={titleWithInfo("Drink Levels", "Distribution of drink levels logged this month.")}
+            persistKey="trackers-drink-levels"
+          >
             <div className="trackers-chart">
               {loadingDr ? (
                 <Skeleton variant="rectangular" width="100%" height={180} />
@@ -397,7 +419,9 @@ export default function Trackers() {
 
       <div className="dashboard-full">
         <div className="theme-exp">
-          <SectionCard title="Spending Tracker">
+          <SectionCard
+            title={titleWithInfo("Spending Tracker", "Log and edit expense entries for this month.")}
+          >
             <ExpenseTable
               rows={monthExpenses}
               loading={loadingExp}
@@ -413,7 +437,9 @@ export default function Trackers() {
 
       <div className="dashboard-full">
         <div className="theme-wo">
-          <SectionCard title="Training Tracker">
+          <SectionCard
+            title={titleWithInfo("Training Tracker", "Log and edit workouts for this month.")}
+          >
             <WorkoutTable
               rows={monthWorkouts}
               loading={loadingWo}
@@ -429,7 +455,9 @@ export default function Trackers() {
 
       <div className="dashboard-full">
         <div className="theme-drink">
-          <SectionCard title="Drinking Tracker">
+          <SectionCard
+            title={titleWithInfo("Drinking Tracker", "Log and edit drink sessions for this month.")}
+          >
             <DrinkTable
               rows={monthDrinks}
               loading={loadingDr}

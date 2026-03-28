@@ -89,7 +89,7 @@ export default function DrinkForm({ initial, onSubmit, onDelete }) {
         <div className="drink-form__row">
           <label className="form__label">Date *</label>
           <input
-            className="form__input"
+            className="form__input form__input--date"
             type="date"
             value={form.date}
             onChange={(e) => {

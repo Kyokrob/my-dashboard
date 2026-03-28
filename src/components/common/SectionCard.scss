@@ -25,6 +25,25 @@
     opacity: 0.95;
   }
 
+  &__title-with-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  &__info-icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    color: rgba(255, 255, 255, 0.65);
+    cursor: pointer;
+  }
+
+  &__info-icon:hover {
+    color: rgba(255, 255, 255, 0.9);
+  }
+
   &__body {
     padding: 14px 16px;
     display: grid;

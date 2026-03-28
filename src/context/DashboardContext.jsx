@@ -19,7 +19,10 @@ function getCurrentMonthKey() {
 export function DashboardProvider({ children }) {
   const { user } = useAuth();
   const [monthKey, setMonthKey] = useState(getCurrentMonthKey()); // ✅ current month
-  const [tier, setTier] = useState("low"); // low | mid | high
+  const [tier, setTier] = useState(() => {
+    if (typeof window === "undefined") return "low";
+    return localStorage.getItem("budget.tier") || "low";
+  }); // low | mid | high
   const [lastUpdate, setLastUpdate] = useState(null);
   const [refreshKey, setRefreshKey] = useState(0);
   const [themeOn, setThemeOn] = useState(() => {
@@ -44,6 +47,11 @@ export function DashboardProvider({ children }) {
     if (typeof window === "undefined") return;
     localStorage.setItem("ui.themeOn", String(themeOn));
   }, [themeOn]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("budget.tier", tier);
+  }, [tier]);
 
   useEffect(() => {
     const loadBudgets = async () => {

@@ -35,6 +35,15 @@
   .drink-form .form__input[type="date"]::-webkit-datetime-edit-year-field {
     color: #222;
   }
+
+  .form__input--date,
+  .form__input--date::-webkit-datetime-edit,
+  .form__input--date::-webkit-datetime-edit-text,
+  .form__input--date::-webkit-datetime-edit-month-field,
+  .form__input--date::-webkit-datetime-edit-day-field,
+  .form__input--date::-webkit-datetime-edit-year-field {
+    color: #777;
+  }
 }
 
 .drink-form__grid {
@@ -46,6 +55,10 @@
 .drink-form__row {
   display: grid;
   gap: 6px;
+}
+
+.form__input--date {
+  padding-right: 12px;
 }
 
 .drink-form__row--full {

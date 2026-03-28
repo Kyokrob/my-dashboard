@@ -213,6 +213,42 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 10px;
   min-width: 0;
+  align-items: stretch;
+}
+
+.workout-insights__col {
+  display: grid;
+  grid-template-rows: 1fr 1fr;
+  gap: 10px;
+  min-width: 0;
+  height: 100%;
+}
+
+.workout-insights__col .drink-card {
+  min-height: 78px !important;
+  height: auto;
+  padding: 8px;
+}
+
+.workout-insights__col .drink-card__title {
+  min-height: 0;
+}
+
+.workout-insights__col .drink-card__value {
+  min-height: 0;
+  font-size: 20px;
+}
+
+.workout-insights__col .drink-card__value.is-large {
+  font-size: 22px;
+}
+
+.workout-insights__col .drink-card__sub {
+  min-height: 0;
+}
+
+.workout-insights__card--tall {
+  height: 100%;
 }
 
 .drink-card {
@@ -326,6 +362,13 @@
   opacity: 0.75;
 }
 
+.runrate-card__pace-value {
+  font-size: 32px;
+  font-weight: 700;
+  letter-spacing: 0.2px;
+  line-height: 1.15;
+}
+
 .runrate-card__status--good {
   color: #9FC8B3;
 }
@@ -368,26 +411,65 @@
 }
 
 .runrate-card__summary {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr auto;
+  gap: 6px 12px;
+  justify-content: space-between;
   height: 100%;
 }
 
 .runrate-card__summary-text {
-  display: grid;
-  gap: 14px;
+  display: contents;
+}
+
+.runrate-card__summary-block {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.runrate-card__summary-block--status {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.runrate-card__summary-block--pace {
+  grid-column: 1;
+  grid-row: 2;
 }
 
 .runrate-card__sparkline {
-  margin-top: 8px;
-  min-width: 120px;
+  margin-top: 0;
+  min-width: 0;
   display: flex;
   align-items: center;
 }
 
 .runrate-card__sparkline--desktop {
-  margin-top: auto;
-  justify-content: flex-start;
+  justify-content: flex-end;
+  align-self: center;
+  width: 100%;
+}
+
+.runrate-card__pace-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 0;
+}
+
+.runrate-card__pace-value {
+  flex: 0 0 25%;
+  min-width: 0;
+}
+
+.runrate-card__pace-row > .runrate-card__sparkline {
+  flex: 0 0 70%;
+  min-width: 0;
+}
+
+.runrate-card__sparkline svg {
+  height: 48px;
 }
 
 .runrate-card__sparkline--mobile {
@@ -660,15 +742,29 @@
 
   .runrate-card__summary {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
     align-items: flex-start;
-    gap: 10px;
+    gap: 8px;
+  }
+
+  .runrate-card__summary-text {
+    display: contents;
+  }
+
+  .runrate-card__pace-value {
+    font-size: 20px;
+  }
+
+  .runrate-card__pace-row {
+    flex-direction: column;
+    align-items: flex-start;
   }
 
   .runrate-card__sparkline {
     margin-top: 0;
-    min-width: 100px;
-    justify-content: flex-end;
+    min-width: 0;
+    width: 100%;
+    justify-content: flex-start;
   }
 
   .runrate-card__sparkline--desktop {
@@ -713,6 +809,15 @@
     gap: 8px;
     font-size: 12px;
   }
+
+  .spend-day-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .kpi-budget__gauge {
+    max-width: 180px;
+    height: 110px;
+  }
 }
 .kpi-momentum {
   display: grid;
@@ -747,6 +852,57 @@
 
 .kpi-momentum__value--good {
   color: #9FC8B3;
+}
+
+.kpi-budget {
+  display: grid;
+  gap: 10px;
+  justify-items: center;
+}
+
+.kpi-budget__gauge {
+  width: 100%;
+  max-width: 200px;
+  height: 120px;
+}
+
+.kpi-budget__gauge svg {
+  overflow: visible;
+}
+
+.kpi-budget__status {
+  font-size: 12px;
+  opacity: 0.8;
+  text-align: center;
+}
+
+.kpi-budget__status.is-bad {
+  color: #E3A6A1;
+}
+
+.kpi-budget__status.is-good {
+  color: #9FC8B3;
+}
+
+.spend-day-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.spend-day-grid__panel {
+  border-radius: 14px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.spend-day-grid__title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  opacity: 0.7;
+  margin-bottom: 10px;
 }
 
 .kpi-momentum__value--bad {

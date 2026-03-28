@@ -130,22 +130,6 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
         </div>
 
         <div className="form__row">
-          <label className="form__label" htmlFor="wo-bf">Body fat (%)</label>
-          <input
-            id="wo-bf"
-            className="form__input"
-            name="bodyFat"
-            type="number"
-            inputMode="decimal"
-            pattern="[0-9.]*"
-            step="0.1"
-            placeholder="Optional"
-            value={form.bodyFat}
-            onChange={handleChange}
-          />
-        </div>
-
-        <div className="form__row">
           <label className="form__label" htmlFor="wo-feel">Energy level</label>
           <select
             id="wo-feel"
@@ -174,6 +158,22 @@ export default function WorkoutForm({ initial, onSubmit, onDelete }) {
             step="0.1"
             placeholder="Optional"
             value={form.weight}
+            onChange={handleChange}
+          />
+        </div>
+
+        <div className="form__row">
+          <label className="form__label" htmlFor="wo-bf">Body fat (%)</label>
+          <input
+            id="wo-bf"
+            className="form__input"
+            name="bodyFat"
+            type="number"
+            inputMode="decimal"
+            pattern="[0-9.]*"
+            step="0.1"
+            placeholder="Optional"
+            value={form.bodyFat}
             onChange={handleChange}
           />
         </div>

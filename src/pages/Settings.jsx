@@ -35,6 +35,8 @@ import "./Settings.scss";
 export default function Settings() {
   const {
     monthKey,
+    tier,
+    setTier,
     budgets,
     setBudgets,
     workoutTypes,
@@ -116,10 +118,15 @@ export default function Settings() {
   const [pendingAction, setPendingAction] = useState(null);
   const [pendingTab, setPendingTab] = useState(null);
   const [snack, setSnack] = useState({ open: false, message: "", severity: "success" });
+  const [budgetTierDraft, setBudgetTierDraft] = useState(tier || "low");
 
   useEffect(() => {
     setBudgetForm(budgets || budgetByCategory);
   }, [budgets]);
+
+  useEffect(() => {
+    setBudgetTierDraft(tier || "low");
+  }, [tier]);
 
   useEffect(() => {
     const raw = workoutTypes || defaultWorkoutTypePrefs;
@@ -545,6 +552,12 @@ export default function Settings() {
         setSavingBudget(false);
       }
     });
+  }
+
+  function saveBudgetTier() {
+    if (!budgetTierDraft) return;
+    setTier(budgetTierDraft);
+    setSnack({ open: true, message: "Budget type updated", severity: "success" });
   }
 
   function addWorkoutType() {
@@ -1193,6 +1206,37 @@ export default function Settings() {
               </div>
             </SectionCard>
             <SectionCard title="Budget">
+              <div className="settings-form__row-inline">
+                <div className="settings-form__helper">
+                  Choose your default budget type to use across the dashboard.
+                </div>
+                <div className="settings-export__toggle">
+                  <button
+                    type="button"
+                    className={`settings-export__btn ${budgetTierDraft === "low" ? "is-active" : ""}`}
+                    onClick={() => setBudgetTierDraft("low")}
+                  >
+                    Low
+                  </button>
+                  <button
+                    type="button"
+                    className={`settings-export__btn ${budgetTierDraft === "mid" ? "is-active" : ""}`}
+                    onClick={() => setBudgetTierDraft("mid")}
+                  >
+                    Mid
+                  </button>
+                  <button
+                    type="button"
+                    className={`settings-export__btn ${budgetTierDraft === "high" ? "is-active" : ""}`}
+                    onClick={() => setBudgetTierDraft("high")}
+                  >
+                    High
+                  </button>
+                </div>
+                <Button variant="outlined" onClick={saveBudgetTier}>
+                  Save Default
+                </Button>
+              </div>
               <div className="budget-table">
                 <div className="budget-table__head">
                   <div>Category</div>

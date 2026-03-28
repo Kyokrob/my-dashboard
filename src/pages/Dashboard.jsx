@@ -11,8 +11,6 @@ import DialogContent from "@mui/material/DialogContent";
 import DialogActions from "@mui/material/DialogActions";
 import Button from "@mui/material/Button";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import WarningAmberIcon from "@mui/icons-material/WarningAmber";
-import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import LocalBarIcon from "@mui/icons-material/LocalBar";
 import PaymentsIcon from "@mui/icons-material/Payments";
@@ -41,6 +39,13 @@ import DrinkTable from "../components/drinks/DrinkTable.jsx";
 import DrinkLogsDialog from "../components/drinks/DrinkLogsDialog.jsx";
 import CoachTour from "../components/common/CoachTour.jsx";
 import { SparkLineChart } from "@mui/x-charts/SparkLineChart";
+import { Gauge } from "@mui/x-charts/Gauge";
+import Tooltip from "@mui/material/Tooltip";
+import InfoOutlineIcon from "@mui/icons-material/InfoOutline";
+import WbSunnyIcon from "@mui/icons-material/WbSunny";
+import Brightness5Icon from "@mui/icons-material/Brightness5";
+import WbTwilightIcon from "@mui/icons-material/WbTwilight";
+import NightsStayIcon from "@mui/icons-material/NightsStay";
 import { areaElementClasses, lineElementClasses } from "@mui/x-charts/LineChart";
 import { chartsAxisHighlightClasses } from "@mui/x-charts/ChartsAxisHighlight";
 
@@ -120,6 +125,15 @@ export default function Dashboard() {
   const [isWorkoutDialogOpen, setIsWorkoutDialogOpen] = useState(false);
   const [isDrinkDialogOpen, setIsDrinkDialogOpen] = useState(false);
   const [viewDrink, setViewDrink] = useState(null);
+
+  const greetingMeta = (() => {
+    const hour = new Date().getHours();
+    if (hour < 5) return { label: "Good night", period: "Night", Icon: NightsStayIcon };
+    if (hour < 12) return { label: "Good morning", period: "Morning", Icon: WbSunnyIcon };
+    if (hour < 18) return { label: "Good afternoon", period: "Afternoon", Icon: Brightness5Icon };
+    if (hour < 22) return { label: "Good evening", period: "Evening", Icon: WbTwilightIcon };
+    return { label: "Good night", period: "Night", Icon: NightsStayIcon };
+  })();
   const [editingDrink, setEditingDrink] = useState(null);
   const [drinkDelete, setDrinkDelete] = useState({ open: false, id: null });
   const [editingExpense, setEditingExpense] = useState(null);
@@ -587,8 +601,14 @@ export default function Dashboard() {
     workoutDeltaPct === null
       ? "No prior data"
       : `${workoutDeltaPct > 0 ? "+" : ""}${workoutDeltaPct.toFixed(0)}% vs last month`;
-  const workoutDeltaTone =
-    workoutDeltaPct === null ? "neutral" : workoutDeltaPct >= 0 ? "good" : "bad";
+const workoutDeltaTone =
+  workoutDeltaPct === null ? "neutral" : workoutDeltaPct >= 0 ? "good" : "bad";
+const workoutIntensityValues = monthWorkouts
+  .map((w) => Number(w.intensity))
+  .filter((v) => Number.isFinite(v) && v > 0);
+const avgWorkoutIntensity = workoutIntensityValues.length
+  ? (workoutIntensityValues.reduce((sum, v) => sum + v, 0) / workoutIntensityValues.length).toFixed(1)
+  : null;
   const prevMonthExpenses = expenseRows.filter((e) => inMonth(e.date || e.createdAt || e.updatedAt, prevMonthKey));
   const prevMonthMTD = prevMonthExpenses
     .filter((e) => Number(e.date.split("-")[2]) <= asOfDay)
@@ -741,8 +761,8 @@ const paceSparkline = hasBudget && paceTrendData.values.length ? (
         new Date(value).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
     }}
     showTooltip
-    height={34}
-    color="rgb(73, 90, 251)"
+    height={46}
+    color="#6FE3C1"
     valueFormatter={(v) => Number(v || 0).toFixed(2)}
     area
     max={paceTrendMax}
@@ -751,7 +771,7 @@ const paceSparkline = hasBudget && paceTrendData.values.length ? (
       [`& .${areaElementClasses.root}`]: { opacity: 0.2 },
       [`& .${lineElementClasses.root}`]: { strokeWidth: 3 },
       [`& .${chartsAxisHighlightClasses.root}`]: {
-        stroke: "rgb(137, 86, 255)",
+        stroke: "#6FE3C1",
         strokeDasharray: "none",
         strokeWidth: 2,
       },
@@ -797,6 +817,25 @@ const spendVarianceLabel =
 
 const spendVarianceSub = spendVariance >= 0 ? "Remaining" : "Over budget";
 const spendVarianceIsBad = spendVariance < 0;
+const budgetOverage = plannedTotal > 0 ? totalSpend - plannedTotal : 0;
+const isOverBudget = plannedTotal > 0 && budgetOverage > 0;
+const budgetGaugeValue = plannedTotal > 0 ? Math.min(100, Math.round((totalSpend / plannedTotal) * 100)) : 0;
+const budgetStatusLabel = plannedTotal <= 0
+  ? "No budget set"
+  : isOverBudget
+  ? `Over budget by ฿${Math.round(budgetOverage).toLocaleString()}`
+  : `On track · ฿${Math.round(plannedTotal - totalSpend).toLocaleString()} remaining`;
+
+const titleWithInfo = (text, info) => (
+  <span className="card__title-with-info">
+    <span>{text}</span>
+    <Tooltip title={info} arrow>
+      <span className="card__info-icon" aria-label={info}>
+        <InfoOutlineIcon fontSize="inherit" />
+      </span>
+    </Tooltip>
+  </span>
+);
 
 /* ======================
    Today Snapshot
@@ -805,7 +844,7 @@ const spendVarianceIsBad = spendVariance < 0;
 const todayExpenses = expenseRows.filter((e) => e.date === todayKey);
 const todaySpend = todayExpenses.reduce((sum, e) => sum + Number(e.amount || 0), 0);
   const todayWorkouts = workoutRows.filter((w) => w.date === todayKey);
-  const todayWorkoutLabel = todayWorkouts[0]?.workoutType || (todayWorkouts.length ? "Workout" : "None");
+  const todayWorkoutLabel = todayWorkouts[0]?.workoutType || (todayWorkouts.length ? "Workout" : "Rest day");
   const todayDrinks = drinkRows.filter((d) => d.date === todayKey && d.drank);
 const todayDrinkLabel = todayDrinks.length ? "Yes" : "None";
 
@@ -881,11 +920,6 @@ const runRateTone = !hasBudget ? "neutral" : projectedSpend <= plannedTotal ? "g
 const avgDailySpend = totalSpend / daysPassed;
 const budgetDaily = hasBudget ? plannedTotal / daysInMonth : 0;
 const paceMultiplier = hasBudget && budgetDaily > 0 ? avgDailySpend / budgetDaily : null;
-const RunRateIcon = !hasBudget
-  ? InfoOutlinedIcon
-  : projectedSpend <= plannedTotal
-  ? CheckCircleOutlineIcon
-  : WarningAmberIcon;
 
 /* ======================
    Drinking Day Spend Multiplier
@@ -958,7 +992,16 @@ const topWorkoutTypes = (() => {
 
   return (
     <DashboardLayout
-      title={`Welcome Back ${user?.name || "there"}`}
+      title={
+        <span className="greeting">
+          <span className="greeting__icon">
+            <greetingMeta.Icon fontSize="inherit" />
+          </span>
+          <span className="greeting__text">
+            {greetingMeta.label} {user?.name || "there"}
+          </span>
+        </span>
+      }
       right={<MonthPicker value={monthKey} onChange={setMonthKey} tourId="month-picker" />}
       titleInline
     >
@@ -982,7 +1025,7 @@ const topWorkoutTypes = (() => {
                     Workout
                   </span>
                   <span className={`kpi-today__value ${todayWorkouts.length ? "is-good" : "is-muted"}`}>
-                    {todayWorkouts.length ? `${todayWorkoutLabel} ✓` : "None"}
+                    {todayWorkouts.length ? `${todayWorkoutLabel} ✓` : "Rest day"}
                   </span>
                 </div>
                 <div className="kpi-today__row">
@@ -1005,29 +1048,6 @@ const topWorkoutTypes = (() => {
           />
         </div>
 
-        <div className="theme-exp kpi--short kpi--bottom">
-          <KpiCard
-            title="Category Momentum"
-            value={
-              <div className="kpi-momentum">
-                {categoryMomentum.length ? (
-                  categoryMomentum.map((row) => (
-                    <div key={row.cat} className="kpi-momentum__row">
-                      <span className="kpi-momentum__label">{row.cat}</span>
-                      <span className={`kpi-momentum__value kpi-momentum__value--${row.tone}`}>
-                        {row.arrow} {row.label}
-                      </span>
-                    </div>
-                  ))
-                ) : (
-                  <div className="kpi-momentum__empty">No categories yet</div>
-                )}
-              </div>
-            }
-            sub="Top 3 categories"
-          />
-        </div>
-
         <div className="theme-exp kpi--wide">
           <KpiCard
             title="Run-Rate Forecast"
@@ -1035,19 +1055,25 @@ const topWorkoutTypes = (() => {
               <div className="runrate-card">
                 <div className="runrate-card__summary">
                   <div className="runrate-card__summary-text">
-                    <div className="runrate-card__label">Status</div>
-                    <div className={`runrate-card__status runrate-card__status--${runRateTone}`}>
-                      <RunRateIcon fontSize="small" />
-                      {runRateStatus}
+                    <div className="runrate-card__summary-block runrate-card__summary-block--status">
+                      <div className="runrate-card__label">Status</div>
+                      <div className={`runrate-card__status runrate-card__status--${runRateTone}`}>
+                        {runRateStatus}
+                      </div>
                     </div>
-                    <div className="runrate-card__pace">
-                      Pace {paceMultiplier ? `${paceMultiplier.toFixed(1)}×` : "—"}
+                    <div className="runrate-card__summary-block runrate-card__summary-block--pace">
+                      <div className="runrate-card__label">Avg Pace</div>
+                      <div className="runrate-card__pace-row">
+                        <div className="runrate-card__pace-value">
+                          {paceMultiplier ? `${paceMultiplier.toFixed(1)}×` : "—"}
+                        </div>
+                        <div className="runrate-card__sparkline runrate-card__sparkline--desktop">
+                          {paceSparkline}
+                        </div>
+                      </div>
                     </div>
                   </div>
                   <div className="runrate-card__sparkline runrate-card__sparkline--mobile">
-                    {paceSparkline}
-                  </div>
-                  <div className="runrate-card__sparkline runrate-card__sparkline--desktop">
                     {paceSparkline}
                   </div>
                 </div>
@@ -1071,6 +1097,44 @@ const topWorkoutTypes = (() => {
                 </div>
               </div>
             }
+          />
+        </div>
+
+        <div className="theme-exp kpi--short kpi--bottom">
+          <KpiCard
+            title="Current Monthly Spend"
+            value={
+              <div className="kpi-budget">
+                <div className="kpi-budget__gauge">
+                  <Gauge
+                    value={budgetGaugeValue}
+                    startAngle={-90}
+                    endAngle={90}
+                    innerRadius="70%"
+                    outerRadius="100%"
+                    cornerRadius="50%"
+                    sx={{
+                      "& .MuiGauge-valueArc": {
+                        fill: isOverBudget ? "#E3A6A1" : "#9FC8B3",
+                      },
+                      "& .MuiGauge-referenceArc": {
+                        fill: "rgba(255,255,255,0.12)",
+                      },
+                      "& .MuiGauge-valueText": {
+                        fill: "#E7E4DF",
+                        fontSize: 18,
+                        fontWeight: 700,
+                      },
+                    }}
+                    text={`${budgetGaugeValue}%`}
+                  />
+                </div>
+                <div className={`kpi-budget__status ${isOverBudget ? "is-bad" : "is-good"}`}>
+                  {budgetStatusLabel}
+                </div>
+              </div>
+            }
+            sub={plannedTotal > 0 ? `Budget ฿${Math.round(plannedTotal).toLocaleString()}` : "Set a budget to track"}
           />
         </div>
 
@@ -1147,7 +1211,10 @@ const topWorkoutTypes = (() => {
 
           <div className="theme-exp">
             <MobileSectionCard
-              title="Budget overview"
+              title={titleWithInfo(
+                "Budget overview",
+                "Planned vs actual spend by category for the selected budget tier."
+              )}
               right={<TierSelector value={tier} onChange={setTier} />}
               stackRightOnMobile={false}
               noWrapOnMobile
@@ -1164,7 +1231,13 @@ const topWorkoutTypes = (() => {
           </div>
 
           <div className="theme-exp" data-tour="monthly-insights">
-            <MobileSectionCard title="Spending summary (Monthly)" persistKey="dash-monthly-summary">
+            <MobileSectionCard
+              title={titleWithInfo(
+                "Spending summary (Monthly)",
+                "Highlights of this month’s spending versus plan and last month."
+              )}
+              persistKey="dash-monthly-summary"
+            >
               {loadingData ? (
                 <div className="drink-insights-grid">
                   {Array.from({ length: 4 }).map((_, index) => (
@@ -1215,38 +1288,73 @@ const topWorkoutTypes = (() => {
           </div>
 
           <div className="theme-exp" data-tour="spending-by-day">
-            <MobileSectionCard title="Spending by Day (This Month)" persistKey="dash-spending-by-day">
-              {loadingData ? (
-                <div className="weekly-spend">
-                  {Array.from({ length: 7 }).map((_, index) => (
-                    <div key={`spend-skel-${index}`} className="weekly-spend__row">
-                      <Skeleton variant="text" width={24} height={14} {...skeletonProps} />
-                      <Skeleton variant="rectangular" height={10} {...skeletonProps} sx={{ borderRadius: 999 }} />
-                      <Skeleton variant="text" width={60} height={14} {...skeletonProps} />
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="weekly-spend">
-                  {weeklySpend.map((d) => (
-                    <div key={d.label} className="weekly-spend__row">
-                      <div className="weekly-spend__label">{d.label}</div>
-                      <div className="weekly-spend__bar-wrap">
-                        <div
-                          className="weekly-spend__bar"
-                          style={{ width: `${(d.amount / maxWeeklySpend) * 100}%` }}
-                        />
-                      </div>
-                      <div className="weekly-spend__value">฿{d.amount.toLocaleString()}</div>
-                    </div>
-                  ))}
-                </div>
+            <MobileSectionCard
+              title={titleWithInfo(
+                "Spending by Day (This Month)",
+                "Daily spending bars for the current month."
               )}
+              persistKey="dash-spending-by-day"
+            >
+              <div className="spend-day-grid">
+                <div className="spend-day-grid__panel">
+                  {loadingData ? (
+                    <div className="weekly-spend">
+                      {Array.from({ length: 7 }).map((_, index) => (
+                        <div key={`spend-skel-${index}`} className="weekly-spend__row">
+                          <Skeleton variant="text" width={24} height={14} {...skeletonProps} />
+                          <Skeleton
+                            variant="rectangular"
+                            height={10}
+                            {...skeletonProps}
+                            sx={{ borderRadius: 999 }}
+                          />
+                          <Skeleton variant="text" width={60} height={14} {...skeletonProps} />
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="weekly-spend">
+                      {weeklySpend.map((d) => (
+                        <div key={d.label} className="weekly-spend__row">
+                          <div className="weekly-spend__label">{d.label}</div>
+                          <div className="weekly-spend__bar-wrap">
+                            <div
+                              className="weekly-spend__bar"
+                              style={{ width: `${(d.amount / maxWeeklySpend) * 100}%` }}
+                            />
+                          </div>
+                          <div className="weekly-spend__value">฿{d.amount.toLocaleString()}</div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+                <div className="spend-day-grid__panel spend-day-grid__panel--momentum">
+                  <div className="spend-day-grid__title">Category Momentum</div>
+                  <div className="kpi-momentum">
+                    {categoryMomentum.length ? (
+                      categoryMomentum.map((row) => (
+                        <div key={row.cat} className="kpi-momentum__row">
+                          <span className="kpi-momentum__label">{row.cat}</span>
+                          <span className={`kpi-momentum__value kpi-momentum__value--${row.tone}`}>
+                            {row.arrow} {row.label}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="kpi-momentum__empty">No categories yet</div>
+                    )}
+                  </div>
+                </div>
+              </div>
             </MobileSectionCard>
           </div>
           
           <div className="theme-drink">
-            <MobileSectionCard title="Drink Insights" persistKey="dash-drink-insights">
+            <MobileSectionCard
+              title={titleWithInfo("Drink Insights", "Summary of drinking habits for this month.")}
+              persistKey="dash-drink-insights"
+            >
               {loadingData ? (
                 <div className="drink-insights-grid">
                   {Array.from({ length: 4 }).map((_, index) => (
@@ -1285,7 +1393,13 @@ const topWorkoutTypes = (() => {
           </div>
 
           <div className="theme-drink">
-            <MobileSectionCard title="Drinking day spending" persistKey="dash-drink-multiplier">
+            <MobileSectionCard
+              title={titleWithInfo(
+                "Drinking day spending",
+                "Compares spending on drinking days vs non-drinking days."
+              )}
+              persistKey="dash-drink-multiplier"
+            >
               <div className="multiplier-card">
                 <div>
                   <div className="multiplier-card__label">On drinking days you spend</div>
@@ -1394,76 +1508,98 @@ const topWorkoutTypes = (() => {
           
 
       <div className="theme-wo">
-      <MobileSectionCard title="Workout Mix" persistKey="dash-workout-mix">
-        <div
-          style={{
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            padding: "8px 0 4px",
-            gap: 6,
-            color: "white",
-          }}
+        <MobileSectionCard
+          title={titleWithInfo("Workout Insights", "Key workout trends for the current month.")}
+          persistKey="dash-workout-insights"
         >
-          <div style={{ fontSize: 14, fontWeight: 600 }}>Distribution by workout type</div>
-          <div style={{ fontSize: 12, opacity: 0.65 }}>Based on logged workouts this month</div>
-          <div style={{ marginTop: 8, width: "100%", display: "flex", justifyContent: "center" }}>
-            {loadingData ? (
-              <Skeleton variant="rectangular" width="100%" height={180} {...skeletonProps} />
-            ) : monthWorkouts.length ? (
-              <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
-                <WorkoutTypePie rows={monthWorkouts} />
-              </Suspense>
-            ) : (
-              <div className="chart-empty">No data yet. Log your first workout to see insights.</div>
-            )}
-          </div>
-        </div>
-      </MobileSectionCard>
+          {loadingData ? (
+            <div className="workout-insights-grid">
+              <div className="workout-insights__col">
+                {Array.from({ length: 2 }).map((_, index) => (
+                  <div className="drink-card theme-wo" key={`workout-skel-${index}`}>
+                    <Skeleton variant="text" width="60%" height={16} {...skeletonProps} />
+                    <Skeleton variant="text" width="40%" height={30} {...skeletonProps} />
+                    <Skeleton variant="text" width="70%" height={14} {...skeletonProps} />
+                  </div>
+                ))}
+              </div>
+              <div className="drink-card theme-wo workout-insights__card--tall">
+                <Skeleton variant="text" width="60%" height={16} {...skeletonProps} />
+                <Skeleton variant="text" width="80%" height={30} {...skeletonProps} />
+                <Skeleton variant="text" width="70%" height={14} {...skeletonProps} />
+              </div>
+            </div>
+          ) : (
+            <div className="workout-insights-grid">
+              <div className="workout-insights__col">
+                <div className="drink-card theme-wo">
+                  <div className="drink-card__title">Total Workouts</div>
+                  <div className="drink-card__value is-large">{workoutCount}</div>
+                  <div className={`drink-card__sub drink-card__value--${workoutDeltaTone}`}>
+                    {workoutDeltaLabel}
+                  </div>
+                </div>
+                <div className="drink-card theme-wo">
+                  <div className="drink-card__title">Avg Intensity</div>
+                  <div className="drink-card__value is-large">
+                    {avgWorkoutIntensity ?? "—"}
+                  </div>
+                  <div className="drink-card__sub">Average intensity this month</div>
+                </div>
+              </div>
+              <div className="drink-card theme-wo workout-insights__card--tall">
+                <div className="drink-card__title">Top Workout Types</div>
+                {topWorkoutTypes.length ? (
+                  <div className="kpi-momentum">
+                    {topWorkoutTypes.map((row) => (
+                      <div className="kpi-momentum__row" key={row.type}>
+                        <span className="kpi-momentum__label">{row.type}</span>
+                        <span className="kpi-momentum__value kpi-momentum__value--neutral">
+                          {row.count}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="kpi-momentum__empty">No workout data yet</div>
+                )}
+              </div>
+            </div>
+          )}
+        </MobileSectionCard>
       </div>
 
-          <div className="theme-wo">
-            <MobileSectionCard title="Workout Insights" persistKey="dash-workout-insights">
+      <div className="theme-wo">
+        <MobileSectionCard
+          title={titleWithInfo("Workout Mix", "Breakdown of workout types logged this month.")}
+          persistKey="dash-workout-mix"
+        >
+          <div
+            style={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              padding: "8px 0 4px",
+              gap: 6,
+              color: "white",
+            }}
+          >
+            <div style={{ fontSize: 14, fontWeight: 600 }}>Distribution by workout type</div>
+            <div style={{ fontSize: 12, opacity: 0.65 }}>Based on logged workouts this month</div>
+            <div style={{ marginTop: 8, width: "100%", display: "flex", justifyContent: "center" }}>
               {loadingData ? (
-                <div className="workout-insights-grid">
-                  {Array.from({ length: 2 }).map((_, index) => (
-                    <div className="drink-card theme-wo" key={`workout-skel-${index}`}>
-                      <Skeleton variant="text" width="60%" height={16} {...skeletonProps} />
-                      <Skeleton variant="text" width="40%" height={30} {...skeletonProps} />
-                      <Skeleton variant="text" width="70%" height={14} {...skeletonProps} />
-                    </div>
-                  ))}
-                </div>
+                <Skeleton variant="rectangular" width="100%" height={180} {...skeletonProps} />
+              ) : monthWorkouts.length ? (
+                <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
+                  <WorkoutTypePie rows={monthWorkouts} />
+                </Suspense>
               ) : (
-                <div className="workout-insights-grid">
-                  <div className="drink-card theme-wo">
-                    <div className="drink-card__title">Total Workouts</div>
-                    <div className="drink-card__value is-large">{workoutCount}</div>
-                    <div className={`drink-card__sub drink-card__value--${workoutDeltaTone}`}>
-                      {workoutDeltaLabel}
-                    </div>
-                  </div>
-                  <div className="drink-card theme-wo">
-                    <div className="drink-card__title">Top Workout Types</div>
-                    {topWorkoutTypes.length ? (
-                      <div className="kpi-momentum">
-                        {topWorkoutTypes.map((row) => (
-                          <div className="kpi-momentum__row" key={row.type}>
-                            <span className="kpi-momentum__label">{row.type}</span>
-                            <span className="kpi-momentum__value kpi-momentum__value--neutral">
-                              {row.count}
-                            </span>
-                          </div>
-                        ))}
-                      </div>
-                    ) : (
-                      <div className="kpi-momentum__empty">No workout data yet</div>
-                    )}
-                  </div>
-                </div>
+                <div className="chart-empty">No data yet. Log your first workout to see insights.</div>
               )}
-            </MobileSectionCard>
+            </div>
           </div>
+        </MobileSectionCard>
+      </div>
 
           
 
