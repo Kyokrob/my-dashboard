@@ -1,24 +1,28 @@
 import { PieChart } from "@mui/x-charts/PieChart";
 import useMediaQuery from "@mui/material/useMediaQuery";
 
-export default function WorkoutTypePie({ rows = [] }) {
+export default function WorkoutIntensityPie({ rows = [] }) {
   const isMobile = useMediaQuery("(max-width: 720px)");
   const counts = rows.reduce((acc, w) => {
-    const key = w.workout || w.workoutType || "Other";
+    const level = Number(w.intensity || 0);
+    if (!Number.isFinite(level) || level <= 0) return acc;
+    const key = Math.min(5, Math.max(1, Math.round(level)));
     acc[key] = (acc[key] || 0) + 1;
     return acc;
   }, {});
 
-  const workoutColors = ["#6FE3C1", "#4FD6FF", "#7CB4FF", "#9FC8B3", "#5B9BD5", "#2FA986"];
-  const data = Object.entries(counts).map(([label, value], i) => ({
-    id: i,
-    label,
-    value,
-    color: workoutColors[i % workoutColors.length],
-  }));
+  const intensityColors = ["#6FE3C1", "#4FD6FF", "#7CB4FF", "#9FC8B3", "#5B9BD5"];
+  const data = Object.entries(counts)
+    .map(([level, value], i) => ({
+      id: i,
+      label: `Intensity ${level}`,
+      value,
+      color: intensityColors[(Number(level) - 1) % intensityColors.length],
+    }))
+    .filter((row) => row.value > 0);
 
   if (!data.length) {
-    return <div style={{ opacity: 0.6, fontSize: 13 }}>No workouts logged</div>;
+    return <div style={{ opacity: 0.6, fontSize: 13 }}>No intensity data</div>;
   }
 
   const totalWorkouts = data.reduce((sum, d) => sum + d.value, 0);
@@ -29,10 +33,10 @@ export default function WorkoutTypePie({ rows = [] }) {
   return (
     <div style={{ display: "grid", gap: 8 }}>
       <div style={{ fontSize: 14, fontWeight: 650, color: "#fff", textAlign: "center" }}>
-        Workout Mix
+        Workout Intensity
       </div>
       <div style={{ fontSize: 12, opacity: 0.7, color: "#fff", textAlign: "center" }}>
-        Total {totalWorkouts.toLocaleString()} · by workout type (this month)
+        Total {totalWorkouts.toLocaleString()} · by intensity (this month)
       </div>
       <div style={{ display: "grid", gridTemplateColumns: "1fr auto", gap: 14, alignItems: "center" }}>
         <div style={{ display: "flex", justifyContent: "center" }}>

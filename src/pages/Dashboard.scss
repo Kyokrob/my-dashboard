@@ -751,6 +751,10 @@
     display: contents;
   }
 
+  .runrate-card__summary-block--status {
+    display: none;
+  }
+
   .runrate-card__pace-value {
     font-size: 20px;
   }
@@ -811,7 +815,8 @@
   }
 
   .spend-day-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+    grid-template-rows: auto auto;
   }
 
   .kpi-budget__gauge {
@@ -853,6 +858,7 @@
 .kpi-momentum__value--good {
   color: #9FC8B3;
 }
+
 
 .kpi-budget {
   display: grid;

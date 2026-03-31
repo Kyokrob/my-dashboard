@@ -61,8 +61,7 @@ export default function ExpenseCategoryBar({ rows = [], height = 280, topN = 8 }
           {
             data: values,
             label: "Total",
-            color: "#7c83fd", // pastel indigo
-
+            color: "#4FD6FF",
           },
         ]}
         height={height}

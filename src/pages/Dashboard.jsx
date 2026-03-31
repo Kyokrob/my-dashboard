@@ -18,6 +18,7 @@ import MonthCalendar from "../components/common/MonthCalendar.jsx";
 
 import KpiCard from "../components/common/KpiCard.jsx";
 const WorkoutTypePie = lazy(() => import("../components/workouts/WorkoutTypePie.jsx"));
+const WorkoutIntensityPie = lazy(() => import("../components/workouts/WorkoutIntensityPie.jsx"));
 const ExpenseCategoryBar = lazy(() => import("../components/expenses/ExpenseCategoryBar.jsx"));
 const ExpenseCategoryPie = lazy(() => import("../components/expenses/ExpenseCategoryPie.jsx"));
 import TodoList from "../components/todo/TodoList.jsx";
@@ -139,6 +140,7 @@ export default function Dashboard() {
   const [editingExpense, setEditingExpense] = useState(null);
   const [editingWorkout, setEditingWorkout] = useState(null);
   const [expenseChartView, setExpenseChartView] = useState("mix");
+  const [workoutChartView, setWorkoutChartView] = useState("workout");
 
   /* ======================
    Load from API (STRICT)
@@ -1571,7 +1573,29 @@ const topWorkoutTypes = (() => {
 
       <div className="theme-wo">
         <MobileSectionCard
-          title={titleWithInfo("Workout Mix", "Breakdown of workout types logged this month.")}
+          title={
+            <div className="chart-card__title">
+              <span>Workouts (This Month)</span>
+              <div className="chart-toggle">
+                <Button
+                  size="small"
+                  variant={workoutChartView === "workout" ? "contained" : "outlined"}
+                  onClick={() => setWorkoutChartView("workout")}
+                  className={`chart-toggle__btn ${workoutChartView === "workout" ? "is-active" : ""}`}
+                >
+                  Workout
+                </Button>
+                <Button
+                  size="small"
+                  variant={workoutChartView === "intensity" ? "contained" : "outlined"}
+                  onClick={() => setWorkoutChartView("intensity")}
+                  className={`chart-toggle__btn ${workoutChartView === "intensity" ? "is-active" : ""}`}
+                >
+                  Intensity
+                </Button>
+              </div>
+            </div>
+          }
           persistKey="dash-workout-mix"
         >
           <div
@@ -1584,14 +1608,16 @@ const topWorkoutTypes = (() => {
               color: "white",
             }}
           >
-            <div style={{ fontSize: 14, fontWeight: 600 }}>Distribution by workout type</div>
-            <div style={{ fontSize: 12, opacity: 0.65 }}>Based on logged workouts this month</div>
             <div style={{ marginTop: 8, width: "100%", display: "flex", justifyContent: "center" }}>
               {loadingData ? (
                 <Skeleton variant="rectangular" width="100%" height={180} {...skeletonProps} />
               ) : monthWorkouts.length ? (
                 <Suspense fallback={<div style={{ opacity: 0.6, fontSize: 12 }}>Loading chart…</div>}>
-                  <WorkoutTypePie rows={monthWorkouts} />
+                  {workoutChartView === "workout" ? (
+                    <WorkoutTypePie rows={monthWorkouts} />
+                  ) : (
+                    <WorkoutIntensityPie rows={monthWorkouts} />
+                  )}
                 </Suspense>
               ) : (
                 <div className="chart-empty">No data yet. Log your first workout to see insights.</div>

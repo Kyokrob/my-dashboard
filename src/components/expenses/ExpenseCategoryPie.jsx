@@ -26,11 +26,13 @@ export default function ExpenseCategoryPie({ rows = [] }) {
     return acc;
   }, {});
 
+  const expenseColors = ["#6FE3C1", "#4FD6FF", "#7CB4FF", "#9FC8B3", "#5B9BD5", "#2FA986"];
   const data = Object.entries(totals)
     .map(([label, value], i) => ({
       id: i,
       label,
       value: Math.round(value),
+      color: expenseColors[i % expenseColors.length],
     }))
     .filter((d) => Number.isFinite(d.value) && d.value > 0) // ✅ remove 0/NaN slices
     .sort((a, b) => b.value - a.value);
